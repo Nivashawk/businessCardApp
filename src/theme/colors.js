@@ -1,4 +1,4 @@
-export const theme = {
+export const colors = {
     background: '#FFFFFF',
     primary: '#004643',
     secondary: '#F4F4F4',
@@ -7,3 +7,8 @@ export const theme = {
     status_green: "#80D97E",
     status_red: "#DA4035"
   };
+
+
+
+
+  
