@@ -1,81 +1,131 @@
-import React, { useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchUser } from '../../redux/slices/user/userSlices';
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
+import {useDispatch, useSelector} from 'react-redux';
+// import {fetchUser} from '../../redux/slices/user/userSlices';
+import {typography} from '../../theme/typography';
+import {colors} from '../../theme/colors';
+import LargeButton from '../../components/buttons/largeButton';
+import InputBox from '../../components/inputs/textInput';
+import {useNavigation} from '@react-navigation/native';
 
 const Login = () => {
+  const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { data: user, loading, error } = useSelector(state => state.user);
+  // const {data: user, loading, error} = useSelector(state => state.user);
 
-  useEffect(() => {
-    dispatch(fetchUser());
-  }, []);
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading user info...</Text>
-      </View>
-    );
-  }
+  // useEffect(() => {
+  //   dispatch(fetchUser());
+  // }, []);
 
-  if (error) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>Error: {error}</Text>
-      </View>
-    );
-  }
+  const handleSignIn = () => {
+    if (!email.includes('@')) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    setEmailError('');
+    console.log('Signing in with:', email);
+    navigation.navigate('Verify');
+  };
+
+  // if (loading) {
+  //   return (
+  //     <View style={styles.center}>
+  //       <ActivityIndicator size="large" color="#007AFF" />
+  //       <Text style={styles.loadingText}>Loading user info...</Text>
+  //     </View>
+  //   );
+  // }
+
+  // if (error) {
+  //   return (
+  //     <View style={styles.center}>
+  //       <Text style={styles.errorText}>Error: {error}</Text>
+  //     </View>
+  //   );
+  // }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login Screen</Text>
-      {user && (
-        <View style={styles.userBox}>
-          <Text style={styles.userText}>User Info:</Text>
-          <Text style={styles.userText}>{JSON.stringify(user, null, 2)}</Text>
-        </View>
-      )}
+      {/* Logo */}
+      <View style={styles.topSection}>
+        <Text style={[typography.logo, styles.logo]}>LOGO</Text>
+      </View>
+
+      <View style={styles.bottomSection}>
+        {/* Title */}
+        <Text style={[typography.heading, styles.subtitle]}>
+          Sign in to your account
+        </Text>
+
+        {/* Input */}
+        <InputBox
+          label="Email Address"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Enter your email address"
+          keyboardType="email-address"
+          required
+          error={emailError}
+        />
+
+        {/* Button */}
+        <LargeButton title="Sent OTP" onPress={handleSignIn} />
+
+        {/* Bottom text */}
+        <TouchableOpacity onPress={()=> navigation.navigate("Signup")} style={styles.footer}>
+          <Text style={typography.footerText}>
+            Don't have an account?{' '}
+            <Text style={typography.linkText}>Create Account</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    paddingHorizontal: 24,
+    justifyContent: 'center',
+  },
+  topSection: {
+    height: '60%',
+    justifyContent: 'center',
+  },
+  logo: {
+    textAlign: 'center',
+  },
+  bottomSection: {
+    height: '40%',
+    justifyContent: 'center',
+  },
+  subtitle: {
+    textAlign: 'center',
+    marginBottom: 30,
+  },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
   },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#333',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 16,
-  },
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#F7F9FC',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  userBox: {
-    padding: 10,
-    backgroundColor: '#EAF4FF',
-    borderRadius: 10,
-    marginTop: 10,
-  },
-  userText: {
-    fontSize: 14,
-    color: '#333',
+  // loadingText: {
+  //   marginTop: 10,
+  //   fontSize: 16,
+  // },
+  footer: {
+    marginTop: 24,
+    alignItems: 'center',
   },
 });
 
