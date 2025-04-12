@@ -76,7 +76,7 @@ const OTPVerificationScreen = ({route}) => {
       console.log(`Entered OTP: ${otp.join('')}`);
       const inputOTP = otp.join('');
       if (inputOTP === '123456') {
-        navigation.navigate('Home');
+        navigation.navigate('MainTabs');
       } else {
         console.log('Please enter a valid OTP');
       }
