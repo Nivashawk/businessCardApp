@@ -6,6 +6,7 @@ import InputBox from '../../components/inputs/textInput';
 import PhoneNumberInput from '../../components/inputs/phoneNumberInput';
 import LargeButton from '../../components/buttons/largeButton';
 import {useNavigation} from '@react-navigation/native';
+import { colors } from '../../theme/colors';
 
 const SignUp = () => {
   const navigation = useNavigation();
@@ -123,7 +124,7 @@ const SignUp = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     paddingHorizontal: 24,
     paddingTop: 60,
     justifyContent: 'center',
