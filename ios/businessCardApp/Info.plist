@@ -4,6 +4,8 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to scan QR codes.</string>
 	<key>CFBundleDisplayName</key>
 	<string>businessCardApp</string>
 	<key>CFBundleExecutable</key>
@@ -48,5 +50,6 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+
 </dict>
 </plist>
