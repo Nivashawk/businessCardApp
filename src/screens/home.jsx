@@ -9,6 +9,7 @@ import DescriptiveCard from '../components/cards/descriptiveCard';
 import ReferralImage from '../../assets/serviceCard/referral.png';
 import EventImage from '../../assets/serviceCard/event.png';
 import ShareImage from '../../assets/serviceCard/share.png';
+import { useNavigation } from '@react-navigation/native';
 
 
 const {width, height} = Dimensions.get('window');
@@ -30,6 +31,7 @@ const handleShare = () => {
 
 
 const Home = () => {
+  const navigation = useNavigation();
   return (
   <View style={{backgroundColor:colors.background}}>
     <GestureHandlerRootView style={styles.container}>
@@ -40,7 +42,7 @@ const Home = () => {
       <View style={styles.serviceWrapper}>
         <ServiceCard title={'Refer & Earn'} image={ReferralImage} onPress={handleReferral}/>
         <ServiceCard title={'Create New Event'} image={EventImage} onPress={handleEvent}/>
-        <ServiceCard title={'Share My Business'} image={ShareImage} onPress={handleShare}/>
+        <ServiceCard title={'Share My Business'} image={ShareImage} onPress={()=>{navigation.navigate("GenerateQR")}}/>
       </View>
     </View>
     <View style={styles.eventContainer}>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{useState} from 'react';
 import { useNavigationState } from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
@@ -44,11 +44,14 @@ const styles = StyleSheet.create({
 });
 
 export default function RootNavigator() {
+  const{auth, setAuh} = useState(true);
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{headerShown: false}}>
-        <Stack.Screen name="Auth" component={AuthNavigator} />
-        <Stack.Screen name="MainTabs" component={withCustomHeader(BottomTabNavigator)} />
+        {
+          auth ? <Stack.Screen name="Auth" component={AuthNavigator} /> : <Stack.Screen name="MainTabs" component={withCustomHeader(BottomTabNavigator)} />
+        }
+        
       </Stack.Navigator>
     </NavigationContainer>
   );
