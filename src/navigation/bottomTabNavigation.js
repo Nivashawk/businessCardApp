@@ -1,15 +1,18 @@
 import React, {useRef, useEffect} from 'react';
-import {View, Animated, TouchableOpacity, Platform} from 'react-native';
+import {View, Animated, TouchableOpacity, Platform, StyleSheet, Dimensions} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {colors} from '../theme/colors';
+import CustomHeader from '../components/customHeader';
 
-import Home from '../screens/home';
+import HomeStack from './homeStack';
 import Contacts from '../screens/contacts';
 import ScanQR from '../screens/scan/scanQR';
 
 import HomeIcon from '../../assets/bottomTab/home.svg';
 import ScanIcon from '../../assets/bottomTab/qscan.svg';
 import ContactsIcon from '../../assets/bottomTab/contact.svg';
+const {width, height} = Dimensions.get('window');
+
 
 const Tab = createBottomTabNavigator();
 
@@ -30,6 +33,8 @@ const AnimatedTabIcon = ({focused, children}) => {
     </Animated.View>
   );
 };
+
+
 
 export default function BottomTabNavigator() {
   return (
@@ -97,7 +102,7 @@ export default function BottomTabNavigator() {
 
         tabBarStyle: {
           backgroundColor: colors.secondary,
-          height: 70,
+          height: height * 0.09,
           paddingBottom: 10,
           paddingTop: 10,
           position: 'absolute',
@@ -124,7 +129,21 @@ export default function BottomTabNavigator() {
           );
         },
       })}>
-      <Tab.Screen name="Home" component={Home} />
+      <Tab.Screen
+        name="Home"
+        component={HomeStack}
+        listeners={({navigation, route}) => ({
+          tabPress: e => {
+            // Prevent default behavior
+            e.preventDefault();
+
+            // If already on Home tab, reset the stack to Home screen
+            navigation.navigate('Home', {
+              screen: 'Home', // this is the screen inside your HomeStack
+            });
+          },
+        })}
+      />
       <Tab.Screen
         name="ScanQR"
         component={ScanQR}

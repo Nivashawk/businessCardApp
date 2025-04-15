@@ -29,7 +29,10 @@ const ScanQR = () => {
           console.log('Scanned QR Code:', qrData);
 
           // Navigate to another screen and pass the scanned data
-          navigation.navigate('BusinessDetails', {data: qrData});
+          navigation.navigate("Home", {
+            screen: "BusinessDetails",
+            params: { data: qrData }
+          });
         }
       }
     },

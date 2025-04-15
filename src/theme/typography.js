@@ -16,6 +16,11 @@ export const typography = {
     color: colors.primary,
     fontWeight: 'bold',
   },
+  description:{
+    fontSize: fontSize.paragraph_1,
+    color: colors.primary,
+    fontWeight: '400',
+  },
   footerText:{
     fontSize: fontSize.paragraph_2,
     color: colors.text_color_1,

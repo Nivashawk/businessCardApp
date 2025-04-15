@@ -7,10 +7,12 @@ import Toast from 'react-native-toast-message';
 
 const App = () => {
   return (
-      <Provider store={store}>
+    <Provider store={store}>
+      <SafeAreaView style={{flex: 1}}>
         <RootNavigator />
         <Toast />
-      </Provider>
+      </SafeAreaView>
+    </Provider>
   );
 };
 
