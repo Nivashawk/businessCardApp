@@ -139,7 +139,7 @@ export default function BottomTabNavigator() {
 
             // If already on Home tab, reset the stack to Home screen
             navigation.navigate('Home', {
-              screen: 'Home', // this is the screen inside your HomeStack
+              screen: 'mainPage', // this is the screen inside your HomeStack
             });
           },
         })}

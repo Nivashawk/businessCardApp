@@ -41,7 +41,7 @@ const Home = () => {
       <Text style={[typography.heading, {paddingLeft:10}]}>Services</Text>
       <View style={styles.serviceWrapper}>
         <ServiceCard title={'Refer & Earn'} image={ReferralImage} onPress={handleReferral}/>
-        <ServiceCard title={'Create New Event'} image={EventImage} onPress={handleEvent}/>
+        <ServiceCard title={'Create New Event'} image={EventImage} onPress={()=>{navigation.navigate("CreateEvent")}}/>
         <ServiceCard title={'Share My Business'} image={ShareImage} onPress={()=>{navigation.navigate("GenerateQR")}}/>
       </View>
     </View>
@@ -50,10 +50,10 @@ const Home = () => {
       <ScrollView contentContainerStyle={styles.eventWrapper}>
         <DescriptiveCard title={'Madurai expo....'} date={"22/09/2025"} description={"Lorem Ipsum is simply dummy"} onPress={handleReferral}/>
         <DescriptiveCard title={'Madurai expo....'} date={"22/09/2025"}  description={"Lorem Ipsum is simply dummy"} onPress={handleEvent}/>
-        <DescriptiveCard title={'Madurai expo....'} date={"22/09/2025"}  description={"Lorem Ipsum is simply dummy"} onPress={handleShare}/>
+        {/* <DescriptiveCard title={'Madurai expo....'} date={"22/09/2025"}  description={"Lorem Ipsum is simply dummy"} onPress={handleShare}/>
         <DescriptiveCard title={'Madurai expo....'} date={"22/09/2025"} description={"Lorem Ipsum is simply dummy"} onPress={handleReferral}/>
         <DescriptiveCard title={'Madurai expo....'} date={"22/09/2025"}  description={"Lorem Ipsum is simply dummy"} onPress={handleEvent}/>
-        <DescriptiveCard title={'Madurai expo....'} date={"22/09/2025"}  description={"Lorem Ipsum is simply dummy"} onPress={handleShare}/>
+        <DescriptiveCard title={'Madurai expo....'} date={"22/09/2025"}  description={"Lorem Ipsum is simply dummy"} onPress={handleShare}/> */}
       </ScrollView>
     </View>
   </View>
