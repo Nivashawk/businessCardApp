@@ -44,14 +44,12 @@ const styles = StyleSheet.create({
 });
 
 export default function RootNavigator() {
-  const{auth, setAuh} = useState(true);
+  const{auth, setAuh} = useState(false);
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{headerShown: false}}>
-        {
-          auth ? <Stack.Screen name="Auth" component={AuthNavigator} /> : <Stack.Screen name="MainTabs" component={withCustomHeader(BottomTabNavigator)} />
-        }
-        
+         <Stack.Screen name="Auth" component={AuthNavigator} /> 
+        <Stack.Screen name="MainTabs" component={withCustomHeader(BottomTabNavigator)} />
       </Stack.Navigator>
     </NavigationContainer>
   );
