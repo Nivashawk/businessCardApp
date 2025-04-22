@@ -1,8 +1,16 @@
 import React, {useRef, useEffect} from 'react';
-import {View, Animated, TouchableOpacity, Platform, StyleSheet, Dimensions} from 'react-native';
+import {
+  View,
+  Animated,
+  TouchableOpacity,
+  Platform,
+  StyleSheet,
+  Dimensions,
+} from 'react-native';
+import {getFocusedRouteNameFromRoute} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {colors} from '../theme/colors';
-import CustomHeader from '../components/customHeader';
+
 
 import HomeStack from './homeStack';
 import Contacts from '../screens/contacts';
@@ -11,8 +19,8 @@ import ScanQR from '../screens/scan/scanQR';
 import HomeIcon from '../../assets/bottomTab/home.svg';
 import ScanIcon from '../../assets/bottomTab/qscan.svg';
 import ContactsIcon from '../../assets/bottomTab/contact.svg';
-const {width, height} = Dimensions.get('window');
 
+import {TabBarStyle} from '../theme/tabBar';
 
 const Tab = createBottomTabNavigator();
 
@@ -33,8 +41,6 @@ const AnimatedTabIcon = ({focused, children}) => {
     </Animated.View>
   );
 };
-
-
 
 export default function BottomTabNavigator() {
   return (
@@ -100,20 +106,7 @@ export default function BottomTabNavigator() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.primary,
 
-        tabBarStyle: {
-          backgroundColor: colors.secondary,
-          height: height * 0.09,
-          paddingBottom: 10,
-          paddingTop: 10,
-          position: 'absolute',
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          elevation: 5,
-          shadowColor: '#000',
-          shadowOpacity: 0.1,
-          shadowOffset: {width: 0, height: -2},
-          shadowRadius: 4,
-        },
+        tabBarStyle: TabBarStyle,
 
         tabBarLabel: ({focused, color}) => {
           return (
@@ -152,7 +145,21 @@ export default function BottomTabNavigator() {
           headerShown: false, // optional: hide top header if needed
         }}
       />
-      <Tab.Screen name="Contacts" component={Contacts} />
+      <Tab.Screen
+        name="Contacts"
+        component={Contacts}
+        options={({route}) => {
+          const routeName = getFocusedRouteNameFromRoute(route) ?? 'Home';
+          const hideHeaderScreens = [
+            'ScanQR',
+            'CreateBusiness',
+            'CustomCamera',
+          ];
+          return {
+            headerShown: !hideHeaderScreens.includes(routeName),
+          };
+        }}
+      />
     </Tab.Navigator>
   );
 }

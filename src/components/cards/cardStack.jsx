@@ -1,6 +1,12 @@
 // CardStack.js
 import React, {useState, useCallback} from 'react';
-import {View, StyleSheet, Dimensions, Image} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import {formatCompanyName, truncateText} from '../../utlis/stringHandler';
 import {GestureDetector, Gesture} from 'react-native-gesture-handler';
+import {useNavigation} from '@react-navigation/native';
 import {colors} from '../../theme/colors';
 import {typography} from '../../theme/typography';
 import Editicon from '../../../assets/edit.svg';
@@ -24,76 +31,105 @@ import Whatsapp from '../../../assets/socialIcons/whatsapp.svg';
 
 const {width, height} = Dimensions.get('window');
 
-const CARD_DATA = [
-  {
-    id: 1,
-    company: 'ZEDBYTE SOFWARE SOLUTIONS',
-    tagline:
-      'entrust us with the management of your internet business and forget about it entrust us with the management of your internet business and forget about it',
-    contact: '1234567890',
-    email: 'tech@example.com',
-  },
-  {
-    id: 2,
-    company: 'Design Studio',
-    tagline: 'Creativity Unleashed',
-    contact: '9876543210',
-    email: 'design@example.com',
-  },
-  {
-    id: 3,
-    company: 'Startup Inc.',
-    tagline: 'Sky is the Limit',
-    contact: '4561237890',
-    email: 'startup@example.com',
-  },
-];
+const CARD_DATA = []
 
-const Card = React.memo(({card, style}) => (
-  <Animated.View style={[styles.card, style]}>
-    <View style={[styles.header]}>
-      <View style={[styles.headerLeft]}>
-        <EmptyLogo width={50} height={50} />
-        <Animated.Text
-          style={[typography.heading, styles.title]}
-          numberOfLines={2}
-          ellipsizeMode="tail">
-          {formatCompanyName(card.company)}
+// const CARD_DATA = [
+//   {
+//     id: 1,
+//     company: 'ZEDBYTE SOFWARE SOLUTIONS',
+//     tagline:
+//       'entrust us with the management of your internet business and forget about it entrust us with the management of your internet business and forget about it',
+//     contact: '1234567890',
+//     email: 'tech@example.com',
+//   },
+//   {
+//     id: 2,
+//     company: 'Design Studio',
+//     tagline: 'Creativity Unleashed',
+//     contact: '9876543210',
+//     email: 'design@example.com',
+//   },
+//   {
+//     id: 3,
+//     company: 'Startup Inc.',
+//     tagline: 'Sky is the Limit',
+//     contact: '4561237890',
+//     email: 'startup@example.com',
+//   },
+// ];
+
+const Card = React.memo(({card, style}) => {
+  const navigation = useNavigation();
+
+  return (
+    <Animated.View style={[styles.card, style]}>
+      <View style={[styles.header]}>
+        <View style={[styles.headerLeft]}>
+          <EmptyLogo width={50} height={50} />
+          <Animated.Text
+            style={[typography.heading, styles.title]}
+            numberOfLines={2}
+            ellipsizeMode="tail">
+            {formatCompanyName(card.company)}
+          </Animated.Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('CreateBusiness');
+          }}>
+          <Editicon width={20} height={20} />
+        </TouchableOpacity>
+      </View>
+      <View style={styles.descriptionContainer}>
+        <Animated.Text style={[typography.description, styles.tagline]}>
+          {truncateText(card.tagline, 70)}
         </Animated.Text>
       </View>
-      <Editicon width={20} height={20} />
-    </View>
-    <View style={styles.descriptionContainer}>
-      <Animated.Text style={[typography.description, styles.tagline]}>
-        {truncateText(card.tagline, 70)}
-      </Animated.Text>
-    </View>
-    <View style={styles.contactContainer}>
-      <View style={styles.contact1}>
-        <Animated.Image source={PhoneIcon} />
-        <Animated.Text style={[typography.inputText]}>{card.contact}</Animated.Text>
-      </View>
-      <View style={styles.contact2}>
-        <Animated.Image source={MailIcon} />
-        <Animated.Text style={[typography.inputText]}>{card.email}</Animated.Text>
-      </View>
-    </View>
-    <View style={styles.socialContainer}>
-      <Animated.View style={styles.socialleftContainer}>
-        <View style={styles.socialBg}>
-          <Facebook width={20} height={20} />
-          <Instagram width={20} height={20} />
-          <LinkedIn width={20} height={20} />
-          <Telegram width={20} height={20} />
-          <Whatsapp width={20} height={20} />
+      <View style={styles.contactContainer}>
+        <View style={styles.contact1}>
+          <Animated.Image source={PhoneIcon} />
+          <Animated.Text style={[typography.inputText]}>
+            {card.contact}
+          </Animated.Text>
         </View>
-      </Animated.View>
-      <Animated.View style={styles.socialrightContainer}>
-        <Animated.Text style={[typography.description]}>Primary</Animated.Text>
-      </Animated.View>
-    </View>
-  </Animated.View>
-));
+        <View style={styles.contact2}>
+          <Animated.Image source={MailIcon} />
+          <Animated.Text style={[typography.inputText]}>
+            {card.email}
+          </Animated.Text>
+        </View>
+      </View>
+      <View style={styles.socialContainer}>
+        <Animated.View style={styles.socialleftContainer}>
+          <View style={styles.socialBg}>
+            <Facebook width={20} height={20} />
+            <Instagram width={20} height={20} />
+            <LinkedIn width={20} height={20} />
+            <Telegram width={20} height={20} />
+            <Whatsapp width={20} height={20} />
+          </View>
+        </Animated.View>
+        <Animated.View style={styles.socialrightContainer}>
+          <Animated.Text style={[typography.description]}>
+            Primary
+          </Animated.Text>
+        </Animated.View>
+      </View>
+    </Animated.View>
+  );
+});
+
+const EmptyCard = () => {
+  const navigation = useNavigation();
+
+  return (
+    <TouchableOpacity
+      style={styles.emptyCard}
+      onPress={() => navigation.navigate('CreateBusiness')}>
+      <Animated.Text style={styles.plusIcon}>+</Animated.Text>
+    </TouchableOpacity>
+  );
+};
 
 const CardStack = () => {
   const [cards, setCards] = useState(CARD_DATA);
@@ -152,14 +188,20 @@ const CardStack = () => {
 
   return (
     <View style={styles.container}>
-      {cards.slice(1).map((card, index) => (
-        <Card
-          key={card.id}
-          card={card}
-          style={[styles.card, {top: (index + 1) * -20, zIndex: -index}]}
-        />
-      ))}
-      {renderTopCard()}
+      {cards.length === 0 ? (
+        <EmptyCard />
+      ) : (
+        <>
+          {cards.slice(1).map((card, index) => (
+            <Card
+              key={card.id}
+              card={card}
+              style={[styles.card, {top: (index + 1) * -20, zIndex: -index}]}
+            />
+          ))}
+          {renderTopCard()}
+        </>
+      )}
     </View>
   );
 };
@@ -167,7 +209,6 @@ const CardStack = () => {
 const styles = StyleSheet.create({
   container: {
     height: height * 0.001,
-    // flex: 1,
     justifyContent: 'flex-start',
     alignItems: 'center',
     backgroundColor: colors.background,
@@ -188,7 +229,6 @@ const styles = StyleSheet.create({
   },
   header: {
     height: '30%',
-
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -199,19 +239,16 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   descriptionContainer: {
-    width:'80%',
+    width: '80%',
     height: '30%',
     alignItems: 'flex-start',
-    justifyContent:'center',
-    // flexShrink: 1,
-    // flexWrap: 'wrap',
-    // backgroundColor: 'grey',
+    justifyContent: 'center',
   },
   contactContainer: {
     height: '15%',
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    alignItems:'center',
+    alignItems: 'center',
     gap: 20,
   },
   contact1: {
@@ -227,15 +264,10 @@ const styles = StyleSheet.create({
     height: '25%',
     flexDirection: 'row',
     alignItems: 'center',
-    // justifyContent: 'space-evenly',
-    // backgroundColor: 'blue',
   },
   socialleftContainer: {
     width: '60%',
-    // alignItems: 'center',
-    // justifyContent:"flex-start",
-    // backgroundColor: 'blue',
-    flexWrap:'wrap'
+    flexWrap: 'wrap',
   },
   socialBg: {
     padding: 8,
@@ -269,6 +301,26 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 16,
+  },
+  emptyCard: {
+    marginTop: height * 0.04,
+    width: width * 0.95,
+    height: height * 0.3,
+    backgroundColor: colors.secondary,
+    borderRadius: 10,
+    padding: 10,
+    position: 'absolute',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 5},
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 10,
+    alignItems:'center',
+    justifyContent:'center'
+  },
+  plusIcon: {
+    fontSize: 50,
+    color: colors.primary,
   },
 });
 

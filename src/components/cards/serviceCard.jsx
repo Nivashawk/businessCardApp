@@ -5,14 +5,35 @@ import {colors} from '../../theme/colors';
 import {cards} from '../../theme/cards';
 const {width, height} = Dimensions.get('window');
 
-const ServiceCard = ({title, image, onPress}) => {
+const ServiceCard = ({ title, image, onPress, disabled = false }) => {
   return (
-    <TouchableOpacity style={cards.serviceCard} onPress={onPress}>
+    <TouchableOpacity
+      style={[
+        cards.serviceCard,
+        disabled && { opacity: 0.4 }, // faded look when disabled
+      ]}
+      onPress={disabled ? null : onPress} // prevent click if disabled
+      activeOpacity={0.7}
+      disabled={disabled} // disables touch feedback
+    >
       <Image style={styles.image} source={image} />
-      <Text style={[typography.inputText, {textAlign:'center', fontWeight:'bold', color:colors.primary}]}>{title}</Text>
+      <Text
+        style={[
+          typography.inputText,
+          {
+            textAlign: 'center',
+            fontWeight: 'bold',
+            color: colors.primary,
+            opacity: disabled ? 0.5 : 1,
+          },
+        ]}
+      >
+        {title}
+      </Text>
     </TouchableOpacity>
   );
 };
+
 
 const styles = StyleSheet.create({
     image:{

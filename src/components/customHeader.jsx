@@ -1,119 +1,63 @@
-import React, {useState, useRef} from 'react';
+// components/CustomHeader.js
+
+import React from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  Animated,
-  Dimensions,
+  Platform,
+  Image,
   StyleSheet,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {typography} from '../theme/typography';
-import { CommonActions } from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {colors} from '../theme/colors';
+import { typography } from '../theme/typography';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function CustomHeader() {
   const navigation = useNavigation();
-  const [menuVisible, setMenuVisible] = useState(false);
-  const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
+  const route = useRoute();
 
-  const openMenu = () => {
-    setMenuVisible(true);
-    slideAnim.setValue(SCREEN_WIDTH);
-    Animated.timing(slideAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const closeMenu = () => {
-    Animated.timing(slideAnim, {
-      toValue: SCREEN_WIDTH,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => setMenuVisible(false));
-  };
+  const isHome = route.name === 'mainPage';
 
   return (
-    <>
-      <View style={styles.header}>
-        <Text style={typography.heading}>LOGO</Text>
-        <TouchableOpacity onPress={openMenu}>
-          <Text style={styles.menu}>≡</Text>
+    <View style={styles.container}>
+      {/* Left - Back button (if not home) */}
+      <View style={[{flexDirection:'row', alignItems:'center'}, !isHome && {gap:10}]}>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.canGoBack() && !isHome && navigation.goBack()
+          }
+          disabled={isHome}>
+          <Text style={[styles.icon, isHome && {display:'none'}]}>←</Text>
         </TouchableOpacity>
+
+        {/* Center - Logo (you can swap this out for an image if needed) */}
+        <Text style={typography.heading}>LOGO</Text>
       </View>
 
-      {menuVisible && (
-        <Animated.View
-          style={[styles.drawer, {transform: [{translateX: slideAnim}]}]}>
-          <TouchableOpacity onPress={closeMenu} style={styles.closeBtn}>
-            <Text style={styles.closeText}>✕</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('HomeStack', {
-                screen: 'ListBusiness',
-              });
-              closeMenu();
-            }}>
-            <Text style={styles.drawerItem}>Business Profile</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('EventList');
-              closeMenu();
-            }}>
-            <Text style={styles.drawerItem}>Manage Events</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-    </>
+      {/* Right - Hamburger menu */}
+      <TouchableOpacity onPress={() => navigation.openDrawer()}>
+        <Text style={styles.icon}>≡</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    height: 60,
-    backgroundColor: '#f6f6f6',
+  container: {
+    height: Platform.OS === 'ios' ? 100 : 70,
+    // paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingHorizontal: 15,
+    backgroundColor: colors.secondary,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    elevation: 4,
+    justifyContent: 'space-between',
   },
-  logo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#00332e',
-  },
-  menu: {
-    fontSize: 24,
-    color: '#00332e',
-  },
-  drawer: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    right: 0, // anchor it to the right
-    width: SCREEN_WIDTH * 0.75,
-    backgroundColor: '#fff',
-    elevation: 8,
-    padding: 20,
-    zIndex: 10000000,
-  },
-  closeBtn: {
-    alignSelf: 'flex-end',
-    marginBottom: 20,
-  },
-  closeText: {
-    fontSize: 20,
-    color: '#00332e',
-  },
-  drawerItem: {
-    fontSize: 16,
-    paddingVertical: 10,
-    color: '#00332e',
+  icon: {
+    fontSize: 22,
+    fontWeight: '600',
+    width: 30,
+    textAlign: 'center',
   },
 });
