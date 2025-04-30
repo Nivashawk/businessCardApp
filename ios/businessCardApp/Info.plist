@@ -6,6 +6,8 @@
 	<string>en</string>
 	<key>NSCameraUsageDescription</key>
 	<string>We need access to your camera to scan QR codes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to select and upload media.</string>
 	<key>CFBundleDisplayName</key>
 	<string>businessCardApp</string>
 	<key>CFBundleExecutable</key>

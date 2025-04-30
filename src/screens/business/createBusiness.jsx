@@ -26,21 +26,21 @@ const CreateBusiness = () => {
   const [index, setIndex] = useState(0);
   const progress = useRef(new Animated.Value(0)).current;
 
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     // Hide tab bar
-  //     navigation.getParent()?.setOptions({
-  //       tabBarStyle: {display: 'none'},
-  //     });
+  useFocusEffect(
+    useCallback(() => {
+      // Hide tab bar
+      navigation.getParent()?.setOptions({
+        tabBarStyle: {display: 'none'},
+      });
 
-  //     return () => {
-  //       // Show tab bar again when navigating back
-  //       navigation.getParent()?.setOptions({
-  //         tabBarStyle: TabBarStyle,
-  //       });
-  //     };
-  //   }, [navigation]),
-  // );
+      return () => {
+        // Show tab bar again when navigating back
+        navigation.getParent()?.setOptions({
+          tabBarStyle: TabBarStyle,
+        });
+      };
+    }, [navigation]),
+  );
 
   const basicRef = useRef();
   const addressRef = useRef();

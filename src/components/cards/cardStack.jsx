@@ -6,6 +6,7 @@ import {
   Dimensions,
   TouchableOpacity,
   Image,
+  Platform
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -31,32 +32,31 @@ import Whatsapp from '../../../assets/socialIcons/whatsapp.svg';
 
 const {width, height} = Dimensions.get('window');
 
-const CARD_DATA = []
 
-// const CARD_DATA = [
-//   {
-//     id: 1,
-//     company: 'ZEDBYTE SOFWARE SOLUTIONS',
-//     tagline:
-//       'entrust us with the management of your internet business and forget about it entrust us with the management of your internet business and forget about it',
-//     contact: '1234567890',
-//     email: 'tech@example.com',
-//   },
-//   {
-//     id: 2,
-//     company: 'Design Studio',
-//     tagline: 'Creativity Unleashed',
-//     contact: '9876543210',
-//     email: 'design@example.com',
-//   },
-//   {
-//     id: 3,
-//     company: 'Startup Inc.',
-//     tagline: 'Sky is the Limit',
-//     contact: '4561237890',
-//     email: 'startup@example.com',
-//   },
-// ];
+const CARD_DATA = [
+  {
+    id: 1,
+    company: 'ZEDBYTE SOFWARE SOLUTIONS',
+    tagline:
+      'entrust us with the management of your internet business and forget about it entrust us with the management of your internet business and forget about it',
+    contact: '1234567890',
+    email: 'tech@example.com',
+  },
+  {
+    id: 2,
+    company: 'Design Studio',
+    tagline: 'Creativity Unleashed',
+    contact: '9876543210',
+    email: 'design@example.com',
+  },
+  {
+    id: 3,
+    company: 'Startup Inc.',
+    tagline: 'Sky is the Limit',
+    contact: '4561237890',
+    email: 'startup@example.com',
+  },
+];
 
 const Card = React.memo(({card, style}) => {
   const navigation = useNavigation();
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   card: {
-    marginTop: height * 0.06,
+    marginTop: Platform.OS == 'ios' ? height * 0.03 : height * 0.06,
     width: width * 0.95,
     height: height * 0.3,
     backgroundColor: colors.secondary,

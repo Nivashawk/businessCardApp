@@ -23,21 +23,21 @@ const CustomCamera = () => {
   );
   const {onCapture} = useRoute().params || {};
 
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     // Hide tab bar
-  //     navigation.getParent()?.setOptions({
-  //       tabBarStyle: { display: 'none' },
-  //     });
+  useFocusEffect(
+    useCallback(() => {
+      // Hide tab bar
+      navigation.getParent()?.setOptions({
+        tabBarStyle: { display: 'none' },
+      });
 
-  //     return () => {
-  //       // Show tab bar again when navigating back
-  //       navigation.getParent()?.setOptions({
-  //         tabBarStyle: TabBarStyle,
-  //       });
-  //     };
-  //   }, [navigation])
-  // );
+      return () => {
+        // Show tab bar again when navigating back
+        navigation.getParent()?.setOptions({
+          tabBarStyle: TabBarStyle,
+        });
+      };
+    }, [navigation])
+  );
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {

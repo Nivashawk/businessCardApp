@@ -7,7 +7,7 @@ const {height} = Dimensions.get('window');
 export const TabBarStyle = {
   backgroundColor: colors.secondary,
   height: height * 0.09,
-  paddingBottom: 10,
+  // paddingBottom: 10,
   paddingTop: 10,
   position: 'absolute',
   borderTopLeftRadius: 20,

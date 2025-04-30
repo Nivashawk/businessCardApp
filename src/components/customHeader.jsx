@@ -46,7 +46,7 @@ export default function CustomHeader() {
 
 const styles = StyleSheet.create({
   container: {
-    height: Platform.OS === 'ios' ? 100 : 70,
+    height: Platform.OS === 'ios' ? 50 : 70,
     // paddingTop: Platform.OS === 'ios' ? 50 : 20,
     paddingHorizontal: 15,
     backgroundColor: colors.secondary,

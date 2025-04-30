@@ -3,6 +3,7 @@ import React, {useState, useEffect} from 'react';
 import QrCode from '../../../assets/QRcode.png';
 import InputBox from '../../components/inputs/textInput';
 import SmallButton from '../../components/buttons/smallButton';
+import { colors } from '../../theme/colors';
 
 const {width, height} = Dimensions.get('window');
 
@@ -37,6 +38,7 @@ const GenerateQR = () => {
         width: '100%',
         alignItems: 'center',
         justifyContent: 'space-around',
+        backgroundColor: colors.background
       }}>
       <View
         style={{

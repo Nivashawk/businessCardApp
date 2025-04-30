@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, Dimensions, ScrollView} from 'react-native';
+import {View, Text, StyleSheet, Dimensions, ScrollView, Platform} from 'react-native';
 import React from 'react';
 import CardStack from '../components/cards/cardStack';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -27,18 +27,18 @@ const handleShare = () => {
 };
 
 const eventsData = [
-  // {
-  //   title: 'Madurai expo....',
-  //   date: '22/09/2025',
-  //   description: 'Lorem Ipsum is simply dummy',
-  //   onPress: handleReferral,
-  // },
-  // {
-  //   title: 'Madurai expo....',
-  //   date: '22/09/2025',
-  //   description: 'Lorem Ipsum is simply dummy',
-  //   onPress: handleEvent,
-  // },
+  {
+    title: 'Madurai expo....',
+    date: '22/09/2025',
+    description: 'Lorem Ipsum is simply dummy',
+    onPress: handleReferral,
+  },
+  {
+    title: 'Madurai expo....',
+    date: '22/09/2025',
+    description: 'Lorem Ipsum is simply dummy',
+    onPress: handleEvent,
+  },
 ];
 
 const Home = () => {
@@ -72,7 +72,7 @@ const Home = () => {
             onPress={() => {
               navigation.navigate('GenerateQR');
             }}
-            disabled = {true}
+            // disabled = {true}
           />
         </View>
       </View>
@@ -109,8 +109,8 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     // flex: 1,
-    height: height * 0.38,
-    // backgroundColor:'black',
+    height: Platform.OS =='ios' ? height * 0.34 : height * 0.38,
+    // backgroundColor:colors.background,
     // alignItems:'center'
   },
   serviceContainer: {

@@ -1,13 +1,16 @@
+import {
+  Platform,
+} from 'react-native';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {colors} from './colors';
 
 
 export const fontSize = {
-  heading_1 : RFValue(48), // For placeholder LOGO or COMPANY NAME 
-  heading_2 : RFValue(20), // For page titles
-  paragraph_1 : RFValue(16), // For page tabs, details page field labels
-  paragraph_2 : RFValue(14), // For input_labels, input_placeholder, input_text, button_text 
-  paragraph_3 : RFValue(12) // error messae, inforamtions
+  heading_1 : Platform.OS === 'ios' ? RFValue(34) : RFValue(48), // For placeholder LOGO or COMPANY NAME 
+  heading_2 : Platform.OS === 'ios' ? RFValue(18) :RFValue(20), // For page titles
+  paragraph_1 :Platform.OS === 'ios' ? RFValue(12) : RFValue(16), // For page tabs, details page field labels
+  paragraph_2 : Platform.OS === 'ios' ? RFValue(10) :RFValue(14), // For input_labels, input_placeholder, input_text, button_text 
+  paragraph_3 : Platform.OS === 'ios' ? RFValue(8) :RFValue(12) // error messae, inforamtions
 }
 
 export const typography = {
