@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-let API_BASE_URL = 'https://reqres.in/';
+let API_BASE_URL = 'https://erp.thumps.app/';
 
 // Create an Axios instance
 const apiClient = axios.create({
@@ -23,10 +23,20 @@ const handleSessionExpired = async () => {
 
 apiClient.interceptors.request.use(
   async (config) => {
-    // const sessionID = await AsyncStorage.getItem('sessionID');
-    // if (sessionID) {
-    //   config.headers['Cookie'] = `session_id=${sessionID}`;
-    // }
+    try {
+      const sessionID = await AsyncStorage.getItem('sessionID');
+      if (sessionID && typeof sessionID === 'string' && sessionID.trim() !== '') {
+        config.headers['Cookie'] = `session_id=MvDBvoLHG4gOIcRmOVgBFg9eQbCspIbN-i7s0Vz4eYSnPdxkA55Qysg3zWoCxGjrmegGnO3J8R7W_O7-52mo`;
+      } else {
+        config.headers['db'] = `thumps18`;
+        config.headers['login'] = `thumpsbot@yopmail.com`;
+        config.headers['password'] = `Welcome@123`;
+        // Optional: explicitly remove Cookie if sessionID is invalid
+        delete config.headers['Cookie'];
+      }
+    } catch (error) {
+      console.warn('Error retrieving sessionID:', error);
+    }
     return config;
   },
   (error) => Promise.reject(error)

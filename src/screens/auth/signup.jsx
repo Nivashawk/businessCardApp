@@ -1,56 +1,37 @@
-import React, {useState} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, Platform} from 'react-native';
+
+import {View, Text, StyleSheet,ActivityIndicator, TouchableOpacity, Platform} from 'react-native';
 import {typography} from '../../theme/typography';
 import CustomCheckbox from '../../components/inputs/checkBox';
 import InputBox from '../../components/inputs/textInput';
 import PhoneNumberInput from '../../components/inputs/phoneNumberInput';
 import LargeButton from '../../components/buttons/largeButton';
-import {useNavigation} from '@react-navigation/native';
 import { colors } from '../../theme/colors';
+import { useSignUp } from '../../hooks/auth/useSignUp';
+import { useNavigation } from '@react-navigation/native';
+
 
 const SignUp = () => {
-  const navigation = useNavigation();
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [referral, setReferral] = useState('');
-  const [agree, setAgree] = useState(false);
-  const [selectedCode, setSelectedCode] = useState('+91');
-  const [phoneError, setPhoneError] = useState('');
-  const [nameError, setNameError] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const navigation = useNavigation()
+  const {
+    name,
+    setName,
+    phone,
+    setPhone,
+    email,
+    setEmail,
+    referral,
+    setReferral,
+    agree,
+    setAgree,
+    selectedCode,
+    setSelectedCode,
+    phoneError,
+    nameError,
+    emailError,
+    loading,
+    handleSignUp,
+  } = useSignUp();
 
-  const handleSignUp = () => {
-    if (!agree) {
-      alert('Please agree to the terms before signing up');
-      return;
-    }
-
-    // Validate Indian phone number
-    if (name.length == 0) {
-      setNameError('Please enter a name');
-      return;
-    }
-    if (selectedCode === '+91') {
-      const cleanedPhone = phone.replace(/\D/g, ''); // remove non-digits
-      if (cleanedPhone.length !== 10) {
-        setPhoneError('Please enter a valid 10-digit Indian phone number');
-        return;
-      }
-    }
-    if (!email.includes('@')) {
-      setEmailError('Please enter a valid email address');
-      return;
-    }
-    setNameError('');
-    setPhoneError('');
-    setEmailError('');
-
-    // Add more validations if needed
-
-    console.log({name, phone, email, referral});
-    navigation.navigate('Verify');
-  };
 
   return (
     <View style={styles.container}>
@@ -93,7 +74,6 @@ const SignUp = () => {
         placeholder="Enter Code"
       />
 
-      {/* Checkbox Row */}
       <View style={styles.checkboxContainer}>
         <CustomCheckbox value={agree} onValueChange={setAgree} />
         <Text style={styles.checkboxText}>
@@ -103,10 +83,12 @@ const SignUp = () => {
         </Text>
       </View>
 
-      {/* Sign Up Button */}
-      <LargeButton title="Sign up" onPress={handleSignUp} />
+      {loading ? (
+        <ActivityIndicator size="large" color={colors.primary} />
+      ) : (
+        <LargeButton title="Sign up" onPress={handleSignUp} />
+      )}
 
-      {/* Bottom Navigation */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>
           Already have an account?{' '}

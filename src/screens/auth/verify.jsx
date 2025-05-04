@@ -8,82 +8,26 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-const {width, height} = Dimensions.get('window');
 import {colors} from '../../theme/colors';
 import {typography} from '../../theme/typography';
-import {useDispatch} from 'react-redux';
 import SmallButton from '../../components/buttons/smallButton';
+import { useOTPVerification } from '../../hooks/auth/useOTPVerification';
 
-const OTPVerificationScreen = ({route}) => {
-  const navigation = useNavigation();
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(60);
-  const [resendText, setResendText] = useState(`OTP sent to `);
-  const inputRefs = useRef([]);
-  const intervalRef = useRef(null);
+const {width, height} = Dimensions.get('window');
 
-  // Function to start the countdown timer
-  const startTimer = () => {
-    setTimer(60);
-    setResendText(`OTP sent to `);
-    if (intervalRef.current) clearInterval(intervalRef.current);
-
-    intervalRef.current = setInterval(() => {
-      setTimer(prevTimer => {
-        if (prevTimer === 1) {
-          clearInterval(intervalRef.current);
-          setResendText('Resend OTP');
-          return 0;
-        }
-        return prevTimer - 1;
-      });
-    }, 1000);
-  };
-
-  useEffect(() => {
-    startTimer(); // Start timer on mount
-    return () => clearInterval(intervalRef.current); // Cleanup on unmount
-  }, []);
-
-  const handleResendOTP = () => {
-    startTimer(); // Restart timer when Resend OTP is clicked
-  };
-
-  const handleChange = (text, index) => {
-    if (text.length > 1) return;
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
-    if (text && index < otp.length - 1) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyPress = (event, index) => {
-    if (event.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handleWrongePhoneNiumber = () => {
-    navigation.navigate('Login');
-  };
-
-  const handleVerify = async () => {
-    // await AsyncStorage.setItem("email", email);
-    if (otp.every(value => value !== '')) {
-      console.log(`Entered OTP: ${otp.join('')}`);
-      const inputOTP = otp.join('');
-      if (inputOTP === '123456') {
-        navigation.navigate('MainTabs');
-      } else {
-        console.log('Please enter a valid OTP');
-      }
-    } else {
-      console.log('Please enter all OTP digits.');
-    }
-  };
+const OTPVerificationScreen = () => {
+  const {
+    otp,
+    inputRefs,
+    timer,
+    resendText,
+    handleChange,
+    handleKeyPress,
+    handleResendOTP,
+    handleWrongePhoneNumber,
+    handleVerifyOTP,
+  } = useOTPVerification();
+  
 
   return (
     <View style={[styles.container]}>
@@ -108,7 +52,7 @@ const OTPVerificationScreen = ({route}) => {
         </View>
 
         <View style={styles.buttonContainer}>
-          <SmallButton title="Verify OTP" onPress={handleVerify} />
+          <SmallButton title="Verify OTP" onPress={handleVerifyOTP} />
         </View>
 
         <View style={styles.footer}>
@@ -129,7 +73,7 @@ const OTPVerificationScreen = ({route}) => {
             {resendText}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleWrongePhoneNiumber}>
+        <TouchableOpacity onPress={handleWrongePhoneNumber}>
           <Text style={[styles.wrongNumberText]}>Entered wrong email ?</Text>
         </TouchableOpacity>
       </View>

@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,36 +6,28 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
-// import {fetchUser} from '../../redux/slices/user/userSlices';
-import {typography} from '../../theme/typography';
-import {colors} from '../../theme/colors';
+import { typography } from '../../theme/typography';
+import { colors } from '../../theme/colors';
 import LargeButton from '../../components/buttons/largeButton';
 import InputBox from '../../components/inputs/textInput';
-import {useNavigation} from '@react-navigation/native';
+import useLogin from '../../hooks/auth/useLogin';
+/**
+ * Login Screen Component
+ * Focuses on rendering the UI while logic is handled by useLogin hook
+ */
 
 const Login = () => {
-  const navigation = useNavigation();
-  const dispatch = useDispatch();
-  // const {data: user, loading, error} = useSelector(state => state.user);
+  const {
+    email,
+    emailError,
+    // loading,
+    // error,
+    setEmail,
+    handleSignIn,
+    navigateToSignup,
+  } = useLogin();
 
-  const [email, setEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
-
-  // useEffect(() => {
-  //   dispatch(fetchUser());
-  // }, []);
-
-  const handleSignIn = () => {
-    if (!email.includes('@')) {
-      setEmailError('Please enter a valid email address');
-      return;
-    }
-    setEmailError('');
-    console.log('Signing in with:', email);
-    navigation.navigate('Verify');
-  };
-
+  // Uncomment if you need loading state
   // if (loading) {
   //   return (
   //     <View style={styles.center}>
@@ -45,6 +37,7 @@ const Login = () => {
   //   );
   // }
 
+  // Uncomment if you need error handling
   // if (error) {
   //   return (
   //     <View style={styles.center}>
@@ -81,7 +74,7 @@ const Login = () => {
         <LargeButton title="Sent OTP" onPress={handleSignIn} />
 
         {/* Bottom text */}
-        <TouchableOpacity onPress={()=> navigation.navigate("Signup")} style={styles.footer}>
+        <TouchableOpacity onPress={navigateToSignup} style={styles.footer}>
           <Text style={typography.footerText}>
             Don't have an account?{' '}
             <Text style={typography.linkText}>Create Account</Text>

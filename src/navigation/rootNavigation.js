@@ -3,13 +3,17 @@ import {NavigationContainer} from '@react-navigation/native';
 
 import AuthNavigator from './authNavigation';
 import DrawerNavigation from './drawerNavigation';
+import { useSelector } from 'react-redux';
 
 export default function RootNavigator() {
-  const [auth] = useState(true);
+  const message = "OTP verified successfully"
+  const VerifyState = useSelector(state => state.verify);
+  const {data} = VerifyState;
+
 
   return (
     <NavigationContainer>
-      {auth ? <DrawerNavigation /> : <AuthNavigator />}
+      {data?.result?.message === message ? <DrawerNavigation /> : <AuthNavigator />}
     </NavigationContainer>
   );
 }

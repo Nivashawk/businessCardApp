@@ -13,7 +13,8 @@ import {colors} from '../theme/colors';
 
 
 import HomeStack from './homeStack';
-import Contacts from '../screens/contacts';
+import ContactStack from './contactStack';
+// import Contacts from '../screens/contacts';
 import ScanQR from '../screens/scan/scanQR';
 
 import HomeIcon from '../../assets/bottomTab/home.svg';
@@ -148,18 +149,18 @@ export default function BottomTabNavigator() {
       />
       <Tab.Screen
         name="Contacts"
-        component={Contacts}
-        options={({route}) => {
-          const routeName = getFocusedRouteNameFromRoute(route) ?? 'Home';
-          const hideHeaderScreens = [
-            'ScanQR',
-            'CreateBusiness',
-            'CustomCamera',
-          ];
-          return {
-            headerShown: !hideHeaderScreens.includes(routeName),
-          };
-        }}
+        component={ContactStack}
+        listeners={({navigation, route}) => ({
+          tabPress: e => {
+            // Prevent default behavior
+            e.preventDefault();
+
+            // If already on Contact tab, reset the stack to Contact screen
+            navigation.navigate('Contacts', {
+              screen: 'contactPage', // this is the screen inside your ContactStack
+            });
+          },
+        })}
       />
     </Tab.Navigator>
   );
