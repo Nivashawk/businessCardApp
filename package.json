@@ -34,7 +34,6 @@
     "react-native-svg": "^15.11.2",
     "react-native-toast-message": "^2.2.1",
     "react-native-vision-camera": "^4.6.4",
-    "react-native-worklets-core": "^1.5.0",
     "react-redux": "^9.2.0"
   },
   "devDependencies": {
