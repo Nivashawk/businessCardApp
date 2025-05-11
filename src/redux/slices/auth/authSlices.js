@@ -23,7 +23,8 @@ export const authUser = createAsyncThunk(
             login: "thumpsbot@yopmail.com",
             password: "Welcome@123"
           }
-        })
+        }),
+        excludeSessionID: true
       });
       
       // Log response status
@@ -46,7 +47,9 @@ export const authUser = createAsyncThunk(
       
       // Store session ID if present
       if (setCookieHeader) {
-        await AsyncStorage.setItem('sessionID', setCookieHeader);
+        const match = setCookieHeader.match(/(session_id=[^;]+)/);
+        const sessionId = match ? match[1] : null;
+        await AsyncStorage.setItem('sessionID', sessionId);
       }
       
       return {

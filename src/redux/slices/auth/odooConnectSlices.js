@@ -2,39 +2,30 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../../api/apiClient';
 
-
 export const odooConnect = createAsyncThunk(
-  'auth/odooConnect', 
-  async (_, thunkAPI) => {  
+  'auth/odooConnect',
+  async (_, thunkAPI) => {
     try {
-      console.log("Attempting authentication with fetch-based API client");
+      console.log('Attempting authentication with fetch-based API client');
       // Use the getFullResponse method to get access to headers
-      const response = await apiClient.get('odoo_connect', {
+      const response = await apiClient.getFullResponse('odoo_connect', {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            // "X-Cookie": "session_id=Fj_p3AaN6gcE2ELS_QMYN3NGtQM6hDtfo6Lt2cYcUiwUV0puGW2ie429XszfnX2zwgTER1X6kglXYnJ0MX7H",
-            // 'X-DB': 'thumps18',
-            // 'X-Login': 'thumpsbot@yopmail.com',
-            // 'X-Password': 'Welcome@123'
-            'X-DB': 'thumpsapp_dev',
-            'X-Login': 'thumpsbot@yopmail.com',
-            'X-Password': 'Welcome@123'
-          }
+        isOdooConnect: true,
       });
 
-     // Parse the response body
-    //  const data = await response.json();
-     console.log("Response Data:", response);
-     
-     return {
+      // Parse the response body
+      //  const data = await response.json();
+      const text = await response.text();
+      console.log('Response Data:', text);
+
+      return {
         response,
-     };
+      };
     } catch (error) {
-      console.error("Authentication Error:", error);
+      console.error('Authentication Error:', error);
       return thunkAPI.rejectWithValue(error.message);
     }
-  }
+  },
 );
 
 const odooConnectSlice = createSlice({

@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSelector } from 'react-redux';
+
 
 // const API_BASE_URL = 'https://erp.thumps.app/';
 const API_BASE_URL = 'http://e5eb-2405-201-e01a-d894-c21-2096-c2e3-3a3c.ngrok-free.app/';
@@ -67,20 +69,36 @@ const fetchWithTimeout = async (endpoint, options = {}) => {
  * @returns {Promise<Object>} - Modified request options with headers
  */
 const addHeaders = async (options = {}) => {
-  // Initialize headers
+  const {
+    headers: customHeaders = {},
+    excludeSessionID = false, 
+    isOdooConnect = true,
+  } = options;
+
   const headers = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...customHeaders,
   };
-  
+
   try {
-    const sessionID = await AsyncStorage.getItem('sessionID');
-    
-    if (sessionID && typeof sessionID === 'string' && sessionID.trim() !== '') {
-      headers['Cookie'] = sessionID;
-    } else {
-      // Remove Cookie if sessionID is invalid
-      delete headers['Cookie'];
+    if (!excludeSessionID) {
+      const sessionID = await AsyncStorage.getItem('sessionID');
+      console.log("sessionId from api client", sessionID);
+      
+      if (sessionID && typeof sessionID === 'string' && sessionID.trim() !== '') {
+        headers['Cookie'] = sessionID;
+        if(isOdooConnect){
+          headers['DB'] = 'thumpsapp_dev';
+          headers['Login'] = 'thumpsbot@yopmail.com';
+          headers['Password'] = 'Welcome@123';
+        }else{
+          headers['login'] = useSelector(state => state.odooConnect?.email);
+          headers['password'] = 'Welcome@123';
+          headers['api-key'] = useSelector(state => state.odooConnect?.api-key);
+        }
+      } else {
+        delete headers['Cookie'];
+      }
     }
   } catch (error) {
     console.warn('Error retrieving sessionID:', error);
@@ -192,6 +210,8 @@ const apiClient = {
   async getFullResponse(endpoint, options = {}) {
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
     const requestOptions = await addHeaders(options);
+    console.log(url, requestOptions);
+    
     
     const controller = new AbortController();
     const { signal } = controller;

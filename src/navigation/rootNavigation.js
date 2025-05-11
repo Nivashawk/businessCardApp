@@ -7,13 +7,17 @@ import { useSelector } from 'react-redux';
 
 export default function RootNavigator() {
   const message = "OTP verified successfully"
-  const VerifyState = useSelector(state => state.verify);
-  const {data} = VerifyState;
+  // const VerifyState = useSelector(state => state.verify);
+  // const {data} = VerifyState;
 
 
   return (
     <NavigationContainer>
-      {data?.result?.message === message ? <DrawerNavigation /> : <AuthNavigator />}
+      {
+      // data?.result?.message === message ? 
+      // <DrawerNavigation /> : 
+      <AuthNavigator />
+      }
     </NavigationContainer>
   );
 }

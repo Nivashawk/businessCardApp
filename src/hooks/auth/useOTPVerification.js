@@ -1,7 +1,7 @@
 import {useState,useRef,useCallback, useEffect} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
-import { verifyUser } from '../../redux/slices/auth/verifyOTPSlices';
+import { verifyUser } from '../../redux/slices/auth/sendOTPSlices';
 
 export const useOTPVerification = () => {
     const dispatch = useDispatch();
