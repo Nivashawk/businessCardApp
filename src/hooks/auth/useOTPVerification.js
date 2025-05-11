@@ -2,6 +2,7 @@ import {useState,useRef,useCallback, useEffect} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import { verifyUser } from '../../redux/slices/auth/sendOTPSlices';
+import { resetOTPData } from '../../redux/slices/auth/sendOTPSlices';
 
 export const useOTPVerification = () => {
     const dispatch = useDispatch();
@@ -62,6 +63,7 @@ export const useOTPVerification = () => {
     }, [otp, inputRefs]);
   
     const handleWrongePhoneNumber = useCallback(() => {
+      dispatch(resetOTPData());
       navigation.navigate('Login');
     }, [navigation]);
   

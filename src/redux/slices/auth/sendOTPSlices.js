@@ -38,6 +38,11 @@ const sendOTPSlice = createSlice({
     loading: false,
     error: null,
   },
+  reducers: {
+    resetOTPData: (state) => {
+      state.data = null;
+    },
+  },
   extraReducers: builder => {
     builder
       .addCase(sentOTP.pending, state => {
@@ -54,5 +59,8 @@ const sendOTPSlice = createSlice({
       });
   },
 });
+
+export const { resetOTPData } = sendOTPSlice.actions;
+
 
 export default sendOTPSlice.reducer;

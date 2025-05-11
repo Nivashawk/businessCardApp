@@ -25,7 +25,7 @@ export const useSignUp = () => {
     useEffect(() => {
       console.log("otp response",data?.result?.status);
       
-      if (data?.result?.status === 'success') {
+      if (data?.result?.status === 'error') {
         navigation.navigate('Verify',{purpose:"Register", name:name});
       }
       if (error) {
