@@ -1,14 +1,12 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import apiClient from '../../../api/apiClient';
-import { useNavigation } from '@react-navigation/native';
 
 // Async thunk for registering a user (POST request)
 export const sentOTP = createAsyncThunk(
   'auth/sentOTP',
-  async ({email, purpose}, thunkAPI) => {
+  async ({email}, thunkAPI) => {
     // const navigation = useNavigation();
     try {
-      console.log('Purpose:', purpose);
       console.log('Email:', email);
 
       const url = '/api/send_otp';
@@ -20,7 +18,7 @@ export const sentOTP = createAsyncThunk(
 
       console.log('payload', payload);
       const response = await apiClient.post(url, payload);
-      // navigation.navigate('Verify')
+      // navigation.navigate('Verify')r
       console.log('API Response:', response);
       return response;
     } catch (error) {
@@ -37,11 +35,15 @@ const sendOTPSlice = createSlice({
     data: null,
     loading: false,
     error: null,
+    otpVerified: false
   },
   reducers: {
     resetOTPData: (state) => {
       state.data = null;
     },
+    isOTPVerified: (state) => {
+      state.otpVerified = true
+    }
   },
   extraReducers: builder => {
     builder
@@ -60,7 +62,7 @@ const sendOTPSlice = createSlice({
   },
 });
 
-export const { resetOTPData } = sendOTPSlice.actions;
+export const { resetOTPData, isOTPVerified} = sendOTPSlice.actions;
 
 
 export default sendOTPSlice.reducer;

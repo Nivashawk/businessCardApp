@@ -1,29 +1,55 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import apiClient from '../../../api/apiClient';
+import { isOTPVerified } from './sendOTPSlices';
+import Toast from 'react-native-toast-message';
+
+// import {useSelector} from 'react-redux';
 
 // Async thunk for registering a user (POST request)
 export const registerUser = createAsyncThunk(
   'auth/registerUser',
-  async ({ name, phone, email }, thunkAPI) => {
+  async ({name, phone, email, country_code, otp, token}, thunkAPI) => {
     try {
-        console.log("inside redux", name, phone, email);
-        
-      const response = await apiClient.post('api/request_otp', {
-       "params":  {
-            "name": name,
-            "mobile": phone,
-            "email": email,
+      
+      // const state = thunkAPI.getState();
+      // const otpData = state.OTPData;
+      // console.log("OTP DATA", otpData);
+      
+      console.log(name, phone, email, country_code, otp, token);
+      
+      const response = await apiClient.post('api/register', {
+        params:{
+          name,
+          email,
+          mobile: phone,
+          country_code,
+          otp,
+          token,
         }
       });
-      console.log(response); // Optional: log only the data
-      return response; // assuming API responds with user data
+      // console.log(response);
+      console.log("Response Data:", response);
+      const message = 'Registration successful.'
+      if(message === response?.result?.message){
+        Toast.show({
+          type: 'success',
+          text1: response?.result?.message,
+        });
+        thunkAPI.dispatch(isOTPVerified());
+      }else{
+        Toast.show({
+          type: 'error',
+          text1: response?.result?.message,
+        });
+      }
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.response?.data?.message || error.message
+        error.response?.data?.message || error.message,
       );
     }
-  }
+  },
 );
+
 
 const registerSlice = createSlice({
   name: 'register',
@@ -32,9 +58,10 @@ const registerSlice = createSlice({
     loading: false,
     error: null,
   },
-  extraReducers: (builder) => {
+
+  extraReducers: builder => {
     builder
-      .addCase(registerUser.pending, (state) => {
+      .addCase(registerUser.pending, state => {
         state.loading = true;
         state.error = null;
       })

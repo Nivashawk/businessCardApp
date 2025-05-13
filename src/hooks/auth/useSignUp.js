@@ -1,7 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import { registerUser } from '../../redux/slices/auth/registerSlices';
 import { sentOTP } from '../../redux/slices/auth/sendOTPSlices';
 
 
@@ -25,8 +24,8 @@ export const useSignUp = () => {
     useEffect(() => {
       console.log("otp response",data?.result?.status);
       
-      if (data?.result?.status === 'error') {
-        navigation.navigate('Verify',{purpose:"Register", name:name});
+      if (data?.result?.status === 'success') {
+        navigation.navigate('Verify',{purpose:"Register", name:name, email:email, phone:phone});
       }
       if (error) {
         alert(`Sign up failed: ${error}`);
@@ -57,7 +56,7 @@ export const useSignUp = () => {
       setNameError('');
       setPhoneError('');
       setEmailError('');
-      dispatch(sentOTP({email, purpose}));
+      dispatch(sentOTP({email}));
     };
   
     return {

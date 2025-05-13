@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 
 
 // const API_BASE_URL = 'https://erp.thumps.app/';
-const API_BASE_URL = 'http://e5eb-2405-201-e01a-d894-c21-2096-c2e3-3a3c.ngrok-free.app/';
+const API_BASE_URL = 'https://275c-2405-201-e01a-d894-1c28-13c1-5c8a-43b6.ngrok-free.app/';
 const DEFAULT_TIMEOUT = 10000; // 10 seconds
 
 /**

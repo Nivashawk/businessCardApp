@@ -1,26 +1,42 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import apiClient from '../../../api/apiClient';
+import {isOTPVerified} from './sendOTPSlices';
+import Toast from 'react-native-toast-message';
 
 // Async thunk for registering a user (POST request)
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
-  async ({ email }, thunkAPI) => {
+  async ({email, otp, token}, thunkAPI) => {
     try {
-        console.log(email);
-        
-      const response = await apiClient.post('api/send_otp', {
-       "params":  {
-            "email": email,
-        }
+      console.log(email);
+
+      const response = await apiClient.post('api/login', {
+        params: {
+          email: email,
+          otp: otp,
+          token: token,
+        },
       });
-      console.log(response); // Optional: log only the data
-      return response; // assuming API responds with user data
+      console.log('Response Data:', response);
+      const message = 'Login successful.';
+      if (message === response?.result?.message) {
+        Toast.show({
+          type: 'success',
+          text1: response?.result?.message,
+        });
+        thunkAPI.dispatch(isOTPVerified());
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: response?.result?.message,
+        });
+      }
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.response?.data?.message || error.message
+        error.response?.data?.message || error.message,
       );
     }
-  }
+  },
 );
 
 const loginSlice = createSlice({
@@ -30,9 +46,9 @@ const loginSlice = createSlice({
     loading: false,
     error: null,
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
-      .addCase(loginUser.pending, (state) => {
+      .addCase(loginUser.pending, state => {
         state.loading = true;
         state.error = null;
       })
