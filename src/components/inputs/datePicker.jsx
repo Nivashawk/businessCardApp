@@ -58,6 +58,7 @@ const DatePickerBox = ({
           mode={mode}
           display={display}
           onChange={onChangeDate}
+          minimumDate={new Date()}
         />
       )}
 

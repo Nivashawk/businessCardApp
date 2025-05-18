@@ -5,12 +5,17 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
+  Image,
+  Dimensions
 } from 'react-native';
 import { typography } from '../../theme/typography';
 import { colors } from '../../theme/colors';
 import LargeButton from '../../components/buttons/largeButton';
 import InputBox from '../../components/inputs/textInput';
 import useLogin from '../../hooks/auth/useLogin';
+import logo from '../../../assets/logo.png'
+
+const {width, height} = Dimensions.get('window');
 /**
  * Login Screen Component
  * Focuses on rendering the UI while logic is handled by useLogin hook
@@ -50,7 +55,8 @@ const Login = () => {
     <View style={styles.container}>
       {/* Logo */}
       <View style={styles.topSection}>
-        <Text style={[typography.logo, styles.logo]}>LOGO</Text>
+        <Image style={{height:height*0.3, width:width*0.85}} resizeMode="contain" source={logo}></Image>
+        {/* <Text style={[typography.logo, styles.logo]}>LOGO</Text> */}
       </View>
 
       <View style={styles.bottomSection}>
@@ -88,13 +94,16 @@ const Login = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.secondary,
     paddingHorizontal: 24,
     justifyContent: 'center',
   },
   topSection: {
     height: '60%',
     justifyContent: 'center',
+    alignContent: "center",
+    // backgroundColor: "black"
+
   },
   logo: {
     textAlign: 'center',

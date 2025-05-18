@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
 import {useRoute} from '@react-navigation/native';
 import {colors} from '../../theme/colors';
 import { typography } from '../../theme/typography';
+import { useDispatch, useSelector } from 'react-redux';
+import { getBusiness } from '../../redux/slices/business/getBusinessSlices';
 import PhoneIcon from '../../../assets/phone.png';
 import MailIcon from '../../../assets/mailIcon.png';
 import Facebook from '../../../assets/socialIcons/facebook.svg';
@@ -20,9 +22,20 @@ import Telegram from '../../../assets/socialIcons/telegram.svg';
 import Whatsapp from '../../../assets/socialIcons/whatsapp.svg';
 
 const BusinessDetails = ({}) => {
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState('Business Details');
   const route = useRoute();
   const {data} = route.params;
+  const id = data.id
+
+  // console.log(data);
+
+    useEffect(() => {
+      console.log('before api');
+      dispatch(getBusiness({id}));
+      console.log('aftyer api');
+    }, []);
+  
   return (
     <SafeAreaView style={styles.container}>
       <TabSwitcher activeTab={activeTab} setActiveTab={setActiveTab} />

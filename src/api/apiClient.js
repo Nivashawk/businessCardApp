@@ -2,8 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSelector } from 'react-redux';
 
 
-// const API_BASE_URL = 'https://erp.thumps.app/';
-const API_BASE_URL = 'https://275c-2405-201-e01a-d894-1c28-13c1-5c8a-43b6.ngrok-free.app/';
+const API_BASE_URL = 'https://erp.thumps.app/';
+// const API_BASE_URL = 'https://83b7-2405-201-e01a-d894-6438-f5ba-27af-b723.ngrok-free.app/';
 const DEFAULT_TIMEOUT = 10000; // 10 seconds
 
 /**
@@ -88,7 +88,7 @@ const addHeaders = async (options = {}) => {
       if (sessionID && typeof sessionID === 'string' && sessionID.trim() !== '') {
         headers['Cookie'] = sessionID;
         if(isOdooConnect){
-          headers['DB'] = 'thumpsapp_dev';
+          headers['DB'] = 'thumps_dev';
           headers['Login'] = 'thumpsbot@yopmail.com';
           headers['Password'] = 'Welcome@123';
         }else{
@@ -128,6 +128,7 @@ const apiClient = {
       method: 'GET',
     });
     
+    console.log(url, requestOptions);
     return fetchWithTimeout(url, requestOptions);
   },
   
@@ -145,6 +146,9 @@ const apiClient = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+
+    console.log(url, requestOptions);
+    
     
     return fetchWithTimeout(url, requestOptions);
   },

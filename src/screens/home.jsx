@@ -52,12 +52,12 @@ const Home = () => {
         <Text style={[typography.heading, {paddingLeft: 10}]}>Services</Text>
         <View style={styles.serviceWrapper}>
           <ServiceCard
-            title={'Refer & Earn'}
+            title={'My Business'}
             image={ReferralImage}
             onPress={() => {
               navigation.navigate('Referral');
             }}
-            disabled = {true}
+            disabled = {false}
           />
           <ServiceCard
             title={'Create New Event'}

@@ -15,9 +15,11 @@ export default function RootNavigator() {
     <NavigationContainer>
       {
       otpVerified ? 
-      <DrawerNavigation /> : 
+      <DrawerNavigation /> 
+      : 
       <AuthNavigator />
       }
+      {/* <DrawerNavigation />  */}
     </NavigationContainer>
   );
 }

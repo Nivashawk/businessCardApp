@@ -19,7 +19,7 @@ export const authUser = createAsyncThunk(
           //   password: "Welcome@123"
           // }
           params:{
-            db: "thumpsapp_dev",
+            db: "thumps_dev",
             login: "thumpsbot@yopmail.com",
             password: "Welcome@123"
           }
@@ -28,7 +28,7 @@ export const authUser = createAsyncThunk(
       });
       
       // Log response status
-      console.log("Response Status:", response.status);
+      console.log("Response Status:", response);
       
       // Access and log headers
       const headers = {};

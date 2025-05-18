@@ -1,4 +1,4 @@
-import React, {useState, forwardRef, useImperativeHandle} from 'react';
+import React, {useState, useEffect, forwardRef, useImperativeHandle} from 'react';
 import {format} from 'date-fns';
 import {
   KeyboardAvoidingView,
@@ -10,17 +10,36 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { colors } from '../../../theme/colors';
+import {colors} from '../../../theme/colors';
 import InputBox from '../../../components/inputs/textInput';
 import TextAreaBox from '../../../components/inputs/textArea';
 import PhoneNumberInput from '../../../components/inputs/phoneNumberInput';
 import DatePickerBox from '../../../components/inputs/datePicker';
+import {useSelector, useDispatch} from 'react-redux';
+import {updateBusinessAddressData} from '../../../redux/slices/business/businessBasic';
 
 const {width, height} = Dimensions.get('window');
 
 const Address = forwardRef((props, ref) => {
+  const dispatch = useDispatch();
+  const businessData = useSelector(state => state.businessData);
+
+  useEffect(() => {
+    console.log('businessData', businessData);
+    if (businessData) {
+      setStreet(businessData.street || '');
+      setStreet2(businessData.street2 || '');
+      setCity(businessData.city || '');
+      setPinCode(businessData.zip || '');
+      setState(businessData.state_id || '');
+      setCountry(businessData.country_id || '');
+      // If selectedCode is stored, also add:
+      // setSelectedCode(businessData.selectedCode || '+91');
+    }
+  }, [businessData]);
   // input values
   const [street, setStreet] = useState('');
+  const [street2, setStreet2] = useState('');
   const [area, setArea] = useState('');
   const [city, setCity] = useState('');
   const [pinCode, setPinCode] = useState('');
@@ -29,6 +48,7 @@ const Address = forwardRef((props, ref) => {
 
   // input errors
   const [streetError, setStreetError] = useState('');
+  const [street2Error, setStreet2Error] = useState('');
   const [areaError, setAreaError] = useState('');
   const [cityError, setCityError] = useState('');
   const [pinCodeError, setPinCodeError] = useState('');
@@ -39,12 +59,19 @@ const Address = forwardRef((props, ref) => {
     validate: () => {
       let isValid = true;
 
-      // if (street.trim() === '') {
-      //   setStreetError('Street is required');
-      //   isValid = false;
-      // } else {
-      //   setStreetError('');
-      // }
+      if (street.trim() === '') {
+        setStreetError('Street is required');
+        isValid = false;
+      } else {
+        setStreetError('');
+      }
+
+      if (street2.trim() === '') {
+        setStreet2Error('Street is required');
+        isValid = false;
+      } else {
+        setStreet2Error('');
+      }
 
       // if (area.trim() === '') {
       //   setAreaError('Area is required');
@@ -53,33 +80,33 @@ const Address = forwardRef((props, ref) => {
       //   setAreaError('');
       // }
 
-      // if (city.trim() === '') {
-      //   setCityError('City is required');
-      //   isValid = false;
-      // } else {
-      //   setCityError('');
-      // }
+      if (city.trim() === '') {
+        setCityError('City is required');
+        isValid = false;
+      } else {
+        setCityError('');
+      }
 
-      // if (pinCode.trim() === '') {
-      //   setPinCodeError('pinCode is required');
-      //   isValid = false;
-      // } else {
-      //   setPinCodeError('');
-      // }
+      if (pinCode.trim() === '') {
+        setPinCodeError('pinCode is required');
+        isValid = false;
+      } else {
+        setPinCodeError('');
+      }
 
-      // if (state.trim() === '') {
-      //   setStateError('State is required');
-      //   isValid = false;
-      // } else {
-      //   setStateError('');
-      // }
+      if (state.trim() === '') {
+        setStateError('State is required');
+        isValid = false;
+      } else {
+        setStateError('');
+      }
 
-      // if (country.trim() === '') {
-      //   setCountryError('Country is required');
-      //   isValid = false;
-      // } else {
-      //   setCountryError('');
-      // }
+      if (country.trim() === '') {
+        setCountryError('Country is required');
+        isValid = false;
+      } else {
+        setCountryError('');
+      }
 
       if (isValid) {
         const formData = {
@@ -91,19 +118,29 @@ const Address = forwardRef((props, ref) => {
           country,
         };
         console.log('Form Address:', formData);
+        dispatch(
+          updateBusinessAddressData({
+            street,
+            street2,
+            city,
+            zip: pinCode,
+            state_id: state,
+            country_id: country,
+          }),
+        );
       }
 
       return isValid;
     },
 
-    getData: () => ({
-      street,
-      area,
-      city,
-      pinCode,
-      state,
-      country,
-    }),
+    // getData: () => ({
+    //   street,
+    //   area,
+    //   city,
+    //   pinCode,
+    //   state,
+    //   country,
+    // }),
   }));
 
   return (
@@ -125,6 +162,14 @@ const Address = forwardRef((props, ref) => {
               error={streetError}
             />
             <InputBox
+              label="Street2"
+              value={street2}
+              onChangeText={setStreet2}
+              placeholder="Street2"
+              keyboardType="default"
+              error={street2Error}
+            />
+            {/* <InputBox
               label="Area"
               value={area}
               onChangeText={setArea}
@@ -132,7 +177,7 @@ const Address = forwardRef((props, ref) => {
               keyboardType="default"
               required
               error={areaError}
-            />
+            /> */}
             <InputBox
               label="City"
               value={city}
@@ -187,8 +232,8 @@ const styles = StyleSheet.create({
     // backgroundColor:colors.secondary,
     // padding: 16,
     flexGrow: 1,
-    paddingTop: height*0.025,
-    paddingBottom: height*0.1
+    paddingTop: height * 0.025,
+    paddingBottom: height * 0.1,
   },
 });
 

@@ -5,11 +5,11 @@ import {colors} from '../../theme/colors';
 import {cards} from '../../theme/cards';
 const {width, height} = Dimensions.get('window');
 
-const ServiceCard = ({ title, image, onPress, disabled = false }) => {
+const ServiceCard = ({ title, image, onPress, disabled = false, bgColor = "" }) => {
   return (
     <TouchableOpacity
       style={[
-        cards.serviceCard,
+        cards.serviceCard, {backgroundColor: bgColor},
         disabled && { opacity: 0.4 }, // faded look when disabled
       ]}
       onPress={disabled ? null : onPress} // prevent click if disabled

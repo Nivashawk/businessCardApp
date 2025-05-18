@@ -8,6 +8,9 @@ import {
   PanResponder,
   Dimensions,
 } from 'react-native';
+import {useSelector, useDispatch} from 'react-redux';
+import {createBusiness} from '../../redux/slices/business/createBusinessSlices';
+import {updateBusinessSocialData} from '../../redux/slices/business/businessBasic';
 import {TabBarStyle} from '../../theme/tabBar';
 import {useFocusEffect} from '@react-navigation/native';
 import {useNavigation} from '@react-navigation/native';
@@ -23,8 +26,55 @@ const {width, height} = Dimensions.get('window');
 
 const CreateBusiness = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const businessData = useSelector(state => state.businessData);
   const [index, setIndex] = useState(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    console.log('submit status', isSubmitted);
+    console.log('businessData', businessData);
+    if (isSubmitted) {
+      console.log('submit status', isSubmitted);
+      if (businessData) {
+        console.log('businessData', businessData);
+        dispatch(
+          createBusiness({
+            name:businessData.companyName,
+            designation:businessData.designation,
+            business_mobile:businessData.phone,
+            business_email:businessData.email,
+            description:businessData.description,
+            industry:businessData.industry,
+            services_products:businessData.services,
+            date_of_joining:businessData.date_of_joining,
+            street:businessData.street,
+            street2:businessData.street2,
+            city:businessData.city,
+            zip:businessData.zip,
+            state_id:33,
+            country_id:91,
+            website:businessData.website,
+            promo_video:businessData.promo_video,
+            business_card_front:businessData.business_card_front,
+            business_card_back:businessData.business_card_back,
+            logo:businessData.logo,
+            social_insta:businessData.social_insta,
+            social_linkedin:businessData.social_linkedin,
+            social_twitter:businessData.social_twitter,
+            social_fb:businessData.social_fb,
+            social_youtube:businessData.social_youtube,
+            social_google_business:businessData.social_google_business,
+            active:businessData.active,
+            is_primary:businessData.is_primary,
+            is_public:businessData.is_public,
+          }),
+        );
+        setIsSubmitted(false);
+      }
+    }
+  }, [businessData, isSubmitted]);
 
   useFocusEffect(
     useCallback(() => {
@@ -86,6 +136,19 @@ const CreateBusiness = () => {
 
     if (isLastStep) {
       console.log('Form submitted ✅');
+      const socialData = currentRef.current?.getData?.();
+      console.log('Final socialData:', socialData);
+      dispatch(
+        updateBusinessSocialData({
+          social_insta: socialData.instagram,
+          social_linkedin: socialData.linkedin,
+          social_twitter: socialData.twitter,
+          social_fb: socialData.facebook,
+          social_youtube: socialData.youtube,
+          social_google_business: socialData.business,
+        }),
+      );
+      setIsSubmitted(true);
       // Optionally collect data here
     } else {
       setIndex(index + 1);

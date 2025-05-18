@@ -31,6 +31,7 @@ export const loginUser = createAsyncThunk(
           text1: response?.result?.message,
         });
       }
+      return response;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message,

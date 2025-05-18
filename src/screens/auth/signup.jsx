@@ -1,5 +1,5 @@
 
-import {View, Text, StyleSheet,ActivityIndicator, TouchableOpacity, Platform} from 'react-native';
+import {View, Text, StyleSheet,ActivityIndicator, TouchableOpacity, Platform, Dimensions, Image} from 'react-native';
 import {typography} from '../../theme/typography';
 import CustomCheckbox from '../../components/inputs/checkBox';
 import InputBox from '../../components/inputs/textInput';
@@ -8,6 +8,9 @@ import LargeButton from '../../components/buttons/largeButton';
 import { colors } from '../../theme/colors';
 import { useSignUp } from '../../hooks/auth/useSignUp';
 import { useNavigation } from '@react-navigation/native';
+import logo from '../../../assets/logo.png'
+
+const {width, height} = Dimensions.get('window');
 
 
 const SignUp = () => {
@@ -35,7 +38,7 @@ const SignUp = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={[typography.logo, styles.logo]}>LOGO</Text>
+      <Image style={{height:height*0.2, width:width*0.85}} resizeMode="contain" source={logo}/>
       <Text style={[typography.heading, styles.subtitle]}>
         Create new account
       </Text>
@@ -108,7 +111,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 35,
     justifyContent: 'center',
   },
   logo: {
@@ -117,7 +120,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   checkboxContainer: {
     flexDirection: 'row',

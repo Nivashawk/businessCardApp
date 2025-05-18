@@ -1,5 +1,6 @@
 import React, {
   useState,
+  useEffect,
   forwardRef,
   useImperativeHandle,
   useRef,
@@ -29,11 +30,27 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import {colors} from '../../../theme/colors';
 import LargeButton from '../../../components/buttons/largeButton';
+import {useSelector, useDispatch} from 'react-redux';
+import {updateBusinessUploadData} from '../../../redux/slices/business/businessBasic';
+import RNFS from 'react-native-fs';
 
 const {width, height} = Dimensions.get('window');
 
 const Upload = forwardRef((props, ref) => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const businessData = useSelector(state => state.businessData);
+
+  useEffect(() => {
+    console.log('businessData', businessData);
+    if (businessData) {
+      setWebsite(businessData.website || '');
+      setPromo(businessData.promo_video || '');
+      setSelectedFrontImage(businessData.business_card_front || '');
+      setSelectedBackImage(businessData.business_card_back || '');
+      setSelectedLogoImage(businessData.logo || '');
+    }
+  }, [businessData]);
 
   const [website, setWebsite] = useState('');
   const [promo, setPromo] = useState('');
@@ -48,30 +65,40 @@ const Upload = forwardRef((props, ref) => {
   const bottomSheetModalRef = useRef(null);
   const snapPoints = useMemo(() => ['50%'], []);
 
-  const openBottomSheet = useCallback((type) => {
+  const openBottomSheet = useCallback(type => {
     setCurrentImageType(type);
     bottomSheetModalRef.current?.present();
   }, []);
 
-  const handleImageSelected = (type, image) => {
-    if (!image) return;
+  const handleImageSelected = async (type, image) => {
+    if (!image?.path) return;
 
-    switch (type) {
-      case 'front':
-        setSelectedFrontImage(image);
-        break;
-      case 'back':
-        setSelectedBackImage(image);
-        break;
-      case 'logo':
-        setSelectedLogoImage(image);
-        break;
+    try {
+      const base64Data = await RNFS.readFile(image.path, 'base64');
+      const imageData = {
+        ...image,
+        base64: base64Data,
+      };
+
+      switch (type) {
+        case 'front':
+          setSelectedFrontImage(imageData);
+          break;
+        case 'back':
+          setSelectedBackImage(imageData);
+          break;
+        case 'logo':
+          setSelectedLogoImage(imageData);
+          break;
+      }
+
+      bottomSheetModalRef.current?.dismiss();
+    } catch (err) {
+      console.error('Error reading image file:', err);
     }
-
-    bottomSheetModalRef.current?.dismiss();
   };
 
-  const handleSheetChanges = useCallback((index) => {
+  const handleSheetChanges = useCallback(index => {
     console.log('Bottom Sheet state changed:', index);
   }, []);
 
@@ -87,16 +114,19 @@ const Upload = forwardRef((props, ref) => {
           logoImage: selectedLogoImage,
         };
         console.log('Form upload:', formData);
+
+        dispatch(
+          updateBusinessUploadData({
+            website,
+            promo_video: promo,
+            business_card_front: selectedFrontImage?.base64 || '',
+            business_card_back: selectedBackImage?.base64 || '',
+            logo: selectedLogoImage?.base64 || '',
+          }),
+        );
       }
       return isValid;
     },
-    getData: () => ({
-      website,
-      promo,
-      frontImage: selectedFrontImage,
-      backImage: selectedBackImage,
-      logoImage: selectedLogoImage,
-    }),
   }));
 
   return (
@@ -133,7 +163,7 @@ const Upload = forwardRef((props, ref) => {
                 />
                 {selectedFrontImage && (
                   <Image
-                    source={{ uri: selectedFrontImage.path }}
+                    source={{uri: `data:image/jpeg;base64,${selectedFrontImage.base64}`}}
                     style={styles.image}
                   />
                 )}
@@ -144,7 +174,7 @@ const Upload = forwardRef((props, ref) => {
                 />
                 {selectedBackImage && (
                   <Image
-                    source={{ uri: selectedBackImage.path }}
+                    source={{uri: `data:image/jpeg;base64,${selectedBackImage.base64}`}}
                     style={styles.image}
                   />
                 )}
@@ -155,7 +185,7 @@ const Upload = forwardRef((props, ref) => {
                 />
                 {selectedLogoImage && (
                   <Image
-                    source={{ uri: selectedLogoImage.path }}
+                    source={{uri: `data:image/jpeg;base64,${selectedLogoImage.base64}`}}
                     style={styles.image}
                   />
                 )}
@@ -192,8 +222,6 @@ export default Upload;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // padding: 24,
-    
   },
   flex: {
     flex: 1,
@@ -204,8 +232,8 @@ const styles = StyleSheet.create({
   inner: {
     padding: 8,
     flexGrow: 1,
-    gap:10,
-    paddingBottom: height*0.1
+    gap: 10,
+    paddingBottom: height * 0.1,
   },
   modalTitle: {
     fontSize: 18,

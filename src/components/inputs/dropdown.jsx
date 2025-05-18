@@ -11,6 +11,7 @@ import {
   Dimensions
 } from 'react-native';
 import { colors } from '../../theme/colors';
+import { typography } from '../../theme/typography';
 
 
 /**
@@ -169,7 +170,7 @@ const Dropdown = ({
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {label ? <Text style={[styles.label, labelStyle]}>{label}</Text> : null}
+      {label ? <Text style={[styles.label, labelStyle, typography.inputLabel]}>{label}</Text> : null}
       <TouchableOpacity
         ref={dropdownButtonRef}
         style={[styles.button, dropdownStyle, disabled && styles.disabled]}

@@ -1,4 +1,4 @@
-import React, {useState, forwardRef, useImperativeHandle} from 'react';
+import React, {useState, useEffect, forwardRef, useImperativeHandle, use} from 'react';
 import {format} from 'date-fns';
 import {
   KeyboardAvoidingView,
@@ -14,10 +14,31 @@ import InputBox from '../../../components/inputs/textInput';
 import TextAreaBox from '../../../components/inputs/textArea';
 import PhoneNumberInput from '../../../components/inputs/phoneNumberInput';
 import DatePickerBox from '../../../components/inputs/datePicker';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateBusinessBasicData } from '../../../redux/slices/business/businessBasic';
 
 const {width, height} = Dimensions.get('window');
 
 const Basic = forwardRef((props, ref) => {
+  const dispatch = useDispatch();
+  const businessData = useSelector(state => state.businessBasic);
+
+  useEffect(() => {
+    if (businessData) {
+      
+      setCompanyName(businessData.companyName || '');
+      setYourDesignation(businessData.yourDesignation || '');
+      setPhone(businessData.phone || '');
+      setEmail(businessData.email || '');
+      setDescription(businessData.description || '');
+      setIndustry(businessData.industry || '');
+      setServices(businessData.services || '');
+      setDOJ(businessData.DOJ || '');
+      // If selectedCode is stored, also add:
+      // setSelectedCode(businessData.selectedCode || '+91');
+    }
+  }, [businessData]);
+
   // input values
   const [companyName, setCompanyName] = useState('');
   const [yourDesignation, setYourDesignation] = useState('');
@@ -43,61 +64,61 @@ const Basic = forwardRef((props, ref) => {
     validate: () => {
       let isValid = true;
 
-      // if (companyName.trim() === '') {
-      //   setCompanyError('Company Name is required');
-      //   isValid = false;
-      // } else {
-      //   setCompanyError('');
-      // }
+      if (companyName.trim() === '') {
+        setCompanyError('Company Name is required');
+        isValid = false;
+      } else {
+        setCompanyError('');
+      }
 
-      // if (yourDesignation.trim() === '') {
-      //   setYourDesignationError('Designation is required');
-      //   isValid = false;
-      // } else {
-      //   setYourDesignationError('');
-      // }
+      if (yourDesignation.trim() === '') {
+        setYourDesignationError('Designation is required');
+        isValid = false;
+      } else {
+        setYourDesignationError('');
+      }
 
-      // if (!/^\d{10}$/.test(phone)) {
-      //   setPhoneError('Phone must be a 10-digit number');
-      //   isValid = false;
-      // } else {
-      //   setPhoneError('');
-      // }
+      if (!/^\d{10}$/.test(phone)) {
+        setPhoneError('Phone must be a 10-digit number');
+        isValid = false;
+      } else {
+        setPhoneError('');
+      }
 
-      // if (!/\S+@\S+\.\S+/.test(email)) {
-      //   setemailError('Enter a valid email');
-      //   isValid = false;
-      // } else {
-      //   setemailError('');
-      // }
+      if (!/\S+@\S+\.\S+/.test(email)) {
+        setemailError('Enter a valid email');
+        isValid = false;
+      } else {
+        setemailError('');
+      }
 
-      // if (description.trim() === '') {
-      //   setDescriptionError('Description is required');
-      //   isValid = false;
-      // } else {
-      //   setDescriptionError('');
-      // }
+      if (description.trim() === '') {
+        setDescriptionError('Description is required');
+        isValid = false;
+      } else {
+        setDescriptionError('');
+      }
 
-      // if (!industry || industry.length === 0) {
-      //   setIndustryError('Select at least one industry');
-      //   isValid = false;
-      // } else {
-      //   setIndustryError('');
-      // }
+      if (!industry || industry.length === 0) {
+        setIndustryError('Select at least one industry');
+        isValid = false;
+      } else {
+        setIndustryError('');
+      }
 
-      //   if (!services || services.length === 0) {
-      //     setServicesError('Select at least one service');
-      //     isValid = false;
-      //   } else {
-      //     setServicesError('');
-      //   }
+        if (!services || services.length === 0) {
+          setServicesError('Select at least one service');
+          isValid = false;
+        } else {
+          setServicesError('');
+        }
 
-      //   if (!DOJ) {
-      //     setDOJError('Date of Joining is required');
-      //     isValid = false;
-      //   } else {
-      //     setDOJError('');
-      //   }
+        if (!DOJ) {
+          setDOJError('Date of Joining is required');
+          isValid = false;
+        } else {
+          setDOJError('');
+        }
 
       if (isValid) {
         const formData = {
@@ -107,24 +128,33 @@ const Basic = forwardRef((props, ref) => {
           email,
           description,
           industry,
-          services,
+          services
         };
         console.log('Form Data:', formData);
+        dispatch(updateBusinessBasicData({
+          companyName,
+          yourDesignation,
+          phone,
+          email,
+          description,
+          industry,
+          services
+        }));
+        
       }
-
       return isValid;
     },
 
-    getData: () => ({
-      companyName,
-      yourDesignation,
-      phone,
-      email,
-      description,
-      industry,
-      services,
-      DOJ,
-    }),
+    // getData: () => ({
+    //   companyName,
+    //   yourDesignation,
+    //   phone,
+    //   email,
+    //   description,
+    //   industry,
+    //   services,
+    //   DOJ,
+    // }),
   }));
 
   return (

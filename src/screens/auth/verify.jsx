@@ -12,6 +12,8 @@ import {colors} from '../../theme/colors';
 import {typography} from '../../theme/typography';
 import SmallButton from '../../components/buttons/smallButton';
 import { useOTPVerification } from '../../hooks/auth/useOTPVerification';
+import logo from '../../../assets/logo.png'
+
 
 const {width, height} = Dimensions.get('window');
 
@@ -32,7 +34,7 @@ const OTPVerificationScreen = () => {
   return (
     <View style={[styles.container]}>
       <View style={styles.topSection}>
-        <Text style={[typography.logo, styles.logo]}>LOGO</Text>
+        <Image style={{height:height*0.25, width:width*0.85}} resizeMode="contain" source={logo}></Image>
         <Text style={[typography.heading, styles.subtitle]}>
           Create new account
         </Text>
@@ -86,7 +88,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: colors.secondary,
     padding: 20,
   },
   topSection: {
