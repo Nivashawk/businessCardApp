@@ -6,10 +6,12 @@ export const listBusiness = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       console.log('Attempting authentication with fetch-based API client');
+      const state = thunkAPI.getState();
+      const partner_id = state.login?.data?.result?.partner_id
       // Use the getFullResponse method to get access to headers
       const response = await apiClient.post('api/business/list',{
         "params": {
-            "partner_id": 18
+            "partner_id": partner_id
         }
       });
 

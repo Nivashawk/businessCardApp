@@ -39,9 +39,13 @@ export const createBusiness = createAsyncThunk(
     thunkAPI,
   ) => {
     try {
+      console.log("inside create business api");
+      
         const state = thunkAPI.getState();
         const partner_id = state.login?.data?.result?.partner_id
-        const navigation = useNavigation();
+        console.log("partner_id", partner_id);
+        
+        // const navigation = useNavigation();
       console.log(
         "param data",
         partner_id,
@@ -115,7 +119,7 @@ export const createBusiness = createAsyncThunk(
           type: 'success',
           text1: response?.result?.message,
         });
-        navigation.navigate("Home")
+        // navigation.navigate("Home")
       } else {
         Toast.show({
           type: 'error',

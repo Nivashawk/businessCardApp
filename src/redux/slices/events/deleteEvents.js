@@ -2,24 +2,18 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import apiClient from '../../../api/apiClient';
 
 // Async thunk for registering a user (POST request)
-export const getEvent = createAsyncThunk(
+export const deleteEvent = createAsyncThunk(
   'event/get',
-  async (
-    {
-      event_id
-    },
-    thunkAPI,
-  ) => {
+  async ({event_id}, thunkAPI) => {
     try {
       const state = thunkAPI.getState();
-      const partner_id = state.login?.data?.result?.partner_id
-      const response = await apiClient.post(`api/events/${event_id}`,{
-        "params": {
-            "partner_id": partner_id
-        }
+      const partner_id = state.login?.data?.result?.partner_id;
+      const response = await apiClient.post(`api/events/delete/${event_id}`, {
+        params: {
+          partner_id: partner_id,
+        },
       });
       console.log('Response Data:', response);
-      return response
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message,
@@ -28,7 +22,7 @@ export const getEvent = createAsyncThunk(
   },
 );
 
-const getEventSlice = createSlice({
+const deleteEventSlice = createSlice({
   name: 'getEvent',
   initialState: {
     data: null,
@@ -52,4 +46,4 @@ const getEventSlice = createSlice({
   },
 });
 
-export default getEventSlice.reducer;
+export default deleteEventSlice.reducer;

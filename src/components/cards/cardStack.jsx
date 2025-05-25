@@ -33,30 +33,30 @@ import Whatsapp from '../../../assets/socialIcons/whatsapp.svg';
 const {width, height} = Dimensions.get('window');
 
 
-const CARD_DATA = [
-  {
-    id: 1,
-    company: 'ZEDBYTE SOFWARE SOLUTIONS',
-    tagline:
-      'entrust us with the management of your internet business and forget about it entrust us with the management of your internet business and forget about it',
-    contact: '1234567890',
-    email: 'tech@example.com',
-  },
-  {
-    id: 2,
-    company: 'Design Studio',
-    tagline: 'Creativity Unleashed',
-    contact: '9876543210',
-    email: 'design@example.com',
-  },
-  {
-    id: 3,
-    company: 'Startup Inc.',
-    tagline: 'Sky is the Limit',
-    contact: '4561237890',
-    email: 'startup@example.com',
-  },
-];
+// const CARD_DATA = [
+//   {
+//     id: 1,
+//     company: 'ZEDBYTE SOFWARE SOLUTIONS',
+//     tagline:
+//       'entrust us with the management of your internet business and forget about it entrust us with the management of your internet business and forget about it',
+//     contact: '1234567890',
+//     email: 'tech@example.com',
+//   },
+//   {
+//     id: 2,
+//     company: 'Design Studio',
+//     tagline: 'Creativity Unleashed',
+//     contact: '9876543210',
+//     email: 'design@example.com',
+//   },
+//   {
+//     id: 3,
+//     company: 'Startup Inc.',
+//     tagline: 'Sky is the Limit',
+//     contact: '4561237890',
+//     email: 'startup@example.com',
+//   },
+// ];
 
 const Card = React.memo(({card, style}) => {
   const navigation = useNavigation();
@@ -70,7 +70,7 @@ const Card = React.memo(({card, style}) => {
             style={[typography.heading, styles.title]}
             numberOfLines={2}
             ellipsizeMode="tail">
-            {formatCompanyName(card.company)}
+            {formatCompanyName(card.name)}
           </Animated.Text>
         </View>
         <TouchableOpacity
@@ -82,20 +82,20 @@ const Card = React.memo(({card, style}) => {
       </View>
       <View style={styles.descriptionContainer}>
         <Animated.Text style={[typography.description, styles.tagline]}>
-          {truncateText(card.tagline, 70)}
+          {truncateText(card.public_summary, 70)}
         </Animated.Text>
       </View>
       <View style={styles.contactContainer}>
         <View style={styles.contact1}>
           <Animated.Image source={PhoneIcon} />
           <Animated.Text style={[typography.inputText]}>
-            {card.contact}
+            {card.business_mobile}
           </Animated.Text>
         </View>
         <View style={styles.contact2}>
           <Animated.Image source={MailIcon} />
           <Animated.Text style={[typography.inputText]}>
-            {card.email}
+            {card.business_email}
           </Animated.Text>
         </View>
       </View>
@@ -131,8 +131,10 @@ const EmptyCard = () => {
   );
 };
 
-const CardStack = () => {
-  const [cards, setCards] = useState(CARD_DATA);
+const CardStack = ({cardData}) => {
+  console.log(cardData);
+  
+  const [cards, setCards] = useState(cardData);
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
 

@@ -1,6 +1,6 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import apiClient from '../../../api/apiClient';
-import {isOTPVerified} from './sendOTPSlices';
+import {isOTPVerified, purpose} from './sendOTPSlices';
 import Toast from 'react-native-toast-message';
 
 // Async thunk for registering a user (POST request)
@@ -24,6 +24,7 @@ export const loginUser = createAsyncThunk(
           type: 'success',
           text1: response?.result?.message,
         });
+        thunkAPI.dispatch(purpose("Login"));
         thunkAPI.dispatch(isOTPVerified());
       } else {
         Toast.show({

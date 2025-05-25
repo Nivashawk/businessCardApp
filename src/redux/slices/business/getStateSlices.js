@@ -1,25 +1,17 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import apiClient from '../../../api/apiClient';
 
-export const getBusiness = createAsyncThunk(
-  'business/getBusiness',
-  async ({id}, thunkAPI) => {
+export const getState = createAsyncThunk(
+  'business/getState',
+  async ({country_code}, thunkAPI) => {
     try {
-      const state = thunkAPI.getState();
-      const partner_id = state.login?.data?.result?.partner_id
       console.log('Attempting authentication with fetch-based API client');
-      // Use the getFullResponse method to get access to headers
-      const response = await apiClient.post(`/api/business/${id}`,{
-        "params": {
-            "partner_id": partner_id
-        }
+      const response = await apiClient.post(`api/states`, {
+        params: {
+          country_id: country_code,
+        },
       });
-
-      // Parse the response body
-      //  const data = await response.json();
-      // const text = await response.text();
       console.log('Response Data:', response);
-
       return response;
     } catch (error) {
       console.error('Authentication Error:', error);
@@ -28,8 +20,8 @@ export const getBusiness = createAsyncThunk(
   },
 );
 
-const getBusinessSlice = createSlice({
-  name: 'getBusiness',
+const getStateSlice = createSlice({
+  name: 'getState',
   initialState: {
     data: null,
     headers: null,
@@ -39,19 +31,19 @@ const getBusinessSlice = createSlice({
   },
   extraReducers: builder => {
     builder
-      .addCase(getBusiness.pending, state => {
+      .addCase(getState.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(getBusiness.fulfilled, (state, action) => {
+      .addCase(getState.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
       })
-      .addCase(getBusiness.rejected, (state, action) => {
+      .addCase(getState.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
   },
 });
 
-export default getBusinessSlice.reducer;
+export default getStateSlice.reducer;

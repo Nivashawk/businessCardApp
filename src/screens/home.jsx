@@ -1,5 +1,12 @@
-import {View, Text, StyleSheet, Dimensions, ScrollView, Platform} from 'react-native';
-import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  ScrollView,
+  Platform,
+} from 'react-native';
+import React, {useEffect, useState,useCallback} from 'react';
 import CardStack from '../components/cards/cardStack';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {colors} from '../theme/colors';
@@ -11,6 +18,10 @@ import EventImage from '../../assets/serviceCard/event.png';
 import ShareImage from '../../assets/serviceCard/share.png';
 import {useNavigation} from '@react-navigation/native';
 import ImageCropper from '../components/imageCropper';
+import {useDispatch, useSelector} from 'react-redux';
+import {getHome} from '../redux/slices/user/homeSlices';
+import {purpose} from '../redux/slices/auth/sendOTPSlices';
+import {useFocusEffect} from '@react-navigation/native';
 
 const {width, height} = Dimensions.get('window');
 
@@ -26,27 +37,66 @@ const handleShare = () => {
   console.log('clicked share');
 };
 
-const eventsData = [
-  {
-    title: 'Madurai expo....',
-    date: '22/09/2025',
-    description: 'Lorem Ipsum is simply dummy',
-    onPress: handleReferral,
-  },
-  {
-    title: 'Madurai expo....',
-    date: '22/09/2025',
-    description: 'Lorem Ipsum is simply dummy',
-    onPress: handleEvent,
-  },
-];
 
 const Home = () => {
+  const dispatch = useDispatch();
   const navigation = useNavigation();
+  const [isHomeData, setIsHomeData] = useState(false);
+  const VerifyState = useSelector(state => state.OTPData);
+  const {purpose} = VerifyState;
+  const partner_id_from_login = useSelector(
+    state => state.login?.data?.result?.partner_id,
+  );
+  const partner_id_from_register = useSelector(
+    state => state.register?.data?.result?.partner_id,
+  );
+  const homeData = useSelector(state => state?.homeData?.data?.result?.data);
+
+  useFocusEffect(
+
+    useCallback(() => {
+      if (!purpose) {
+        console.log('No purpose found');
+        return;
+      }
+      
+      const partner_id =
+      purpose === 'Login'
+      ? partner_id_from_login
+      : purpose === 'Register'
+      ? partner_id_from_register
+      : null;
+      
+      if (partner_id) {
+        console.log('Purpose available:', purpose);
+        dispatch(getHome({partner_id}));
+      } else {
+        console.log(`No partner_id found for ${purpose}`);
+      }
+    }, [purpose, partner_id_from_login, partner_id_from_register])
+  );
+    
+    useEffect(() => {
+    if (homeData) {
+      console.log(homeData);
+      setIsHomeData(true);
+    }
+  }, [homeData]);
+
+  const handlePress = (id) => {
+  console.log("Event ID:", id)
+  navigation.navigate('UpdateEvents', {id})
+  // Do something with the ID
+}
+
   return (
     <View style={{backgroundColor: colors.background}}>
       <GestureHandlerRootView style={styles.container}>
-        <CardStack />
+        {isHomeData ? (
+          <CardStack cardData={homeData.business_profiles}/>
+        ) : (
+          <Text style={[typography.heading, {paddingLeft: 10}]}>Loading</Text>
+        )}
       </GestureHandlerRootView>
       <View style={styles.serviceContainer}>
         <Text style={[typography.heading, {paddingLeft: 10}]}>Services</Text>
@@ -57,7 +107,7 @@ const Home = () => {
             onPress={() => {
               navigation.navigate('Referral');
             }}
-            disabled = {false}
+            disabled={false}
           />
           <ServiceCard
             title={'Create New Event'}
@@ -83,22 +133,28 @@ const Home = () => {
         <ScrollView
           contentContainerStyle={[
             styles.eventWrapper,
-            eventsData.length > 0
+            homeData?.events.length > 0
               ? {paddingBottom: height * 0.09}
               : {paddingTop: height * 0.13},
           ]}>
-          {eventsData.length > 0 ? (
-            eventsData.map((card, index) => (
+          {homeData?.events.length > 0 ? (
+            homeData?.events.map((card, index) => (
               <DescriptiveCard
                 key={index}
-                title={card.title}
-                date={card.date}
+                title={card.name}
+                date={card.event_date}
                 description={card.description}
-                onPress={card.onPress}
+                onPress={() => handlePress(card.id)} 
               />
             ))
           ) : (
-            <Text style={[typography.description, {fontWeight:600,color : colors.primary, opacity: 0.3}]}>NO EVENTS TO DISPLAY</Text>
+            <Text
+              style={[
+                typography.description,
+                {fontWeight: 600, color: colors.primary, opacity: 0.3},
+              ]}>
+              NO EVENTS TO DISPLAY
+            </Text>
           )}
         </ScrollView>
       </View>
@@ -109,7 +165,7 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     // flex: 1,
-    height: Platform.OS =='ios' ? height * 0.34 : height * 0.38,
+    height: Platform.OS == 'ios' ? height * 0.34 : height * 0.38,
     // backgroundColor:colors.background,
     // alignItems:'center'
   },

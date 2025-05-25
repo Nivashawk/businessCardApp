@@ -7,6 +7,7 @@ import BusinessDetails from '../screens/business/businessDetails';
 import CreateBusiness from '../screens/business/createBusiness';
 import ListBusiness from '../screens/business/listBusiness';
 import CreateEvent from '../screens/event/createEvent';
+import UpdateEvent from '../screens/event/updateEvent';
 import EventList from '../screens/event/eventList';
 import GenerateQR from '../screens/scan/generateQR';
 import ReferAndEarn from '../screens/referral';
@@ -43,6 +44,11 @@ export default function HomeStack() {
         name="CreateEvent"
         component={CreateEvent}
         options={{ header: () => <CustomHeader title="Details" /> }}
+      />
+       <Stack.Screen
+        name="UpdateEvents"
+        component={UpdateEvent}
+        options={{header: () => <CustomHeader title="My Event Update" />}}
       />
       <Stack.Screen
         name="EventList"

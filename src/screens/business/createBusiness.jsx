@@ -42,7 +42,7 @@ const CreateBusiness = () => {
         dispatch(
           createBusiness({
             name:businessData.companyName,
-            designation:businessData.designation,
+            designation:businessData.yourDesignation,
             business_mobile:businessData.phone,
             business_email:businessData.email,
             description:businessData.description,
@@ -71,7 +71,7 @@ const CreateBusiness = () => {
             is_public:businessData.is_public,
           }),
         );
-        setIsSubmitted(false);
+        // setIsSubmitted(false);
       }
     }
   }, [businessData, isSubmitted]);

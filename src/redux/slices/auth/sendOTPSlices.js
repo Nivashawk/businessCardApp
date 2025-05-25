@@ -9,7 +9,7 @@ export const sentOTP = createAsyncThunk(
     try {
       console.log('Email:', email);
 
-      const url = '/api/send_otp';
+      const url = 'api/send_otp';
       const payload = {
         params: {
           email: email,
@@ -35,7 +35,8 @@ const sendOTPSlice = createSlice({
     data: null,
     loading: false,
     error: null,
-    otpVerified: false
+    otpVerified: false,
+    purpose: ""
   },
   reducers: {
     resetOTPData: (state) => {
@@ -43,6 +44,9 @@ const sendOTPSlice = createSlice({
     },
     isOTPVerified: (state) => {
       state.otpVerified = true
+    },
+    purpose: (state, action) => {
+      state.purpose = action.payload
     }
   },
   extraReducers: builder => {
@@ -62,7 +66,7 @@ const sendOTPSlice = createSlice({
   },
 });
 
-export const { resetOTPData, isOTPVerified} = sendOTPSlice.actions;
+export const { resetOTPData, isOTPVerified, purpose} = sendOTPSlice.actions;
 
 
 export default sendOTPSlice.reducer;

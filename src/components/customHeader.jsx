@@ -8,10 +8,15 @@ import {
   Platform,
   Image,
   StyleSheet,
+  Dimensions
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {colors} from '../theme/colors';
 import { typography } from '../theme/typography';
+import logo from '../../assets/logo.png';
+
+const {width, height} = Dimensions.get('window');
+
 
 
 export default function CustomHeader() {
@@ -33,7 +38,9 @@ export default function CustomHeader() {
         </TouchableOpacity>
 
         {/* Center - Logo (you can swap this out for an image if needed) */}
-        <Text style={typography.heading}>LOGO</Text>
+        {/* <Text style={typography.heading}>LOGO</Text> */}
+                <Image style={{height:height*0.2, width:width*0.25}} resizeMode="contain" source={logo}></Image>
+
       </View>
 
       {/* Right - Hamburger menu */}

@@ -6,36 +6,40 @@ import {
   ScrollView,
   StyleSheet,
   SafeAreaView,
-  Image
+  Image,
 } from 'react-native';
 import {useRoute} from '@react-navigation/native';
 import {colors} from '../../theme/colors';
-import { typography } from '../../theme/typography';
-import { useDispatch, useSelector } from 'react-redux';
-import { getBusiness } from '../../redux/slices/business/getBusinessSlices';
-import PhoneIcon from '../../../assets/phone.png';
-import MailIcon from '../../../assets/mailIcon.png';
+import {typography} from '../../theme/typography';
+import {useDispatch, useSelector} from 'react-redux';
+import {getBusiness} from '../../redux/slices/business/getBusinessSlices';
+import PhoneIcon from '../../../assets/phone2.svg';
+import MailIcon from '../../../assets/mail2.svg';
+import WebsiteIcon from '../../../assets/website2.svg';
 import Facebook from '../../../assets/socialIcons/facebook.svg';
 import Instagram from '../../../assets/socialIcons/instagram.svg';
 import LinkedIn from '../../../assets/socialIcons/linkedIn.svg';
 import Telegram from '../../../assets/socialIcons/telegram.svg';
-import Whatsapp from '../../../assets/socialIcons/whatsapp.svg';
+import Whatsapp from '../../../assets/whatsapp2.svg';
 
 const BusinessDetails = ({}) => {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState('Business Details');
   const route = useRoute();
   const {data} = route.params;
-  const id = data.id
+  const id = data.id;
+  const BusinessData = useSelector(
+    state => state.getBusinessData?.data?.result?.data ?? [],
+  );
 
-  // console.log(data);
+  console.log(BusinessData);
 
-    useEffect(() => {
-      console.log('before api');
-      dispatch(getBusiness({id}));
-      console.log('aftyer api');
-    }, []);
-  
+  useEffect(() => {
+    console.log('before api');
+    dispatch(getBusiness({id}));
+    console.log('aftyer api');
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <TabSwitcher activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -56,7 +60,10 @@ const TabSwitcher = ({activeTab, setActiveTab}) => (
         onPress={() => setActiveTab(tab)}
         style={[styles.tab, activeTab === tab && styles.activeTab]}>
         <Text
-          style={[typography.description, activeTab === tab && styles.activeTabText]}>
+          style={[
+            typography.description,
+            activeTab === tab && styles.activeTabText,
+          ]}>
           {tab}
         </Text>
       </TouchableOpacity>
@@ -64,43 +71,90 @@ const TabSwitcher = ({activeTab, setActiveTab}) => (
   </View>
 );
 
-const BusinessDetailsTab = () => (
-  <ScrollView contentContainerStyle={styles.content}>
-    <Text style={[typography.heading,styles.title]}>Zedbyte software solutions</Text>
-    <Text style={[typography.description,styles.description]}>
-      entrust us with the management of your internet business and forget about
-      it. We are one team with you! Our goal is to provide the best service for
-      our clients.
-    </Text>
+const BusinessDetailsTab = () => {
+  const BusinessData = useSelector(
+    state => state.getBusinessData?.data?.result?.data ?? null,
+  );
 
-    <View style={styles.socialBg}>
-      {/* <PhoneIcon width={20} height={20} />
-      <MailIcon width={20} height={20} /> */}
-      {/* <Whatsapp width={20} height={20} /> */}
-      <Text style={{width:'100%', color:colors.secondary, textAlign:'center'}}>***Contact Icons***</Text>
-    </View>
+  if (!BusinessData) {
+    return (
+      <View style={styles.content}>
+        <Text>Loading business details...</Text>
+      </View>
+    );
+  }
 
-    <View style={styles.mapPlaceholder}>
-      <Text style={styles.mapText}>Map Placeholder</Text>
-    </View>
+  return (
+    <ScrollView contentContainerStyle={styles.content}>
+      <Text style={[typography.heading, styles.title]}>
+        {BusinessData?.name}
+      </Text>
+      <Text style={[typography.description, styles.description]}>
+        {BusinessData?.public_summary || 'N/A'}
+      </Text>
 
-    <Text style={[typography.description,styles.label]}>GST NUMBER</Text>
-    <Text style={[typography.inputText,styles.infoText]}>07ABCDE1234F2Z5</Text>
+      <View style={[styles.socialBg, {width:"35%"}]}>
+        <PhoneIcon width={20} height={20} />
+        <MailIcon width={20} height={20} />
+        <WebsiteIcon width={20} height={20} />
+      </View>
 
-    {/* <TouchableOpacity style={styles.socialButton}> */}
+      <View style={styles.infoContainer}>
+        <View style={{alignItems: 'center', justifyContent: 'center'}}>
+          <Text
+            style={[typography.description, styles.label, {color: 'white'}]}>
+            Industry
+          </Text>
+          <Text
+            style={[typography.inputText, styles.infoText, {color: 'white'}]}>
+            {BusinessData?.industry || 'N/A'}
+          </Text>
+        </View>
+        <View style={{alignItems: 'center', justifyContent: 'center'}}>
+          <Text
+            style={[typography.description, styles.label, {color: 'white'}]}>
+            Services
+          </Text>
+          <Text
+            style={[typography.inputText, styles.infoText, {color: 'white'}]}>
+            {BusinessData?.gstNumber || 'N/A'}
+          </Text>
+        </View>
+        <View style={{alignItems: 'center', justifyContent: 'center'}}>
+          <Text
+            style={[typography.description, styles.label, {color: 'white'}]}>
+            DOJ
+          </Text>
+          <Text
+            style={[typography.inputText, styles.infoText, {color: 'white'}]}>
+            {BusinessData?.gstNumber || 'N/A'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.mapPlaceholder}>
+        <Text style={styles.mapText}>Map Placeholder</Text>
+      </View>
+
+      <Text style={[typography.description, styles.label]}>GST NUMBER</Text>
+      <Text style={[typography.inputText, styles.infoText]}>
+        {BusinessData?.gstNumber || 'N/A'}
+      </Text>
+
       <View style={styles.socialBg}>
         <Facebook width={20} height={20} />
         <Instagram width={20} height={20} />
         <LinkedIn width={20} height={20} />
         <Telegram width={20} height={20} />
-        <Whatsapp width={20} height={20} />
       </View>
-    {/* </TouchableOpacity> */}
 
-    <Text style={[typography.description,styles.label]}>Founder</Text>
-    <Text style={[typography.description,styles.infoText]}>Nivas S</Text>
-  </ScrollView>
-);
+      <Text style={[typography.description, styles.label]}>Founder</Text>
+      <Text style={[typography.description, styles.infoText]}>
+        {BusinessData?.designation || 'N/A'}
+      </Text>
+    </ScrollView>
+  );
+};
 
 const BusinessCard = () => (
   <ScrollView contentContainerStyle={styles.content}>
@@ -133,7 +187,7 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     fontWeight: 'bold',
-    color: colors.primary
+    color: colors.primary,
   },
   content: {
     padding: 16,
@@ -216,15 +270,28 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   socialBg: {
-    width:'55%',
+    width: '55%',
     padding: 8,
     borderRadius: 10,
     flexWrap: 'wrap',
     flexDirection: 'row',
     gap: 15,
     backgroundColor: colors.primary,
-    alignItems:'center',
-    marginBottom: 20
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  infoContainer: {
+    width: '85%',
+    padding: 8,
+    borderRadius: 10,
+    flexWrap: 'wrap',
+    flexDirection: 'row',
+    gap: 15,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
 });
 

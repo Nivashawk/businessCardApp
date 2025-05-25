@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 
 
 const API_BASE_URL = 'https://erp.thumps.app/';
-// const API_BASE_URL = 'https://83b7-2405-201-e01a-d894-6438-f5ba-27af-b723.ngrok-free.app/';
+// const API_BASE_URL = 'https://8913-2405-201-e01a-d894-e518-c1f4-790a-c3be.ngrok-free.app/';
 const DEFAULT_TIMEOUT = 10000; // 10 seconds
 
 /**
@@ -140,6 +140,8 @@ const apiClient = {
    * @returns {Promise<any>} - JSON response
    */
   async post(endpoint, data, options = {}) {
+    console.log("inside post",data);
+    
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
     const requestOptions = await addHeaders({
       ...options,

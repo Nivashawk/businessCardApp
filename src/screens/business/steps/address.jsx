@@ -1,4 +1,9 @@
-import React, {useState, useEffect, forwardRef, useImperativeHandle} from 'react';
+import React, {
+  useState,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import {format} from 'date-fns';
 import {
   KeyboardAvoidingView,
@@ -15,14 +20,20 @@ import InputBox from '../../../components/inputs/textInput';
 import TextAreaBox from '../../../components/inputs/textArea';
 import PhoneNumberInput from '../../../components/inputs/phoneNumberInput';
 import DatePickerBox from '../../../components/inputs/datePicker';
+import Dropdown from '../../../components/inputs/dropdown';
+import DropdownWSearch from '../../../components/inputs/dropdownWSearch';
 import {useSelector, useDispatch} from 'react-redux';
 import {updateBusinessAddressData} from '../../../redux/slices/business/businessBasic';
+import {getCountry} from '../../../redux/slices/business/getCountrySlices';
+import {getState} from '../../../redux/slices/business/getStateSlices';
 
 const {width, height} = Dimensions.get('window');
 
 const Address = forwardRef((props, ref) => {
   const dispatch = useDispatch();
   const businessData = useSelector(state => state.businessData);
+  const countries = useSelector(state => state?.countries?.data?.result?.data);
+  const states = useSelector(state => state?.states?.data?.result?.data);
 
   useEffect(() => {
     console.log('businessData', businessData);
@@ -37,6 +48,10 @@ const Address = forwardRef((props, ref) => {
       // setSelectedCode(businessData.selectedCode || '+91');
     }
   }, [businessData]);
+
+  useEffect(() => {
+    dispatch(getCountry());
+  }, [dispatch]);
   // input values
   const [street, setStreet] = useState('');
   const [street2, setStreet2] = useState('');
@@ -143,6 +158,13 @@ const Address = forwardRef((props, ref) => {
     // }),
   }));
 
+  const handleSelectCountry = item => {
+    console.log('country dropdown', item);
+    setCountry(item);
+    setCountryError('');
+    dispatch(getState({country_code: item.value}));
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.flex}
@@ -152,6 +174,42 @@ const Address = forwardRef((props, ref) => {
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled">
           <View style={styles.inner}>
+            <DropdownWSearch
+              label="Country"
+              data={countries?.map(c => ({label: c.name, value: c.id})) ?? []}
+              onSelect={handleSelectCountry}
+              required={true}
+              requiredText="Please select a country"
+
+              // placeholder={eventType}
+            />
+            <DropdownWSearch
+              label="State"
+              data={states?.map(c => ({label: c.name, value: c.id})) ?? []}
+              onSelect={item => {
+                if (!country) {
+                  setCountryError('Please select a country first');
+                } else {
+                  setCountryError('');
+                  setState(item);
+                }
+              }}
+              required={true}
+              requiredText="Please select a state"
+              disabled={!country}
+
+              // placeholder={eventType}
+            />
+
+            <InputBox
+              label="City"
+              value={city}
+              onChangeText={setCity}
+              placeholder="City"
+              keyboardType="default"
+              required
+              error={cityError}
+            />
             <InputBox
               label="Street"
               value={street}
@@ -178,15 +236,7 @@ const Address = forwardRef((props, ref) => {
               required
               error={areaError}
             /> */}
-            <InputBox
-              label="City"
-              value={city}
-              onChangeText={setCity}
-              placeholder="City"
-              keyboardType="default"
-              required
-              error={cityError}
-            />
+
             <InputBox
               label="PinCode"
               value={pinCode}
@@ -195,24 +245,6 @@ const Address = forwardRef((props, ref) => {
               keyboardType="default"
               required
               error={pinCodeError}
-            />
-            <InputBox
-              label="State"
-              value={state}
-              onChangeText={setState}
-              placeholder="State"
-              keyboardType="default"
-              required
-              error={stateError}
-            />
-            <InputBox
-              label="Country"
-              value={country}
-              onChangeText={setCountry}
-              placeholder="Country"
-              keyboardType="default"
-              required
-              error={countryError}
             />
           </View>
         </ScrollView>
