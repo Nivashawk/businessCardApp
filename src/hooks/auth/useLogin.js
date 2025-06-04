@@ -12,11 +12,11 @@ import {sentOTP} from '../../redux/slices/auth/sendOTPSlices';
 const useLogin = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  // Uncomment if you need user state from Redux
-  // const { data: user, loading, error } = useSelector(state => state.user);
 
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  
+  // Get OTP data and loading state from Redux
   const otpData = useSelector(state => state.OTPData);
   const {data, loading, error} = otpData;
 
@@ -30,12 +30,7 @@ const useLogin = () => {
       alert(`Sign up failed: ${error}`);
       // dispatch(clearRegisterError()); // Optional: clear error
     }
-  }, [data, error, navigation, dispatch]);
-
-  // Uncomment if you need to fetch user data on mount
-  // useEffect(() => {
-  //   dispatch(fetchUser());
-  // }, [dispatch]);
+  }, [data, error, navigation, email]);
 
   /**
    * Validates email and handles login process
@@ -45,7 +40,11 @@ const useLogin = () => {
       setEmailError('Please enter a valid email address');
       return;
     }
+    
+    // Clear any previous errors
     setEmailError('');
+    
+    // Dispatch OTP request
     dispatch(sentOTP({email}));
   };
 
@@ -60,8 +59,8 @@ const useLogin = () => {
     // State
     email,
     emailError,
-    // loading,
-    // error,
+    loading, // Expose loading state
+    error,   // Expose error state
 
     // Handlers
     setEmail,

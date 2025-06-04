@@ -283,14 +283,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent ? `${colors.accent}15` : '#FF6B3515',
   },
   logoContainer: {
-    marginBottom: 20,
+    marginBottom: 32,
     alignItems: 'center',
   },
   logoImage: {
-    height: height * 0.12,
-    width: width * 0.6,
-    maxHeight: 100,
-    maxWidth: 240,
+    height: height * 0.18,
+    width: width * 0.65,
+    maxHeight: 140,
+    maxWidth: 280,
     opacity: 0.95,
   },
   welcomeSection: {

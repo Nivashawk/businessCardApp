@@ -30,7 +30,7 @@ export const updateEvents = createAsyncThunk(
         state,
       );
       const reduxstate = thunkAPI.getState();
-      const partner_id = reduxstate.login?.data?.result?.partner_id;
+      const partner_id = state.homeData?.data?.result?.data?.partner?.id
       console.log("partner id from update event", partner_id);
       
 

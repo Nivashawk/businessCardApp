@@ -188,11 +188,14 @@ const Dropdown = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
+    marginBottom: 16,
+    // marginVertical: 10,
+    // alignItems: 'center',
+    // justifyContent:'center'
   },
   label: {
     fontSize: 14,
-    marginBottom: 5,
+    marginBottom: 6,
   },
   button: {
     flexDirection: 'row',

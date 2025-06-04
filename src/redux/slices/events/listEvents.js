@@ -7,7 +7,7 @@ export const listEvents = createAsyncThunk(
     try {
       console.log('Attempting authentication with fetch-based API client');
       const state = thunkAPI.getState();
-      const partner_id = state.login?.data?.result?.partner_id
+      const partner_id = state.homeData?.data?.result?.data?.partner?.id
       // Use the getFullResponse method to get access to headers
       const response = await apiClient.post('api/events/list',{
         "params": {

@@ -12,7 +12,7 @@ export const getEvent = createAsyncThunk(
   ) => {
     try {
       const state = thunkAPI.getState();
-      const partner_id = state.login?.data?.result?.partner_id
+      const partner_id = state.homeData?.data?.result?.data?.partner?.id
       const response = await apiClient.post(`api/events/${event_id}`,{
         "params": {
             "partner_id": partner_id

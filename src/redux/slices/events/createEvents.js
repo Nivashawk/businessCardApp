@@ -6,7 +6,6 @@ export const createEvents = createAsyncThunk(
   'event/create',
   async (
     {
-      partner_id,
       name,
       description,
       event_type,
@@ -19,7 +18,6 @@ export const createEvents = createAsyncThunk(
   ) => {
     try {
       console.log("params inside api",
-        partner_id,
         name,
         description,
         event_type,
@@ -28,6 +26,8 @@ export const createEvents = createAsyncThunk(
         event_organiser,
         state
     );
+     const state = thunkAPI.getState();
+      const partner_id = state.homeData?.data?.result?.data?.partner?.id
 
       const response = await apiClient.post('api/events/create', {
         params: {

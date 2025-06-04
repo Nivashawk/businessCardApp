@@ -25,7 +25,9 @@ export const useSignUp = () => {
       console.log("otp response",data?.result?.status);
       
       if (data?.result?.status === 'success') {
-        navigation.navigate('Verify',{purpose:"Register", name:name, email:email, phone:phone});
+        console.log({purpose:"Register", name:name, email:email, phone:phone, referral_code: referral});
+        
+        navigation.navigate('Verify',{purpose:"Register", name:name, email:email, phone:phone, referral_code: referral});
       }
       if (error) {
         alert(`Sign up failed: ${error}`);

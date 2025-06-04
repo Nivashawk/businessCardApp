@@ -8,7 +8,7 @@ import Toast from 'react-native-toast-message';
 // Async thunk for registering a user (POST request)
 export const registerUser = createAsyncThunk(
   'auth/registerUser',
-  async ({name, phone, email, country_code, otp, token}, thunkAPI) => {
+  async ({name, phone, email, country_code, otp, token, referral_code}, thunkAPI) => {
     try {
       
       // const state = thunkAPI.getState();
@@ -25,11 +25,12 @@ export const registerUser = createAsyncThunk(
           country_code,
           otp,
           token,
+          referral_code
         }
       });
       // console.log(response);
-      console.log("Response Data:", response);
-      const message = 'Registration successful.'
+      console.log("Response register Data:", response);
+      const message = 'Registered successful.'
       if(message === response?.result?.message){
         Toast.show({
           type: 'success',
@@ -43,6 +44,7 @@ export const registerUser = createAsyncThunk(
           text1: response?.result?.message,
         });
       }
+      return response
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message,

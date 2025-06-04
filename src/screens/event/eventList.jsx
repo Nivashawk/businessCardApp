@@ -8,6 +8,7 @@ import {
   Text,
   TextInput,
   Modal,
+  RefreshControl, // <-- Import RefreshControl
 } from 'react-native';
 import React, {useEffect, useState, useMemo, useCallback} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
@@ -25,18 +26,34 @@ const ListEvent = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState('');
-  const [selectedDateFilter, setSelectedDateFilter] = useState('all'); // all, today, week, month
+  const [selectedDateFilter, setSelectedDateFilter] = useState('all'); // all, today, week, month, past
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false); // <-- New state for refreshing
 
   const listEventsData = useSelector(
     state => state.listEventsData?.data?.response?.result?.events ?? [],
   );
+  const listEventsLoading = useSelector( // Get loading state for events
+    state => state.listEventsData?.loading,
+  );
+
+  // Function to fetch events
+  const fetchEvents = useCallback(() => {
+    dispatch(listEvents());
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      dispatch(listEvents());
-    }, [dispatch]),
+      fetchEvents(); // Fetch events when screen gains focus
+    }, [fetchEvents]),
   );
+
+  // Effect to stop refresh indicator when data fetching completes
+  useEffect(() => {
+    if (!listEventsLoading && refreshing) {
+      setRefreshing(false);
+    }
+  }, [listEventsLoading, refreshing]);
 
 
   // Filter events based on search and date
@@ -53,23 +70,23 @@ const ListEvent = () => {
     // Filter by date
     if (selectedDateFilter !== 'all') {
       const today = new Date();
-      const todayString = today.toISOString().split('T')[0];
+      today.setHours(0, 0, 0, 0); // Normalize today to start of day for accurate comparisons
 
       filtered = filtered.filter(event => {
         const eventDate = new Date(event.event_date);
-        const eventDateString = event.event_date;
+        eventDate.setHours(0, 0, 0, 0); // Normalize event date to start of day
 
         switch (selectedDateFilter) {
           case 'today':
-            return eventDateString === todayString;
+            return eventDate.getTime() === today.getTime();
           case 'week':
-            const weekFromNow = new Date(today);
-            weekFromNow.setDate(today.getDate() + 7);
-            return eventDate >= today && eventDate <= weekFromNow;
+            const endOfWeek = new Date(today);
+            endOfWeek.setDate(today.getDate() + 7);
+            return eventDate >= today && eventDate <= endOfWeek;
           case 'month':
-            const monthFromNow = new Date(today);
-            monthFromNow.setMonth(today.getMonth() + 1);
-            return eventDate >= today && eventDate <= monthFromNow;
+            const endOfMonth = new Date(today);
+            endOfMonth.setMonth(today.getMonth() + 1);
+            return eventDate >= today && eventDate <= endOfMonth;
           case 'past':
             return eventDate < today;
           default:
@@ -83,29 +100,47 @@ const ListEvent = () => {
 
   const handleEventPress = eventData => {
     console.log('eventData', eventData);
+    // You might want to navigate to a detailed event view here
+    // navigation.navigate('EventDetails', { event: eventData });
   };
 
   const handleEdit = id => {
     console.log('Edit event id:', id);
-    // Navigate to edit screen
+    navigation.navigate('UpdateEvents', {id}); // Assuming 'UpdateEvents' is your edit screen
   };
 
   const handleDelete = id => {
     console.log('Delete event id:', id);
-    dispatch(deleteEvent({event_id:id}));
-    handleManualRefresh();
-    // Show confirmation and delete
+    dispatch(deleteEvent({event_id:id}))
+      .unwrap() // Use unwrap to handle pending/fulfilled/rejected status
+      .then(() => {
+        console.log('Event deleted successfully, refreshing list...');
+        handleManualRefresh(); // Refresh list after successful deletion
+      })
+      .catch(error => {
+        console.error('Failed to delete event:', error);
+        // Handle error, e.g., show a toast message
+      });
   };
 
   const handleAddNewEvent = () => {
     console.log('Navigate to add new event');
-    // navigation.navigate('AddEvent');
+    navigation.navigate('CreateEvent');
   };
 
+  // Pull-to-refresh handler
+  const onPullToRefresh = useCallback(() => {
+    setRefreshing(true); // Start showing the refresh indicator
+    fetchEvents(); // Trigger the fetch
+  }, [fetchEvents]);
+
+  // Manual refresh for after delete
   const handleManualRefresh = () => {
     console.log('🔄 Manual refresh triggered');
-    dispatch(listEvents())
+    setRefreshing(true); // Show indicator for manual refresh too
+    fetchEvents();
   };
+
 
   const clearFilters = () => {
     setSearchText('');
@@ -147,17 +182,17 @@ const ListEvent = () => {
         </View>
 
         {/* Active Filters Display */}
-        {(searchText || selectedDateFilter !== 'all') && (
+        {(searchText || selectedDateFilter !== 'all') ? ( // Only show if filters are active
           <View style={styles.activeFiltersContainer}>
             <Text style={styles.activeFiltersText}>
               Filters: {searchText && `"${searchText}"`}{' '}
-              {selectedDateFilter !== 'all' && `• ${selectedDateFilter}`}
+              {selectedDateFilter !== 'all' && `• ${selectedDateFilter.charAt(0).toUpperCase() + selectedDateFilter.slice(1)}`}
             </Text>
             <TouchableOpacity onPress={clearFilters}>
               <Text style={styles.clearFiltersText}>Clear All</Text>
             </TouchableOpacity>
           </View>
-        )}
+        ) : null}
       </View>
 
       {/* Events List */}
@@ -175,16 +210,35 @@ const ListEvent = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.flatListContent}
         ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>📅</Text>
-            <Text style={styles.emptyTitle}>No events found</Text>
-            <Text style={styles.emptySubtitle}>
-              {searchText || selectedDateFilter !== 'all'
-                ? 'Try adjusting your filters'
-                : 'Create your first event'}
-            </Text>
-          </View>
+          !listEventsLoading && filteredEvents.length === 0 ? ( // Only show empty state if not loading and filtered list is truly empty
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>📅</Text>
+              <Text style={styles.emptyTitle}>No events found</Text>
+              <Text style={styles.emptySubtitle}>
+                {searchText || selectedDateFilter !== 'all'
+                  ? 'Try adjusting your filters or clear them'
+                  : 'Create your first event to see it here'}
+              </Text>
+              {!(searchText || selectedDateFilter !== 'all') && ( // Offer to create event only if no filters are active
+                <TouchableOpacity
+                  style={styles.createEventButton}
+                  onPress={handleAddNewEvent}
+                >
+                  <Text style={styles.createEventButtonText}>Create Event Now</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : null // Don't show empty component if loading or data is available
         )}
+        // Pull-to-refresh implementation
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onPullToRefresh}
+            tintColor={colors.primary} // iOS spinner color
+            colors={[colors.primary]} // Android spinner color
+          />
+        }
       />
 
       {/* Floating Add Button */}
@@ -316,6 +370,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     backgroundColor: '#F3F4F6',
     borderRadius: 8,
+    marginBottom: 8, // Added margin for spacing
   },
 
   activeFiltersText: {
@@ -357,11 +412,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     textAlign: 'center',
+    marginBottom: 20, // Added margin below subtitle
+  },
+
+  createEventButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+
+  createEventButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 
   floatingButton: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 100,
     right: 20,
     width: 56,
     height: 56,

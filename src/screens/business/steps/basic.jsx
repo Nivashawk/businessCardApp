@@ -64,61 +64,61 @@ const Basic = forwardRef((props, ref) => {
     validate: () => {
       let isValid = true;
 
-      if (companyName.trim() === '') {
-        setCompanyError('Company Name is required');
-        isValid = false;
-      } else {
-        setCompanyError('');
-      }
+      // if (companyName.trim() === '') {
+      //   setCompanyError('Company Name is required');
+      //   isValid = false;
+      // } else {
+      //   setCompanyError('');
+      // }
 
-      if (yourDesignation.trim() === '') {
-        setYourDesignationError('Designation is required');
-        isValid = false;
-      } else {
-        setYourDesignationError('');
-      }
+      // if (yourDesignation.trim() === '') {
+      //   setYourDesignationError('Designation is required');
+      //   isValid = false;
+      // } else {
+      //   setYourDesignationError('');
+      // }
 
-      if (!/^\d{10}$/.test(phone)) {
-        setPhoneError('Phone must be a 10-digit number');
-        isValid = false;
-      } else {
-        setPhoneError('');
-      }
+      // if (!/^\d{10}$/.test(phone)) {
+      //   setPhoneError('Phone must be a 10-digit number');
+      //   isValid = false;
+      // } else {
+      //   setPhoneError('');
+      // }
 
-      if (!/\S+@\S+\.\S+/.test(email)) {
-        setemailError('Enter a valid email');
-        isValid = false;
-      } else {
-        setemailError('');
-      }
+      // if (!/\S+@\S+\.\S+/.test(email)) {
+      //   setemailError('Enter a valid email');
+      //   isValid = false;
+      // } else {
+      //   setemailError('');
+      // }
 
-      if (description.trim() === '') {
-        setDescriptionError('Description is required');
-        isValid = false;
-      } else {
-        setDescriptionError('');
-      }
+      // if (description.trim() === '') {
+      //   setDescriptionError('Description is required');
+      //   isValid = false;
+      // } else {
+      //   setDescriptionError('');
+      // }
 
-      if (!industry || industry.length === 0) {
-        setIndustryError('Select at least one industry');
-        isValid = false;
-      } else {
-        setIndustryError('');
-      }
+      // if (!industry || industry.length === 0) {
+      //   setIndustryError('Select at least one industry');
+      //   isValid = false;
+      // } else {
+      //   setIndustryError('');
+      // }
 
-        if (!services || services.length === 0) {
-          setServicesError('Select at least one service');
-          isValid = false;
-        } else {
-          setServicesError('');
-        }
+      //   if (!services || services.length === 0) {
+      //     setServicesError('Select at least one service');
+      //     isValid = false;
+      //   } else {
+      //     setServicesError('');
+      //   }
 
-        if (!DOJ) {
-          setDOJError('Date of Joining is required');
-          isValid = false;
-        } else {
-          setDOJError('');
-        }
+      //   if (!DOJ) {
+      //     setDOJError('Date of Joining is required');
+      //     isValid = false;
+      //   } else {
+      //     setDOJError('');
+      //   }
 
       if (isValid) {
         const formData = {
@@ -176,10 +176,10 @@ const Basic = forwardRef((props, ref) => {
               error={companyError}
             />
             <InputBox
-              label="Your Desigination (Nivas S)"
+              label="Your Desigination"
               value={yourDesignation}
               onChangeText={setYourDesignation}
-              placeholder="Enter your email address"
+              placeholder="Enter your designation"
               keyboardType="default"
               required
               error={yourDesignationError}
@@ -231,7 +231,7 @@ const Basic = forwardRef((props, ref) => {
               error={servicesError}
             />
             <DatePickerBox
-              label="Event Date Associated with the Organization"
+              label="Date Associated with the Organization"
               value={DOJ}
               onChange={setDOJ}
               // required

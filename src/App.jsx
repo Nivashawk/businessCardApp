@@ -6,6 +6,7 @@ import RootNavigator from './navigation/rootNavigation';
 import Toast from 'react-native-toast-message';
 import { authUser } from './redux/slices/auth/authSlices';
 import { odooConnect } from './redux/slices/auth/odooConnectSlices';
+import { colors } from './theme/colors';
 
 
 // ✅ AuthWrapper component that lives inside the Provider
@@ -31,7 +32,7 @@ const AuthWrapper = () => {
 const App = () => {
   return (
     <Provider store={store}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, {backgroundColor:colors.background}]}>
         {/* Dispatches authUser() inside a valid Redux Provider */}
         <AuthWrapper />
         <RootNavigator />
@@ -42,7 +43,7 @@ const App = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
+  safeArea: { flex: 1, backgroundColor:colors.background },
 });
 
 export default App;

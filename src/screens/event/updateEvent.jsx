@@ -126,7 +126,7 @@ const UpdateEvent = () => {
               typography.heading,
               {textAlign: 'center', marginBottom: 10, marginTop: 10},
             ]}>
-            Create Event
+            Update Event
           </Text>
 
           <InputBox

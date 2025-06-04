@@ -1,20 +1,25 @@
-import {View, StyleSheet, Dimensions, FlatList} from 'react-native';
-import React, {useEffect} from 'react';
+import {View, StyleSheet, Dimensions, FlatList, Text, RefreshControl} from 'react-native'; // Import RefreshControl
+import React, {useEffect, useState, useCallback} from 'react'; // Import useState and useCallback
 import {useDispatch, useSelector} from 'react-redux';
-import ServiceCard from '../../components/cards/serviceCard';
-import Upload from '../../../assets/serviceCard/event.png';
+import BusinessServiceCard from '../../components/cards/businessServiceCard';
+import Upload from '../../../assets/store.png';
+import Add from '../../../assets/add.png'; // Assuming this is for the Add card
 import {colors} from '../../theme/colors';
 import {useNavigation} from '@react-navigation/native';
 import {listBusiness} from '../../redux/slices/business/listBusinessSlices';
+import LinearGradient from 'react-native-linear-gradient';
 
 const {width} = Dimensions.get('window');
-const numColumns = 3;
-const cardMargin = 6;
+const numColumns = 2;
+const cardMargin = 12;
 const itemWidth = (width - cardMargin * (numColumns + 1)) / numColumns;
 
 // Add + Placeholder formatter
 const getFormattedData = (data, columns) => {
-  const fullData = [...data, {id: 'add', name: 'Add New Business'}];
+  const fullData = [
+    ...data,
+    {id: 'add', name: 'Add New Business', isAddCard: true, image: Add}, // Added image for Add card
+  ];
   const remainder = fullData.length % columns;
   if (remainder !== 0) {
     const placeholders = Array(columns - remainder)
@@ -31,20 +36,53 @@ const getFormattedData = (data, columns) => {
 const ListBusiness = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
+
+  // State for pull-to-refresh
+  const [refreshing, setRefreshing] = useState(false);
+
   const listBusinessData = useSelector(
     state => state.listBusinessData?.data?.response?.result?.data ?? [],
   );
-  console.log(listBusinessData);
+  const isLoading = useSelector(
+    state => state.listBusinessData?.loading ?? false,
+  );
+  const listBusinessStatus = useSelector(
+    state => state.listBusinessData?.status, // Assuming you have a 'status' in your slice (e.g., 'idle', 'loading', 'succeeded', 'failed')
+  );
 
-  useEffect(() => {
-    console.log('before api');
+
+  console.log('ListBusiness Data:', listBusinessData);
+  console.log('Is Loading:', isLoading);
+
+  // Function to fetch businesses
+  const fetchBusinesses = useCallback(() => {
+    console.log('Dispatching listBusiness action...');
     dispatch(listBusiness());
-    console.log('aftyer api');
   }, []);
+
+  // Initial data fetch on component mount
+  
+  useEffect(() => {
+    fetchBusinesses();
+  }, [fetchBusinesses]);
+
+  // Monitor loading state to stop refreshing indicator
+  useEffect(() => {
+    if (!isLoading && refreshing) {
+      setRefreshing(false);
+    }
+  }, [isLoading, refreshing]);
+
+  // Handle pull to refresh
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchBusinesses(); // Trigger the fetch
+  }, [fetchBusinesses]);
 
   const handleOnPress = item => {
     if (item.id === 'add') {
       console.log('Navigate to add new business');
+      navigation.navigate('CreateBusiness');
       return;
     }
     navigation.navigate('BusinessDetails', {
@@ -58,38 +96,107 @@ const ListBusiness = () => {
       return <View style={[styles.cardWrapper, {width: itemWidth}]} />;
     }
 
+    // Determine the image based on whether it's the "Add New Business" card
+    const cardImage = item.isAddCard ? Add : Upload;
+
     return (
       <View style={[styles.cardWrapper, {width: itemWidth}]}>
-        <ServiceCard
+        <BusinessServiceCard
           title={item.name}
-          image={Upload}
+          image={cardImage} // Use the determined image
           onPress={() => handleOnPress(item)}
+          isAddCard={item.isAddCard}
         />
       </View>
     );
   };
 
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
+      <Text style={styles.headerTitle}>My Businesses</Text>
+      <Text style={styles.headerSubtitle}>Manage your business listings</Text>
+    </View>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyTitle}>No businesses yet</Text>
+      <Text style={styles.emptySubtitle}>
+        Start by adding your first business
+      </Text>
+    </View>
+  );
+
   return (
-    <View style={{backgroundColor: colors.background}}>
+    <LinearGradient
+      colors={[colors.background || '#F8FAFC', '#FFFFFF']}
+      style={styles.container}>
       <FlatList
         data={getFormattedData(listBusinessData || [], numColumns)}
         renderItem={renderItem}
         keyExtractor={item => item.id.toString()}
         numColumns={numColumns}
         contentContainerStyle={styles.listContainer}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={!isLoading && listBusinessData.length === 0 ? renderEmptyState : null} // Show empty state only if not loading and data is empty
+        showsVerticalScrollIndicator={false}
+        // Pull-to-refresh props
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary} // Customize spinner color for iOS
+            colors={[colors.primary]} // Customize spinner color for Android
+          />
+        }
       />
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  headerContainer: {
+    paddingHorizontal: cardMargin,
+    paddingVertical: 20,
+    paddingBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#6B7280',
+    fontWeight: '400',
+  },
   listContainer: {
-    // flex:1,
-    padding: cardMargin,
-    // backgroundColor: colors.background,
+    paddingHorizontal: cardMargin,
+    paddingBottom: 20,
   },
   cardWrapper: {
-    margin: cardMargin / 2,
+    marginHorizontal: cardMargin / 2,
+    marginBottom: cardMargin,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
   },
 });
 

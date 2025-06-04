@@ -10,7 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StatusBar
+  StatusBar,
+  ActivityIndicator
 } from 'react-native';
 import { typography } from '../../theme/typography';
 import { colors } from '../../theme/colors';
@@ -25,6 +26,8 @@ const Login = () => {
   const {
     email,
     emailError,
+    loading,
+    error,
     setEmail,
     handleSignIn,
     navigateToSignup,
@@ -61,7 +64,7 @@ const Login = () => {
               {/* Welcome Text */}
               <View style={styles.welcomeSection}>
                 <Text style={styles.welcomeTitle}>
-                  Welcome Back! 👋
+                  Welcome Back!
                 </Text>
                 <Text style={styles.welcomeSubtitle}>
                   Enter your email to receive a secure login code
@@ -90,6 +93,7 @@ const Login = () => {
                   keyboardType="email-address"
                   required
                   error={emailError}
+                  editable={!loading} // Disable input during loading
                 />
                 
                 {/* Help Text */}
@@ -101,10 +105,27 @@ const Login = () => {
               {/* Button Section */}
               <View style={styles.buttonSection}>
                 <LargeButton 
-                  title="Send Verification Code"
+                  title={loading ? "Sending Code..." : "Send Verification Code"}
                   onPress={handleSignIn}
-                  style={styles.primaryButton}
+                  disabled={loading} // Disable button during loading
+                  style={[
+                    styles.primaryButton,
+                    loading && styles.buttonDisabled
+                  ]}
                 />
+                
+                {/* Loading Indicator */}
+                {loading && (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator 
+                      size="small" 
+                      color={colors.primary || '#007AFF'} 
+                    />
+                    <Text style={styles.loadingText}>
+                      Sending verification code...
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {/* Security Note */}
@@ -128,15 +149,33 @@ const Login = () => {
                   // For now, showing inline explanation
                   alert('We use email + OTP for enhanced security. No passwords to remember or forget! 🔐');
                 }}
+                disabled={loading} // Disable during loading
               >
-                <Text style={styles.faqText}>Why email verification instead of password? 💡</Text>
+                <Text style={[
+                  styles.faqText,
+                  loading && styles.textDisabled
+                ]}>
+                  Why email verification instead of password? 💡
+                </Text>
               </TouchableOpacity>
 
               {/* Sign Up Link */}
-              <TouchableOpacity onPress={navigateToSignup} style={styles.signupSection}>
-                <Text style={styles.signupText}>
+              <TouchableOpacity 
+                onPress={navigateToSignup} 
+                style={styles.signupSection}
+                disabled={loading} // Disable during loading
+              >
+                <Text style={[
+                  styles.signupText,
+                  loading && styles.textDisabled
+                ]}>
                   New here?{' '}
-                  <Text style={styles.signupLink}>Create your account</Text>
+                  <Text style={[
+                    styles.signupLink,
+                    loading && styles.linkDisabled
+                  ]}>
+                    Create your account
+                  </Text>
                 </Text>
               </TouchableOpacity>
             </View>
@@ -203,6 +242,7 @@ const styles = StyleSheet.create({
   welcomeSection: {
     alignItems: 'center',
     paddingHorizontal: 20,
+    marginBottom: 10,
   },
   welcomeTitle: {
     fontSize: 28,
@@ -280,6 +320,27 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
+  buttonDisabled: {
+    opacity: 0.7,
+    shadowOpacity: 0.1,
+    elevation: 2,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+  },
+  loadingText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: colors.textSecondary || '#666',
+    fontWeight: '500',
+  },
   securityNote: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -314,7 +375,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   faqText: {
     fontSize: 14,
@@ -334,6 +395,15 @@ const styles = StyleSheet.create({
     color: colors.primary || '#007AFF',
     fontWeight: '600',
     textDecorationLine: 'underline',
+  },
+  
+  // Loading States
+  textDisabled: {
+    opacity: 0.5,
+  },
+  linkDisabled: {
+    opacity: 0.5,
+    textDecorationLine: 'none',
   },
 });
 

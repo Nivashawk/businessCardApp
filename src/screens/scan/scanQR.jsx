@@ -30,7 +30,7 @@ const ScanQR = () => {
 
           // Navigate to another screen and pass the scanned data
           navigation.navigate("Home", {
-            screen: "BusinessDetails",
+            screen: "BusinessDetails2",
             params: { data: qrData }
           });
         }
@@ -198,12 +198,12 @@ const ScanQR = () => {
       />
 
       {/* Top Bar */}
-      <View style={styles.topBar}>
+      {/* <View style={styles.topBar}>
         <TouchableOpacity onPress={()=> navigation.navigate('Home')}>
           <BackArrow width={30} height={30} />
         </TouchableOpacity>
         <Text style={styles.title}>Scan QR</Text>
-      </View>
+      </View> */}
 
       {/* Scanner Frame with Overlay */}
       <View style={styles.overlay}>

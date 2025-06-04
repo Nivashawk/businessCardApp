@@ -7,7 +7,7 @@ export const deleteEvent = createAsyncThunk(
   async ({event_id}, thunkAPI) => {
     try {
       const state = thunkAPI.getState();
-      const partner_id = state.login?.data?.result?.partner_id;
+      const partner_id = state.homeData?.data?.result?.data?.partner?.id
       const response = await apiClient.post(`api/events/delete/${event_id}`, {
         params: {
           partner_id: partner_id,

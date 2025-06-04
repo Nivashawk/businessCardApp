@@ -1,6 +1,7 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import apiClient from '../../../api/apiClient';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 
 // Async thunk for registering a user (POST request)
 export const createBusiness = createAsyncThunk(
@@ -11,7 +12,7 @@ export const createBusiness = createAsyncThunk(
       designation,
       business_mobile,
       business_email,
-      description,
+      public_summary,
       industry,
       services_products,
       date_of_joining,
@@ -39,21 +40,21 @@ export const createBusiness = createAsyncThunk(
     thunkAPI,
   ) => {
     try {
-      console.log("inside create business api");
-      
-        const state = thunkAPI.getState();
-        const partner_id = state.login?.data?.result?.partner_id
-        console.log("partner_id", partner_id);
-        
-        // const navigation = useNavigation();
+      console.log('inside create business api');
+
+      const state = thunkAPI.getState();
+      const partner_id = state.homeData?.data?.result?.data?.partner?.id
+      console.log('partner_id', partner_id);
+
+      // const navigation = useNavigation();
       console.log(
-        "param data",
+        'param data',
         partner_id,
         name,
         designation,
         business_mobile,
         business_email,
-        description,
+        public_summary,
         industry,
         services_products,
         date_of_joining,
@@ -86,7 +87,7 @@ export const createBusiness = createAsyncThunk(
           designation,
           business_mobile,
           business_email,
-          description,
+          public_summary,
           industry,
           services_products,
           date_of_joining,
@@ -112,20 +113,21 @@ export const createBusiness = createAsyncThunk(
           is_public,
         },
       });
-      console.log('Response Data:', response);
-      const status = 'success';
+      console.log('Response creat business Data:', response);
+      const status = 'Success';
       if (status === response?.result?.status) {
         Toast.show({
           type: 'success',
           text1: response?.result?.message,
         });
-        // navigation.navigate("Home")
+
       } else {
         Toast.show({
           type: 'error',
-          text1: response?.result?.message,
+          text1: response?.error?.message,
         });
       }
+      return response;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message,
@@ -140,6 +142,13 @@ const createBusinessSlice = createSlice({
     data: null,
     loading: false,
     error: null,
+  },
+  reducers: {
+    resetCreateBusiness: (state) => {
+      state.data = null;
+      state.loading = false;
+      state.error = null;
+    },
   },
   extraReducers: builder => {
     builder
@@ -157,5 +166,7 @@ const createBusinessSlice = createSlice({
       });
   },
 });
+
+export const { resetCreateBusiness } = createBusinessSlice.actions;
 
 export default createBusinessSlice.reducer;

@@ -74,54 +74,54 @@ const Address = forwardRef((props, ref) => {
     validate: () => {
       let isValid = true;
 
-      if (street.trim() === '') {
-        setStreetError('Street is required');
-        isValid = false;
-      } else {
-        setStreetError('');
-      }
-
-      if (street2.trim() === '') {
-        setStreet2Error('Street is required');
-        isValid = false;
-      } else {
-        setStreet2Error('');
-      }
-
-      // if (area.trim() === '') {
-      //   setAreaError('Area is required');
+      // if (street.trim() === '') {
+      //   setStreetError('Street is required');
       //   isValid = false;
       // } else {
-      //   setAreaError('');
+      //   setStreetError('');
       // }
 
-      if (city.trim() === '') {
-        setCityError('City is required');
-        isValid = false;
-      } else {
-        setCityError('');
-      }
+      // if (street2.trim() === '') {
+      //   setStreet2Error('Street is required');
+      //   isValid = false;
+      // } else {
+      //   setStreet2Error('');
+      // }
 
-      if (pinCode.trim() === '') {
-        setPinCodeError('pinCode is required');
-        isValid = false;
-      } else {
-        setPinCodeError('');
-      }
+      // // if (area.trim() === '') {
+      // //   setAreaError('Area is required');
+      // //   isValid = false;
+      // // } else {
+      // //   setAreaError('');
+      // // }
 
-      if (state.trim() === '') {
-        setStateError('State is required');
-        isValid = false;
-      } else {
-        setStateError('');
-      }
+      // if (city.trim() === '') {
+      //   setCityError('City is required');
+      //   isValid = false;
+      // } else {
+      //   setCityError('');
+      // }
 
-      if (country.trim() === '') {
-        setCountryError('Country is required');
-        isValid = false;
-      } else {
-        setCountryError('');
-      }
+      // if (pinCode.trim() === '') {
+      //   setPinCodeError('pinCode is required');
+      //   isValid = false;
+      // } else {
+      //   setPinCodeError('');
+      // }
+
+      // if (state.trim() === '') {
+      //   setStateError('State is required');
+      //   isValid = false;
+      // } else {
+      //   setStateError('');
+      // }
+
+      // if (country.trim() === '') {
+      //   setCountryError('Country is required');
+      //   isValid = false;
+      // } else {
+      //   setCountryError('');
+      // }
 
       if (isValid) {
         const formData = {
@@ -191,7 +191,7 @@ const Address = forwardRef((props, ref) => {
                   setCountryError('Please select a country first');
                 } else {
                   setCountryError('');
-                  setState(item);
+                  setState(item.value);
                 }
               }}
               required={true}

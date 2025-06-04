@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
-  Animated
+  Animated,
+  ActivityIndicator
 } from 'react-native';
 import {colors} from '../../theme/colors';
 import {typography} from '../../theme/typography';
@@ -27,6 +28,9 @@ const OTPVerificationScreen = () => {
     inputRefs,
     timer,
     resendText,
+    isLoading,
+    isVerifying,
+    isResending,
     handleChange,
     handleKeyPress,
     handleResendOTP,
@@ -48,11 +52,24 @@ const OTPVerificationScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.secondary} />
+      
+      {/* Loading Overlay */}
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary || '#007AFF'} />
+            <Text style={styles.loadingText}>
+              {isVerifying ? 'Verifying...' : isResending ? 'Resending OTP...' : 'Please wait...'}
+            </Text>
+          </View>
+        </View>
+      )}
+      
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
-        <View style={styles.container}>
+        <View style={[styles.container, isLoading && styles.containerBlurred]}>
           {/* Header Section */}
           <View style={styles.headerSection}>
             {/* Decorative Elements */}
@@ -67,29 +84,24 @@ const OTPVerificationScreen = () => {
                 source={logo}
               />
             </View>
-
-            {/* Progress Indicator */}
-            <View style={styles.progressSection}>
-              <View style={styles.stepIndicator}>
-                <View style={[styles.stepDot, styles.completedStep]}>
-                  <Text style={styles.checkmark}>✓</Text>
-                </View>
-                <View style={styles.stepLine} />
-                <View style={[styles.stepDot, styles.activeStep]}>
-                  <Text style={styles.stepNumber}>2</Text>
-                </View>
-              </View>
-              <Text style={styles.stepText}>Email Verification</Text>
-            </View>
           </View>
 
           {/* Verification Card */}
           <View style={styles.verificationCard}>
             {/* Card Header */}
             <View style={styles.cardHeader}>
-              <View style={styles.iconContainer}>
-                <Text style={styles.icon}>📧</Text>
+              <View style={styles.progressSection}>
+                <View style={styles.stepIndicator}>
+                  <View style={[styles.stepDot, styles.completedStep]}>
+                    <Text style={styles.checkmark}>✓</Text>
+                  </View>
+                  <View style={styles.stepLine} />
+                  <View style={[styles.stepDot, styles.activeStep]}>
+                    <Text style={styles.stepNumber}>2</Text>
+                  </View>
+                </View>
               </View>
+
               <Text style={styles.cardTitle}>Check Your Email</Text>
               <Text style={styles.cardSubtitle}>
                 We've sent a 6-digit verification code to your email address
@@ -112,13 +124,15 @@ const OTPVerificationScreen = () => {
                       style={[
                         styles.otpBox,
                         digit ? styles.filledOtpBox : {},
+                        isLoading && styles.disabledInput
                       ]}
                       keyboardType="number-pad"
                       maxLength={1}
                       value={digit}
-                      onChangeText={text => handleChange(text, index)}
-                      onKeyPress={event => handleKeyPress(event, index)}
+                      onChangeText={text => !isLoading && handleChange(text, index)}
+                      onKeyPress={event => !isLoading && handleKeyPress(event, index)}
                       textContentType="oneTimeCode"
+                      editable={!isLoading}
                     />
                     {digit && <View style={styles.otpDot} />}
                   </View>
@@ -139,9 +153,14 @@ const OTPVerificationScreen = () => {
             {/* Verify Button */}
             <View style={styles.buttonSection}>
               <SmallButton 
-                title="Verify & Continue" 
+                title={isVerifying ? "Verifying..." : "Verify"}
                 onPress={handleVerifyOTP}
-                style={styles.verifyButton}
+                style={[
+                  styles.verifyButton,
+                  isLoading && styles.disabledButton
+                ]}
+                disabled={isLoading}
+                showLoader={isVerifying}
               />
             </View>
 
@@ -161,27 +180,45 @@ const OTPVerificationScreen = () => {
               <Text style={styles.resendLabel}>Didn't receive the code?</Text>
               <TouchableOpacity 
                 onPress={handleResendOTP} 
-                disabled={timer > 0}
+                disabled={timer > 0 || isLoading}
                 style={[
                   styles.resendButton,
-                  timer === 0 && styles.resendButtonActive
+                  timer === 0 && !isLoading && styles.resendButtonActive,
+                  isLoading && styles.disabledButton
                 ]}
               >
-                <Text style={[
-                  styles.resendText,
-                  timer === 0 && styles.resendTextActive
-                ]}>
-                  {resendText}
-                </Text>
+                <View style={styles.resendButtonContent}>
+                  {isResending && (
+                    <ActivityIndicator 
+                      size="small" 
+                      color={colors.primary || '#007AFF'} 
+                      style={styles.resendLoader}
+                    />
+                  )}
+                  <Text style={[
+                    styles.resendText,
+                    timer === 0 && !isLoading && styles.resendTextActive,
+                    isLoading && styles.disabledText
+                  ]}>
+                    {isResending ? 'Resending...' : resendText}
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
 
             {/* Wrong Email */}
             <TouchableOpacity 
               onPress={handleWrongePhoneNumber}
-              style={styles.wrongEmailButton}
+              style={[
+                styles.wrongEmailButton,
+                isLoading && styles.disabledButton
+              ]}
+              disabled={isLoading}
             >
-              <Text style={styles.wrongEmailText}>
+              <Text style={[
+                styles.wrongEmailText,
+                isLoading && styles.disabledText
+              ]}>
                 📝 Entered wrong email address?
               </Text>
             </TouchableOpacity>
@@ -203,6 +240,56 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+  containerBlurred: {
+    opacity: 0.7,
+  },
+
+  // Loading Styles
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text || '#1a1a1a',
+  },
+  disabledInput: {
+    backgroundColor: '#f0f0f0',
+    color: '#999',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  disabledText: {
+    color: '#999',
+  },
+  resendButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  resendLoader: {
+    marginRight: 8,
   },
 
   // Header Section
@@ -232,14 +319,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent ? `${colors.accent}20` : '#FF6B3520',
   },
   logoContainer: {
-    marginBottom: 16,
+    marginBottom: 32,
     alignItems: 'center',
   },
   logoImage: {
-    height: height * 0.06,
-    width: width * 0.45,
-    maxHeight: 60,
-    maxWidth: 180,
+    height: height * 0.18,
+    width: width * 0.65,
+    maxHeight: 140,
+    maxWidth: 280,
     opacity: 0.95,
   },
   progressSection: {
@@ -279,11 +366,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary || '#007AFF',
     marginHorizontal: 8,
   },
-  stepText: {
-    fontSize: 13,
-    color: colors.primary || '#007AFF',
-    fontWeight: '600',
-  },
 
   // Verification Card
   verificationCard: {
@@ -302,18 +384,6 @@ const styles = StyleSheet.create({
   cardHeader: {
     alignItems: 'center',
     marginBottom: 20,
-  },
-  iconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#e3f2fd',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  icon: {
-    fontSize: 20,
   },
   cardTitle: {
     fontSize: 20,

@@ -4,6 +4,7 @@ import { getHeaderOptions } from '../theme/headerOptions';
 
 import Home from '../screens/home';
 import BusinessDetails from '../screens/business/businessDetails';
+import BusinessDetails2 from '../screens/business/businessDetails2';
 import CreateBusiness from '../screens/business/createBusiness';
 import ListBusiness from '../screens/business/listBusiness';
 import CreateEvent from '../screens/event/createEvent';
@@ -28,6 +29,11 @@ export default function HomeStack() {
       <Stack.Screen
         name="BusinessDetails"
         component={BusinessDetails}
+        options={{ header: () => <CustomHeader title="Details" /> }}
+      />
+      <Stack.Screen
+        name="BusinessDetails2"
+        component={BusinessDetails2}
         options={{ header: () => <CustomHeader title="Details" /> }}
       />
       <Stack.Screen
@@ -68,7 +74,7 @@ export default function HomeStack() {
       <Stack.Screen
         name="CustomCamera"
         component={CustomCamera}
-        options={{ headerShown: false }}
+        options={{ headerShown: false}}
       />
     </Stack.Navigator>
   );

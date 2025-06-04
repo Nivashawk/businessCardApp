@@ -3,15 +3,15 @@ import apiClient from '../../../api/apiClient';
 
 export const getBusiness = createAsyncThunk(
   'business/getBusiness',
-  async ({id}, thunkAPI) => {
+  async ({id, sharedBy=null}, thunkAPI) => {
     try {
       const state = thunkAPI.getState();
-      const partner_id = state.login?.data?.result?.partner_id
+      const partner_id = state.homeData?.data?.result?.data?.partner?.id
       console.log('Attempting authentication with fetch-based API client');
       // Use the getFullResponse method to get access to headers
       const response = await apiClient.post(`/api/business/${id}`,{
         "params": {
-            "partner_id": partner_id
+            "partner_id": sharedBy !== null ? sharedBy : partner_id
         }
       });
 

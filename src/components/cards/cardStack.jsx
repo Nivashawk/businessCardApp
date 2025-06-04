@@ -1,12 +1,12 @@
 // CardStack.js
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useEffect, useMemo} from 'react';
 import {
   View,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
   Image,
-  Platform
+  Platform,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -32,34 +32,13 @@ import Whatsapp from '../../../assets/socialIcons/whatsapp.svg';
 
 const {width, height} = Dimensions.get('window');
 
-
-// const CARD_DATA = [
-//   {
-//     id: 1,
-//     company: 'ZEDBYTE SOFWARE SOLUTIONS',
-//     tagline:
-//       'entrust us with the management of your internet business and forget about it entrust us with the management of your internet business and forget about it',
-//     contact: '1234567890',
-//     email: 'tech@example.com',
-//   },
-//   {
-//     id: 2,
-//     company: 'Design Studio',
-//     tagline: 'Creativity Unleashed',
-//     contact: '9876543210',
-//     email: 'design@example.com',
-//   },
-//   {
-//     id: 3,
-//     company: 'Startup Inc.',
-//     tagline: 'Sky is the Limit',
-//     contact: '4561237890',
-//     email: 'startup@example.com',
-//   },
-// ];
-
 const Card = React.memo(({card, style}) => {
   const navigation = useNavigation();
+
+  // Add validation for card data
+  if (!card) {
+    return null;
+  }
 
   return (
     <Animated.View style={[styles.card, style]}>
@@ -70,32 +49,32 @@ const Card = React.memo(({card, style}) => {
             style={[typography.heading, styles.title]}
             numberOfLines={2}
             ellipsizeMode="tail">
-            {formatCompanyName(card.name)}
+            {formatCompanyName(card.name || '')}
           </Animated.Text>
         </View>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => {
             navigation.navigate('CreateBusiness');
           }}>
           <Editicon width={20} height={20} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
       <View style={styles.descriptionContainer}>
         <Animated.Text style={[typography.description, styles.tagline]}>
-          {truncateText(card.public_summary, 70)}
+          {truncateText(card.public_summary || '', 70)}
         </Animated.Text>
       </View>
       <View style={styles.contactContainer}>
         <View style={styles.contact1}>
           <Animated.Image source={PhoneIcon} />
           <Animated.Text style={[typography.inputText]}>
-            {card.business_mobile}
+            {card.business_mobile || ''}
           </Animated.Text>
         </View>
         <View style={styles.contact2}>
           <Animated.Image source={MailIcon} />
           <Animated.Text style={[typography.inputText]}>
-            {card.business_email}
+            {card.business_email || ''}
           </Animated.Text>
         </View>
       </View>
@@ -132,76 +111,159 @@ const EmptyCard = () => {
 };
 
 const CardStack = ({cardData}) => {
-  console.log(cardData);
+  // ALL HOOKS MUST BE CALLED AT THE TOP LEVEL - NEVER CONDITIONALLY
   
-  const [cards, setCards] = useState(cardData);
+  // Memoize the safe card data to prevent unnecessary re-renders
+  const safeCardData = useMemo(() => {
+    const profiles = cardData?.business_profiles;
+    return Array.isArray(profiles) ? profiles : [];
+  }, [cardData?.business_profiles]);
+
+  // Initialize cards state with safe data
+  const [cards, setCards] = useState(safeCardData);
+  
+  // Separate state for managing card interactions
+  const [isAnimating, setIsAnimating] = useState(false);
+  
+  // Memoize card length to prevent recalculation
+  const cardLength = useMemo(() => cards.length, [cards.length]);
+
+  // ALWAYS declare shared values - they don't cause re-renders
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
 
+  // ALWAYS declare derived values
+  const rotateZ = useDerivedValue(() => `${offsetX.value / 20}deg`);
+
+  // Calculate margin top based on card count and platform
+  const marginTop = useMemo(() => {
+    const baseMargin = Platform.OS === 'ios' ? height * 0.03 : height * 0.02;
+    
+    switch (cardLength) {
+      case 0:
+        return baseMargin;
+      case 1:
+        return baseMargin;
+      case 2:
+        return height * 0.04;
+      default:
+        return height * 0.06;
+    }
+  }, [cardLength]);
+
+  // Update cards when cardData changes
+  useEffect(() => {
+    console.log('CardStack: cardData changed, updating cards. New length:', safeCardData.length);
+    setCards(safeCardData);
+  }, [safeCardData]);
+
+  // Callback to move top card to back
   const moveTopCardToBack = useCallback(() => {
+    if (cards.length <= 1) return; // Don't rotate if only one card
+    
     setCards(prev => {
+      if (prev.length === 0) return prev;
       const [first, ...rest] = prev;
       return [...rest, first];
     });
+  }, [cards.length]);
+
+  // Reset animation state
+  const resetAnimationState = useCallback(() => {
+    setIsAnimating(false);
   }, []);
 
-  const rotateZ = useDerivedValue(() => `${offsetX.value / 20}deg`);
-
+  // ALWAYS declare pan gesture - condition is handled inside
   const pan = Gesture.Pan()
+    .enabled(!isAnimating && cardLength > 0) // Disable during animation
+    .onStart(() => {
+      runOnJS(setIsAnimating)(true);
+    })
     .onUpdate(e => {
       offsetX.value = e.translationX;
       offsetY.value = e.translationY;
     })
     .onEnd(e => {
-      if (Math.abs(e.translationX) > 100) {
+      const threshold = width * 0.3; // 30% of screen width
+      
+      if (Math.abs(e.translationX) > threshold) {
+        // Swipe away animation
         offsetX.value = withTiming(
           e.translationX > 0 ? width : -width,
-          {duration: 200},
-          () => {
-            offsetX.value = 0;
-            offsetY.value = 0;
-            runOnJS(moveTopCardToBack)();
+          {duration: 300},
+          (finished) => {
+            if (finished) {
+              offsetX.value = 0;
+              offsetY.value = 0;
+              runOnJS(moveTopCardToBack)();
+              runOnJS(resetAnimationState)();
+            }
           },
         );
       } else {
-        offsetX.value = withTiming(0);
-        offsetY.value = withTiming(0);
+        // Snap back animation
+        offsetX.value = withTiming(0, {duration: 200});
+        offsetY.value = withTiming(0, {duration: 200}, (finished) => {
+          if (finished) {
+            runOnJS(resetAnimationState)();
+          }
+        });
       }
     });
 
-  const renderTopCard = () => {
-    if (cards.length === 0) return null;
-    const card = cards[0];
+  // ALWAYS declare animated style
+  const topCardAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      {translateX: offsetX.value},
+      {translateY: offsetY.value},
+      {rotateZ: rotateZ.value},
+    ],
+    marginTop: marginTop,
+  }));
 
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [
-        {translateX: offsetX.value},
-        {translateY: offsetY.value},
-        {rotateZ: rotateZ.value},
-      ],
-    }));
+  // Render function for background cards
+  const backgroundCards = useMemo(() => {
+    if (cardLength <= 1) return [];
 
-    return (
-      <GestureDetector gesture={pan}>
-        <Card card={card} style={[animatedStyle, styles.topCard]} />
-      </GestureDetector>
-    );
-  };
+    return cards.slice(1).map((card, index) => {
+      if (!card?.id) return null;
+      
+      return (
+        <Card
+          key={`${card.id}-${index}`}
+          card={card}
+          style={[
+            styles.card,
+            {
+              top: (index + 1) * -20,
+              zIndex: -(index + 1),
+              marginTop: marginTop,
+            },
+          ]}
+        />
+      );
+    }).filter(Boolean);
+  }, [cards, cardLength, marginTop]);
 
+  // Main render - conditional rendering happens here, not in hooks
   return (
     <View style={styles.container}>
-      {cards.length === 0 ? (
+      {cardLength === 0 ? (
         <EmptyCard />
       ) : (
         <>
-          {cards.slice(1).map((card, index) => (
-            <Card
-              key={card.id}
-              card={card}
-              style={[styles.card, {top: (index + 1) * -20, zIndex: -index}]}
-            />
-          ))}
-          {renderTopCard()}
+          {/* Render background cards */}
+          {backgroundCards}
+          
+          {/* Render top card with gesture */}
+          {cards[0] && (
+            <GestureDetector gesture={pan}>
+              <Card 
+                card={cards[0]} 
+                style={[topCardAnimatedStyle, styles.topCard]} 
+              />
+            </GestureDetector>
+          )}
         </>
       )}
     </View>
@@ -210,13 +272,12 @@ const CardStack = ({cardData}) => {
 
 const styles = StyleSheet.create({
   container: {
-    height: height * 0.001,
+    height: height * 0.4, // Fixed: was 0.001 which made container too small
     justifyContent: 'flex-start',
     alignItems: 'center',
     backgroundColor: colors.background,
   },
   card: {
-    marginTop: Platform.OS == 'ios' ? height * 0.03 : height * 0.06,
     width: width * 0.95,
     height: height * 0.3,
     backgroundColor: colors.secondary,
@@ -305,7 +366,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   emptyCard: {
-    marginTop: height * 0.04,
+    marginTop: height * 0.02,
     width: width * 0.95,
     height: height * 0.3,
     backgroundColor: colors.secondary,
@@ -317,8 +378,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 10,
-    alignItems:'center',
-    justifyContent:'center'
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   plusIcon: {
     fontSize: 50,
