@@ -96,6 +96,107 @@ const BusinessDetailsTab = () => {
     }
   };
 
+  const handleSocialPress = (platform, value) => {
+    // Check if the value is already a full URL
+    const isFullUrl = value.startsWith('http://') || value.startsWith('https://');
+    
+    if (isFullUrl) {
+      // If it's already a full URL, use it directly
+      Linking.openURL(value);
+      return;
+    }
+    
+    // If it's not a full URL, construct the URL based on platform
+    let url = '';
+    switch (platform) {
+      case 'instagram':
+        // Handle both @username and username formats
+        const instaHandle = value.startsWith('@') ? value.substring(1) : value;
+        url = `https://instagram.com/${instaHandle}`;
+        break;
+      case 'facebook':
+        url = `https://facebook.com/${value}`;
+        break;
+      case 'linkedin':
+        url = `https://linkedin.com/in/${value}`;
+        break;
+      case 'twitter':
+        // Handle both @username and username formats
+        const twitterHandle = value.startsWith('@') ? value.substring(1) : value;
+        url = `https://twitter.com/${twitterHandle}`;
+        break;
+      case 'youtube':
+        // Handle different YouTube URL formats
+        if (value.includes('channel/') || value.includes('c/') || value.includes('user/')) {
+          url = `https://youtube.com/${value}`;
+        } else {
+          url = `https://youtube.com/c/${value}`;
+        }
+        break;
+      case 'google_business':
+        url = value;
+        break;
+      default:
+        url = value;
+    }
+    Linking.openURL(url);
+  };
+
+  // Function to get available social media platforms
+  const getAvailableSocialMedia = () => {
+    const socialMedia = [];
+    
+    if (BusinessData?.social_insta && BusinessData.social_insta.trim() !== '') {
+      socialMedia.push({
+        platform: 'instagram',
+        value: BusinessData.social_insta,
+        icon: Instagram,
+      });
+    }
+    
+    if (BusinessData?.social_fb && BusinessData.social_fb.trim() !== '') {
+      socialMedia.push({
+        platform: 'facebook',
+        value: BusinessData.social_fb,
+        icon: Facebook,
+      });
+    }
+    
+    if (BusinessData?.social_linkedin && BusinessData.social_linkedin.trim() !== '') {
+      socialMedia.push({
+        platform: 'linkedin',
+        value: BusinessData.social_linkedin,
+        icon: LinkedIn,
+      });
+    }
+    
+    if (BusinessData?.social_twitter && BusinessData.social_twitter.trim() !== '') {
+      socialMedia.push({
+        platform: 'twitter',
+        value: BusinessData.social_twitter,
+        icon: Telegram, // Using Telegram icon for Twitter as per your imports
+      });
+    }
+    
+    if (BusinessData?.social_youtube && BusinessData.social_youtube.trim() !== '') {
+      socialMedia.push({
+        platform: 'youtube',
+        value: BusinessData.social_youtube,
+        icon: Telegram, // You might want to add a YouTube icon
+      });
+    }
+    
+    if (BusinessData?.social_google_business && BusinessData.social_google_business.trim() !== '') {
+      socialMedia.push({
+        platform: 'google_business',
+        value: BusinessData.social_google_business,
+        icon: Telegram, // You might want to add a Google Business icon
+      });
+    }
+    
+    return socialMedia;
+  };
+
   if (!BusinessData) {
     return (
       <View style={styles.loadingContainer}>
@@ -103,6 +204,8 @@ const BusinessDetailsTab = () => {
       </View>
     );
   }
+
+  const availableSocialMedia = getAvailableSocialMedia();
 
   return (
     <ScrollView 
@@ -127,21 +230,27 @@ const BusinessDetailsTab = () => {
 
         {/* Quick Contact Actions */}
         <View style={styles.quickContactContainer}>
-          <TouchableOpacity 
-            style={styles.quickContactButton}
-            onPress={() => handleContactPress('phone', BusinessData?.phone)}>
-            <PhoneIcon width={18} height={18} fill={"#"}/>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.quickContactButton}
-            onPress={() => handleContactPress('email', BusinessData?.email)}>
-            <MailIcon width={18} height={18} />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.quickContactButton}
-            onPress={() => handleContactPress('website', BusinessData?.website)}>
-            <WebsiteIcon width={18} height={18} />
-          </TouchableOpacity>
+          {BusinessData?.business_mobile && (
+            <TouchableOpacity 
+              style={styles.quickContactButton}
+              onPress={() => handleContactPress('phone', BusinessData?.business_mobile)}>
+              <PhoneIcon width={18} height={18} fill={"#ffffff"}/>
+            </TouchableOpacity>
+          )}
+          {BusinessData?.business_email && (
+            <TouchableOpacity 
+              style={styles.quickContactButton}
+              onPress={() => handleContactPress('email', BusinessData?.business_email)}>
+              <MailIcon width={18} height={18} />
+            </TouchableOpacity>
+          )}
+          {BusinessData?.website && BusinessData.website.trim() !== '' && (
+            <TouchableOpacity 
+              style={styles.quickContactButton}
+              onPress={() => handleContactPress('website', BusinessData?.website)}>
+              <WebsiteIcon width={18} height={18} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.quickContactButton}>
             <Whatsapp width={18} height={18} />
           </TouchableOpacity>
@@ -178,7 +287,7 @@ const BusinessDetailsTab = () => {
         <View style={styles.mapContainer}>
           <Text style={styles.mapPlaceholderText}>Interactive Map</Text>
           <Text style={styles.addressText}>
-            {BusinessData?.address || 'Address not available'}
+            {BusinessData?.street || BusinessData?.city || 'Address not available'}
           </Text>
         </View>
       </View>
@@ -187,15 +296,15 @@ const BusinessDetailsTab = () => {
       <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>Registration Details</Text>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>GST Number</Text>
+          <Text style={styles.detailLabel}>Business ID</Text>
           <Text style={styles.detailValue}>
-            {BusinessData?.gstNumber || 'Not registered'}
+            {BusinessData?.id || 'Not available'}
           </Text>
         </View>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Business Type</Text>
+          <Text style={styles.detailLabel}>Status</Text>
           <Text style={styles.detailValue}>
-            {BusinessData?.businessType || 'Private Limited'}
+            {BusinessData?.active ? 'Active' : 'Inactive'}
           </Text>
         </View>
       </View>
@@ -206,38 +315,39 @@ const BusinessDetailsTab = () => {
         <View style={styles.founderCard}>
           <View style={styles.founderAvatar}>
             <Text style={styles.founderInitial}>
-              {BusinessData?.designation?.charAt(0) || 'F'}
+              {BusinessData?.partner_name?.charAt(0) || 'F'}
             </Text>
           </View>
           <View style={styles.founderInfo}>
             <Text style={styles.founderName}>
-              {BusinessData?.designation || 'Founder Name'}
+              {BusinessData?.partner_name || 'Partner Name'}
             </Text>
             <Text style={styles.founderDesignation}>
-              {BusinessData?.partner_name || 'Chief Executive Officer'}
+              {BusinessData?.designation || 'Position'}
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Social Media Section */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Connect With Us</Text>
-        <View style={styles.socialMediaContainer}>
-          <TouchableOpacity style={styles.socialButton}>
-            <Facebook width={20} height={20} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <Instagram width={20} height={20} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <LinkedIn width={20} height={20} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <Telegram width={20} height={20} />
-          </TouchableOpacity>
+      {/* Social Media Section - Only show if there are social media accounts */}
+      {availableSocialMedia.length > 0 && (
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Connect With Us</Text>
+          <View style={styles.socialMediaContainer}>
+            {availableSocialMedia.map((social, index) => {
+              const IconComponent = social.icon;
+              return (
+                <TouchableOpacity 
+                  key={index}
+                  style={styles.socialButton}
+                  onPress={() => handleSocialPress(social.platform, social.value)}>
+                  <IconComponent width={20} height={20} />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
-      </View>
+      )}
     </ScrollView>
   );
 };

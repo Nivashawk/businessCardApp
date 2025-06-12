@@ -1,4 +1,6 @@
-import React, {useRef, useState, useEffect, useCallback, useLayoutEffect} from 'react';
+// Enhanced CreateBusiness.js with better upload handling
+
+import React, {useRef, useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -12,11 +14,18 @@ import {
 } from 'react-native';
 import {useSelector, useDispatch} from 'react-redux';
 import {createBusiness} from '../../redux/slices/business/createBusinessSlices';
-import {updateBusinessSocialData} from '../../redux/slices/business/businessBasic';
+import {
+  updateBusinessBasicData,
+  updateBusinessAddressData,
+  updateBusinessUploadData,
+  updateBusinessSocialData,
+  resetBusinessData,
+  setCurrentTab, // Add this import
+} from '../../redux/slices/business/businessBasic';
 
 import {TabBarStyle} from '../../theme/tabBar';
 import {useFocusEffect} from '@react-navigation/native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import { resetCreateBusiness } from '../../redux/slices/business/createBusinessSlices';
 import {colors} from '../../theme/colors';
 import Basic from './steps/basic';
@@ -28,47 +37,72 @@ const {width, height} = Dimensions.get('window');
 
 const CreateBusiness = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const dispatch = useDispatch();
   const businessData = useSelector(state => state.businessData);
-  const [index, setIndex] = useState(0);
+  
+  // Get current tab from Redux state
+  const currentTabFromRedux = useSelector(state => state.businessData.currentTab || 0);
+  
+  // Get initial tab from route params (this takes priority)
+  const initialTabFromRoute = route.params?.initialTab;
+  
+  // Determine which tab to start with
+  const initialTab = initialTabFromRoute !== undefined ? initialTabFromRoute : currentTabFromRedux;
+  
+  const [index, setIndex] = useState(initialTab);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasNavigatedAway, setHasNavigatedAway] = useState(false);
-  const progress = useRef(new Animated.Value(0)).current;
+  const progress = useRef(new Animated.Value(initialTab / 4)).current;
 
   const BusinessCreated = useSelector(
     state => state.createBusiness?.data?.result ?? [],
   );
 
+  // Update Redux whenever tab changes
+  useEffect(() => {
+    dispatch(setCurrentTab(index));
+  }, [index, dispatch]);
+
   // Reset component state when screen is focused
   useFocusEffect(
     useCallback(() => {
-      // Reset all states when entering the screen
-      setIndex(0);
+      // Handle route params for initial tab
+      if (route.params?.initialTab !== undefined) {
+        setIndex(route.params.initialTab);
+        progress.setValue(route.params.initialTab / 4);
+        // Clear the route param so it doesn't interfere with future navigation
+        navigation.setParams({ initialTab: undefined });
+      } else {
+        // Use Redux state for tab persistence
+        setIndex(currentTabFromRedux);
+        progress.setValue(currentTabFromRedux / 4);
+      }
+      
       setIsSubmitted(false);
       setHasNavigatedAway(false);
-      
-      // Reset progress bar
-      progress.setValue(0);
-      
-      // IMPORTANT: Clear the previous business creation state from Redux
-      // You might need to dispatch a reset action here
-      dispatch(resetCreateBusiness()); // Add this action to your Redux slice
+      dispatch(resetCreateBusiness());
       
       return () => {
-        // Cleanup when leaving the screen
         setHasNavigatedAway(true);
       };
-    }, [])
+    }, [route.params?.initialTab, currentTabFromRedux, navigation, dispatch])
   );
+
+  // // Reset tab state when component unmounts completely
+  // useEffect(() => {
+  //   return () => {
+  //     // Only reset tab if we're navigating away from the entire flow
+  //     if (hasNavigatedAway) {
+  //       dispatch(setCurrentTab(0));
+  //     }
+  //   };
+  // }, [hasNavigatedAway, dispatch]);
 
   useEffect(() => {
     console.log('submit status', isSubmitted);
     console.log('businessData', businessData);
     
-    // Only trigger API call if:
-    // 1. Form is submitted
-    // 2. We're on the last step (index 3)
-    // 3. We haven't navigated away from the screen
     if (isSubmitted && index === 3 && !hasNavigatedAway) {
       console.log('Triggering API call from last step');
       if (businessData) {
@@ -82,13 +116,13 @@ const CreateBusiness = () => {
             public_summary: businessData.description,
             industry: businessData.industry,
             services_products: businessData.services,
-            date_of_joining: businessData.date_of_joining,
+            date_of_joining: businessData.DOJ || businessData.date_of_joining,
             street: businessData.street,
             street2: businessData.street2,
             city: businessData.city,
             zip: businessData.zip,
-            state_id: 33,
-            country_id: 91,
+            state_id: businessData.state_id,
+            country_id: businessData.country_id,
             website: businessData.website,
             promo_video: businessData.promo_video,
             business_card_front: businessData.business_card_front,
@@ -109,20 +143,16 @@ const CreateBusiness = () => {
     }
   }, [businessData, isSubmitted, index, hasNavigatedAway, dispatch]);
 
-  // Monitor Redux state changes - but only respond to NEW success states
   useEffect(() => {
     console.log("BusinessCreated state:", BusinessCreated);
-    // Only navigate if:
-    // 1. Business was successfully created
-    // 2. We haven't navigated away yet
-    // 3. We actually submitted the form (prevents navigation on re-entry)
     if (BusinessCreated?.status === "Success" && !hasNavigatedAway && isSubmitted) {
-      // Add a small delay to ensure smooth transition
+      dispatch(resetBusinessData());
+      dispatch(setCurrentTab(0)); // Reset tab after successful creation
       setTimeout(() => {
         navigation.goBack();
       }, 500);
     }
-  }, [BusinessCreated, navigation, hasNavigatedAway, isSubmitted]);
+  }, [BusinessCreated, navigation, hasNavigatedAway, isSubmitted, dispatch]);
 
   const basicRef = useRef();
   const addressRef = useRef();
@@ -149,7 +179,6 @@ const CreateBusiness = () => {
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (e, gestureState) => {
-        // Only capture horizontal gestures
         return Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
       },
       onPanResponderRelease: (e, gestureState) => {
@@ -162,34 +191,62 @@ const CreateBusiness = () => {
     }),
   ).current;
 
+  // Enhanced function to save current step data to Redux
+  const saveCurrentStepData = () => {
+    const currentRef = steps[index].ref;
+    if (currentRef.current?.getData) {
+      const stepData = currentRef.current.getData();
+      console.log(`Saving step ${index} data:`, stepData);
+      
+      switch (index) {
+        case 0: // Basic step
+          dispatch(updateBusinessBasicData(stepData));
+          break;
+        case 1: // Address step
+          dispatch(updateBusinessAddressData(stepData));
+          break;
+        case 2: // Upload step
+          const uploadData = {
+            website: stepData.website || '',
+            promo_video: stepData.promo_video || stepData.promoVideo || null,
+            business_card_front: stepData.business_card_front || stepData.businessCardFront || null,
+            business_card_back: stepData.business_card_back || stepData.businessCardBack || null,
+            logo: stepData.logo || null,
+          };
+          console.log('Saving upload data:', uploadData);
+          dispatch(updateBusinessUploadData(uploadData));
+          break;
+        case 3: // Social step
+          dispatch(updateBusinessSocialData({
+            social_insta: stepData.instagram || '',
+            social_linkedin: stepData.linkedin || '',
+            social_twitter: stepData.twitter || '',
+            social_fb: stepData.facebook || '',
+            social_youtube: stepData.youtube || '',
+            social_google_business: stepData.business || '',
+          }));
+          break;
+      }
+    }
+  };
+
   const handleNext = () => {
     const currentRef = steps[index].ref;
     if (currentRef.current?.validate && !currentRef.current.validate()) return;
 
+    saveCurrentStepData();
+
     if (isLastStep) {
       console.log('Form submitted ✅');
-      const socialData = currentRef.current?.getData?.();
-      console.log('Final socialData:', socialData);
-      dispatch(
-        updateBusinessSocialData({
-          social_insta: socialData.instagram,
-          social_linkedin: socialData.linkedin,
-          social_twitter: socialData.twitter,
-          social_fb: socialData.facebook,
-          social_youtube: socialData.youtube,
-          social_google_business: socialData.business,
-        }),
-      );
       setIsSubmitted(true);
     } else {
-      // Reset submission state when navigating to other steps
       setIsSubmitted(false);
       setIndex(index + 1);
     }
   };
 
   const handlePrevious = () => {
-    // Reset submission state when going back
+    saveCurrentStepData();
     setIsSubmitted(false);
     setIndex(index - 1);
   };
@@ -198,9 +255,65 @@ const CreateBusiness = () => {
     const currentRef = steps[index].ref;
     if (currentRef.current?.validate && !currentRef.current.validate()) return;
 
-    // Reset submission state when navigating via tabs
+    saveCurrentStepData();
     setIsSubmitted(false);
     setIndex(i);
+  };
+
+  // Enhanced function to get current step data with better upload handling
+  const getCurrentStepData = () => {
+    console.log('Getting data for step:', index, 'businessData:', businessData);
+    
+    switch (index) {
+      case 0: // Basic step
+        return {
+          companyName: businessData.companyName || '',
+          yourDesignation: businessData.yourDesignation || '',
+          phone: businessData.phone || '',
+          email: businessData.email || '',
+          description: businessData.description || '',
+          industry: businessData.industry || '',
+          services: businessData.services || '',
+          DOJ: businessData.DOJ || businessData.date_of_joining || '',
+        };
+      case 1: // Address step
+        return {
+          street: businessData.street || '',
+          street2: businessData.street2 || '',
+          city: businessData.city || '',
+          zip: businessData.zip || '',
+          pinCode: businessData.zip || '',
+          state_id: businessData.state_id || '',
+          state: businessData.state_id || '',
+          country_id: businessData.country_id || '',
+          country: businessData.country_id || '',
+          area: businessData.area || '',
+        };
+      case 2: // Upload step
+        const uploadData = {
+          website: businessData.website || '',
+          promo_video: businessData.promo_video || null,
+          promoVideo: businessData.promo_video || null,
+          business_card_front: businessData.business_card_front || null,
+          businessCardFront: businessData.business_card_front || null,
+          business_card_back: businessData.business_card_back || null,
+          businessCardBack: businessData.business_card_back || null,
+          logo: businessData.logo || null,
+        };
+        console.log('Returning upload data to component:', uploadData);
+        return uploadData;
+      case 3: // Social step
+        return {
+          instagram: businessData.social_insta || '',
+          linkedin: businessData.social_linkedin || '',
+          twitter: businessData.social_twitter || '',
+          facebook: businessData.social_fb || '',
+          youtube: businessData.social_youtube || '',
+          business: businessData.social_google_business || '',
+        };
+      default:
+        return {};
+    }
   };
 
   const StepComponent = steps[index].Component;
@@ -226,7 +339,7 @@ const CreateBusiness = () => {
         />
       </View>
 
-      {/* Tab Navigation with Enhanced Active Indicator */}
+      {/* Tab Navigation */}
       <View style={styles.tabs}>
         {steps.map((step, i) => (
           <TouchableOpacity
@@ -236,7 +349,6 @@ const CreateBusiness = () => {
               styles.tab,
               index === i && styles.activeTab
             ]}>
-            {/* Step Number Circle */}
             <View style={[
               styles.stepNumber,
               index === i && styles.activeStepNumber,
@@ -251,7 +363,6 @@ const CreateBusiness = () => {
               </Text>
             </View>
             
-            {/* Step Label */}
             <Text style={[
               styles.tabText, 
               index === i && styles.activeTabText,
@@ -260,18 +371,23 @@ const CreateBusiness = () => {
               {step.label}
             </Text>
             
-            {/* Active Tab Bottom Indicator */}
             {index === i && <View style={styles.activeTabIndicator} />}
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Step Content with Swipe Support */}
+      {/* Step Content */}
       <Animated.View {...panResponder.panHandlers} style={styles.stepContainer}>
-        <StepComponent ref={steps[index].ref} />
+        <StepComponent 
+          ref={steps[index].ref} 
+          initialData={getCurrentStepData()}
+          onDataChange={index === 2 ? (data) => {
+            console.log('Upload component data changed:', data);
+          } : undefined}
+        />
       </Animated.View>
 
-      {/* Navigation Buttons - Now with better positioning */}
+      {/* Navigation Buttons */}
       <View style={styles.navButtons}>
         <TouchableOpacity
           style={[styles.button, index === 0 && styles.disabledButton]}
@@ -331,7 +447,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   activeTab: {
-    backgroundColor: colors.primary + '10', // 10% opacity
+    backgroundColor: colors.primary + '10',
     borderRadius: 12,
   },
   stepNumber: {
@@ -392,7 +508,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingLeft: 20,
     paddingRight: 20,
-    paddingBottom: 80, // Add padding to prevent overlap with nav buttons
+    paddingBottom: 80,
   },
   navButtons: {
     position: 'absolute',
@@ -403,11 +519,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16, // Account for iOS safe area
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
     borderTopWidth: 1,
     borderTopColor: '#ddd',
-    elevation: 8, // Android shadow
-    shadowColor: '#000', // iOS shadow
+    elevation: 8,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: -2,

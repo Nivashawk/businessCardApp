@@ -29,37 +29,25 @@ import {getState} from '../../../redux/slices/business/getStateSlices';
 
 const {width, height} = Dimensions.get('window');
 
-const Address = forwardRef((props, ref) => {
+const Address = forwardRef(({initialData}, ref) => {
   const dispatch = useDispatch();
-  const businessData = useSelector(state => state.businessData);
   const countries = useSelector(state => state?.countries?.data?.result?.data);
   const states = useSelector(state => state?.states?.data?.result?.data);
 
-  useEffect(() => {
-    console.log('businessData', businessData);
-    if (businessData) {
-      setStreet(businessData.street || '');
-      setStreet2(businessData.street2 || '');
-      setCity(businessData.city || '');
-      setPinCode(businessData.zip || '');
-      setState(businessData.state_id || '');
-      setCountry(businessData.country_id || '');
-      // If selectedCode is stored, also add:
-      // setSelectedCode(businessData.selectedCode || '+91');
-    }
-  }, [businessData]);
-
-  useEffect(() => {
-    dispatch(getCountry());
-  }, [dispatch]);
-  // input values
-  const [street, setStreet] = useState('');
-  const [street2, setStreet2] = useState('');
-  const [area, setArea] = useState('');
-  const [city, setCity] = useState('');
-  const [pinCode, setPinCode] = useState('');
-  const [state, setState] = useState('');
-  const [country, setCountry] = useState('');
+  // Initialize state with initialData (from Redux)
+  const [street, setStreet] = useState(initialData?.street || '');
+  const [street2, setStreet2] = useState(initialData?.street2 || '');
+  const [area, setArea] = useState(initialData?.area || '');
+  const [city, setCity] = useState(initialData?.city || '');
+  const [pinCode, setPinCode] = useState(
+    initialData?.zip || initialData?.pinCode || '',
+  );
+  const [state, setState] = useState(
+    initialData?.state_id || initialData?.state || '',
+  );
+  const [country, setCountry] = useState(
+    initialData?.country_id || initialData?.country || '',
+  );
 
   // input errors
   const [streetError, setStreetError] = useState('');
@@ -70,10 +58,49 @@ const Address = forwardRef((props, ref) => {
   const [stateError, setStateError] = useState('');
   const [countryError, setCountryError] = useState('');
 
+  // Load countries on component mount
+  useEffect(() => {
+    dispatch(getCountry());
+  }, [dispatch]);
+
+  // Update state when initialData changes (when user navigates back)
+  useEffect(() => {
+    if (initialData) {
+      console.log('Updating Address form with initialData:', initialData);
+      console.log('Available countries:', countries);
+      console.log('Available states:', states);
+
+      setStreet(initialData.street || '');
+      setStreet2(initialData.street2 || '');
+      setArea(initialData.area || '');
+      setCity(initialData.city || '');
+      setPinCode(initialData.zip || initialData.pinCode || '');
+
+      // Ensure the values are properly converted to match dropdown data
+      const countryValue = initialData.country_id || initialData.country;
+      const stateValue = initialData.state_id || initialData.state;
+
+      // Convert to string/number as needed to match your dropdown data
+      setCountry(countryValue ? String(countryValue) : '');
+      setState(stateValue ? String(stateValue) : '');
+
+      console.log('Setting country value:', countryValue);
+      console.log('Setting state value:', stateValue);
+    }
+  }, [initialData, countries, states]);
+
+  // Load states when country changes
+  useEffect(() => {
+    if (country) {
+      dispatch(getState({country_code: country}));
+    }
+  }, [country]);
+
   useImperativeHandle(ref, () => ({
     validate: () => {
       let isValid = true;
 
+      // Uncomment these validations as needed
       // if (street.trim() === '') {
       //   setStreetError('Street is required');
       //   isValid = false;
@@ -82,18 +109,11 @@ const Address = forwardRef((props, ref) => {
       // }
 
       // if (street2.trim() === '') {
-      //   setStreet2Error('Street is required');
+      //   setStreet2Error('Street 2 is required');
       //   isValid = false;
       // } else {
       //   setStreet2Error('');
       // }
-
-      // // if (area.trim() === '') {
-      // //   setAreaError('Area is required');
-      // //   isValid = false;
-      // // } else {
-      // //   setAreaError('');
-      // // }
 
       // if (city.trim() === '') {
       //   setCityError('City is required');
@@ -103,20 +123,20 @@ const Address = forwardRef((props, ref) => {
       // }
 
       // if (pinCode.trim() === '') {
-      //   setPinCodeError('pinCode is required');
+      //   setPinCodeError('Pin Code is required');
       //   isValid = false;
       // } else {
       //   setPinCodeError('');
       // }
 
-      // if (state.trim() === '') {
+      // if (!state) {
       //   setStateError('State is required');
       //   isValid = false;
       // } else {
       //   setStateError('');
       // }
 
-      // if (country.trim() === '') {
+      // if (!country) {
       //   setCountryError('Country is required');
       //   isValid = false;
       // } else {
@@ -124,15 +144,8 @@ const Address = forwardRef((props, ref) => {
       // }
 
       if (isValid) {
-        const formData = {
-          street,
-          area,
-          city,
-          pinCode,
-          state,
-          country,
-        };
-        console.log('Form Address:', formData);
+        console.log('Address form validation passed');
+        // Dispatch the data to Redux when validation passes
         dispatch(
           updateBusinessAddressData({
             street,
@@ -148,21 +161,41 @@ const Address = forwardRef((props, ref) => {
       return isValid;
     },
 
-    // getData: () => ({
-    //   street,
-    //   area,
-    //   city,
-    //   pinCode,
-    //   state,
-    //   country,
-    // }),
+    getData: () => {
+      const data = {
+        street,
+        street2,
+        area,
+        city,
+        pinCode,
+        zip: pinCode, // Include both for compatibility
+        state,
+        state_id: state, // Include both for compatibility
+        country,
+        country_id: country, // Include both for compatibility
+      };
+      console.log('Getting Address form data:', data);
+      return data;
+    },
   }));
 
   const handleSelectCountry = item => {
-    console.log('country dropdown', item);
-    setCountry(item);
+    console.log('country dropdown selected:', item);
+    const countryValue = String(item.value);
+    setCountry(countryValue);
     setCountryError('');
-    dispatch(getState({country_code: item.value}));
+    setState(''); // Reset state when country changes
+  };
+
+  const handleSelectState = item => {
+    if (!country) {
+      setCountryError('Please select a country first');
+    } else {
+      setCountryError('');
+      const stateValue = String(item.value);
+      setState(stateValue);
+      setStateError('');
+    }
   };
 
   return (
@@ -176,29 +209,32 @@ const Address = forwardRef((props, ref) => {
           <View style={styles.inner}>
             <DropdownWSearch
               label="Country"
-              data={countries?.map(c => ({label: c.name, value: c.id})) ?? []}
+              data={
+                countries?.map(c => ({
+                  label: c.name,
+                  value: String(c.id), // Ensure consistent string type
+                })) ?? []
+              }
               onSelect={handleSelectCountry}
               required={true}
               requiredText="Please select a country"
-
-              // placeholder={eventType}
+              value={country}
+              error={countryError}
             />
+
             <DropdownWSearch
               label="State"
-              data={states?.map(c => ({label: c.name, value: c.id})) ?? []}
-              onSelect={item => {
-                if (!country) {
-                  setCountryError('Please select a country first');
-                } else {
-                  setCountryError('');
-                  setState(item.value);
-                }
-              }}
+              data={
+                states?.map(s => ({
+                  label: s.name,
+                  value: String(s.id), // Ensure consistent string type
+                })) ?? []
+              }
+              onSelect={handleSelectState}
               required={true}
               requiredText="Please select a state"
-              disabled={!country}
-
-              // placeholder={eventType}
+              value={state}
+              error={stateError}
             />
 
             <InputBox
@@ -220,29 +256,20 @@ const Address = forwardRef((props, ref) => {
               error={streetError}
             />
             <InputBox
-              label="Street2"
+              label="Street 2"
               value={street2}
               onChangeText={setStreet2}
-              placeholder="Street2"
+              placeholder="Street 2 (Optional)"
               keyboardType="default"
               error={street2Error}
             />
-            {/* <InputBox
-              label="Area"
-              value={area}
-              onChangeText={setArea}
-              placeholder="Area"
-              keyboardType="default"
-              required
-              error={areaError}
-            /> */}
 
             <InputBox
-              label="PinCode"
+              label="Pin Code"
               value={pinCode}
               onChangeText={setPinCode}
-              placeholder="PinCode"
-              keyboardType="default"
+              placeholder="Pin Code"
+              keyboardType="numeric"
               required
               error={pinCodeError}
             />

@@ -10,37 +10,54 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import React, {useState, useEffect, useMemo} from 'react';
+import React, {useState, useEffect, useMemo, useCallback} from 'react'; // Import useCallback
 import QrCode from '../../../assets/QRcode.png';
 import SmallButton from '../../components/buttons/smallButton';
 import {colors} from '../../theme/colors';
 import {typography} from '../../theme/typography';
 import DropdownWSearch from '../../components/inputs/dropdownWSearch';
 import {useDispatch, useSelector} from 'react-redux';
-import {getBusinessQR} from '../../redux/slices/business/generateQRSlices';
+import {getBusinessQR, resetQRData} from '../../redux/slices/business/generateQRSlices';
 import {listBusiness} from '../../redux/slices/business/listBusinessSlices';
 import {listEvents} from '../../redux/slices/events/listEvents';
+import {useFocusEffect} from '@react-navigation/native'; // Import useFocusEffect
 
 const {width, height} = Dimensions.get('window');
 
 const GenerateQR = () => {
   const [selectedBusiness, setSelectedBusiness] = useState('');
   const [selectedEvent, setSelectedEvent] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // This local loading state is also handled by Redux loading
   const dispatch = useDispatch();
 
   // Redux selectors
-  const BusinessListData = useSelector(
-    state => state?.listBusinessData?.data?.response?.result?.data ?? [],
-  );
-  const EventListData = useSelector(
-    state => state.listEventsData?.data?.response?.result?.events ?? [],
-  );
-  const QRData = useSelector(
-    state => state.QRData?.data?.result?.data ?? null,
-  );
+  const {
+    data: businessListData,
+    loading: businessLoading, // Get loading state from redux
+    error: businessError,
+  } = useSelector(state => state.listBusinessData);
+
+  const {
+    data: eventListData,
+    loading: eventLoading, // Get loading state from redux
+    error: eventError,
+  } = useSelector(state => state.listEventsData);
+
+  const {
+    data: qrData,
+    loading: qrLoading, // Get loading state from redux
+    error: qrError,
+  } = useSelector(state => state.QRData);
+
+  // Combine Redux loading states
+  const overallLoading = businessLoading || eventLoading || qrLoading;
 
   // Memoized data transformations
+  const BusinessListData = businessListData?.response?.result?.data ?? [];
+  const EventListData = eventListData?.response?.result?.events ?? [];
+  const QRData = qrData?.result?.data ?? null;
+
+
   const businessOptions = useMemo(
     () => BusinessListData?.map(c => ({label: c.name, value: c.id})) ?? [],
     [BusinessListData],
@@ -64,35 +81,53 @@ const GenerateQR = () => {
   const hasQRCode = QRData?.qr_code;
   const hasBusinessUrl = QRData?.business_url;
 
+
+  // Initial data fetch when component mounts
   useEffect(() => {
     console.log('Fetching business and events data...');
     dispatch(listBusiness());
     dispatch(listEvents());
-  }, [dispatch]);
+  }, []);
 
-  const handleSelectBusiness = item => {
+  // useFocusEffect to reset state when the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        console.log('GenerateQR screen unfocused, cleanup...');
+        dispatch(resetQRData());
+      };
+    }, []) 
+  );
+
+  const generateQR = useCallback((businessId, eventId) => {
+    // This isLoading state should reflect the overall Redux loading
+    // setIsLoading(true); // No longer needed here if overallLoading is used
+
+    // You might want to handle error/success more explicitly here
+    dispatch(getBusinessQR({business_id: businessId, event_id: eventId}));
+
+    // setIsLoading(false); // This will always be false immediately, handle in Redux or separate useEffect
+  }, [dispatch]); // Dependency on dispatch
+
+  // Use useEffect to manage local isLoading based on Redux loading
+  useEffect(() => {
+    // This can be used to show a local spinner, but overallLoading covers it
+    // setIsLoading(qrLoading);
+  }, [qrLoading]);
+
+
+  const handleSelectBusiness = useCallback(item => {
     console.log('Selected Business:', item);
     setSelectedBusiness(item.value);
     generateQR(item.value, selectedEvent);
-  };
+  }, [selectedEvent, generateQR]); // Dependencies: selectedEvent, generateQR
 
-  const handleSelectEvent = item => {
+  const handleSelectEvent = useCallback(item => {
     console.log('Selected Event:', item);
     setSelectedEvent(item.value);
     generateQR(selectedBusiness, item.value);
-  };
+  }, [selectedBusiness, generateQR]); // Dependencies: selectedBusiness, generateQR
 
-  const generateQR = (businessId, eventId) => {
-    setIsLoading(true);
-    try {
-      dispatch(getBusinessQR({business_id: businessId, event_id: eventId}));
-    } catch (error) {
-      console.error('Error generating QR:', error);
-      Alert.alert('Error', 'Failed to generate QR code. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleShare = async () => {
     if (!hasBusinessUrl) {
@@ -130,7 +165,7 @@ const GenerateQR = () => {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}>
-      
+
       {/* Header */}
       <View style={styles.header}>
         <Text style={[typography.heading, styles.headerText]}>
@@ -150,7 +185,7 @@ const GenerateQR = () => {
               source={{uri: `data:image/png;base64,${QRData.qr_code}`}}
               resizeMode="contain"
             />
-            {isLoading && (
+            {overallLoading && ( // Use overallLoading here
               <View style={styles.loadingOverlay}>
                 <ActivityIndicator size="large" color={colors.primary} />
               </View>
@@ -196,6 +231,7 @@ const GenerateQR = () => {
             data={businessOptions}
             onSelect={handleSelectBusiness}
             placeholder="Choose your business"
+            value={selectedBusiness} // Pass value to reset dropdown
           />
         </View>
 
@@ -205,6 +241,7 @@ const GenerateQR = () => {
             data={eventOptions}
             onSelect={handleSelectEvent}
             placeholder="Choose an event"
+            value={selectedEvent} // Pass value to reset dropdown
           />
         </View>
       </View>
@@ -389,6 +426,8 @@ const styles = StyleSheet.create({
     color: colors.textSecondary || colors.text,
     opacity: 0.8,
   },
+
+  
 });
 
-export default GenerateQR
+export default GenerateQR;

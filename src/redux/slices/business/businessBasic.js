@@ -1,41 +1,47 @@
 import {createSlice} from '@reduxjs/toolkit';
 
+const initialState = {
+  currentTab: 0, // Added missing currentTab property
+  companyName: '',
+  yourDesignation: '',
+  phone: '',
+  email: '',
+  description: '',
+  industry: '',
+  services: '',
+
+  street: '',
+  street2: '',
+  city: '',
+  zip: '',
+  state_id: '',
+  country_id: '',
+
+  website: '',
+  promo_video: '',
+  business_card_front: '',
+  business_card_back: '',
+  logo: '',
+
+  social_insta: '',
+  social_linkedin: '',
+  social_twitter: '',
+  social_fb: '',
+  social_youtube: '',
+  social_google_business: '',
+
+  active: true,
+  is_primary: true,
+  is_public: true,
+};
+
 const BusinessDataSlice = createSlice({
   name: 'getBusinessData',
-  initialState: {
-    companyName: '',
-    yourDesignation: '',
-    phone: '',
-    email: '',
-    description: '',
-    industry: '',
-    services: '',
-
-    street: '',
-    street2: '',
-    city: '',
-    zip: '',
-    state_id: '',
-    country_id: '',
-
-    website: '',
-    promo_video: '',
-    business_card_front: '',
-    business_card_back: '',
-    logo: '',
-
-    social_insta: '',
-    social_linkedin: '',
-    social_twitter: '',
-    social_fb: '',
-    social_youtube: '',
-    social_google_business: '',
-
-    active: true,
-    is_primary: true,
-    is_public: true,
-  },
+  initialState,
   reducers: {
+    setCurrentTab: (state, action) => {
+      state.currentTab = action.payload;
+    },
     updateBusinessBasicData: (state, action) => {
       const {
         companyName,
@@ -55,9 +61,10 @@ const BusinessDataSlice = createSlice({
       state.industry = industry;
       state.services = services;
     },
+
     updateBusinessAddressData: (state, action) => {
       const {street, street2, city, zip, state_id, country_id} = action.payload;
-      console.log('from redux');
+      // Removed console.log as it's not needed in production
 
       state.street = street;
       state.street2 = street2;
@@ -98,14 +105,31 @@ const BusinessDataSlice = createSlice({
       state.social_youtube = social_youtube;
       state.social_google_business = social_google_business;
     },
+    // Reset action to clear all business data except currentTab
+    resetBusinessData: (state) => {
+      Object.keys(initialState).forEach(key => {
+        if (key !== 'currentTab') {
+          state[key] = initialState[key];
+        }
+      });
+    },
+    // Reset action to clear all data including currentTab
+    resetBusinessDataCompletely: (state) => {
+      Object.keys(initialState).forEach(key => {
+        state[key] = initialState[key];
+      });
+    },
   },
 });
 
 export const {
+  setCurrentTab,
   updateBusinessBasicData,
   updateBusinessAddressData,
   updateBusinessUploadData,
   updateBusinessSocialData,
+  resetBusinessData,
+  resetBusinessDataCompletely 
 } = BusinessDataSlice.actions;
 
 export default BusinessDataSlice.reducer;

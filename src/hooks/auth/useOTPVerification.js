@@ -40,7 +40,7 @@ export const useOTPVerification = () => {
     state => state.login ?? null,
   );
 
-  console.log("loginData",loginData);
+  // console.log("loginData",loginData);
   
 
   // Check if any API call is loading

@@ -14,6 +14,7 @@ import {
 import {useDispatch, useSelector} from 'react-redux';
 import {invite} from '../redux/slices/referral/inviteSlices';
 import {getReferrals} from '../redux/slices/referral/getReferralsSlices';
+import { colors } from '../theme/colors';
 
 const {width} = Dimensions.get('window');
 
@@ -323,7 +324,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   referralBox: {
-    backgroundColor: '#004D45',
+    backgroundColor: colors.primary,
     borderRadius: 20,
     marginHorizontal: 20,
     marginBottom: 20,

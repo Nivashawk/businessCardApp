@@ -6,6 +6,8 @@ import BusinessDetails from '../screens/business/businessDetails';
 import CreateBusiness from '../screens/business/createBusiness';
 import ListBusiness from '../screens/business/listBusiness';
 
+import CustomCamera from '../screens/business/steps/customCamera';
+
 import CustomHeader from '../components/customHeader';
 
 const Stack = createNativeStackNavigator();
@@ -26,11 +28,15 @@ export default function BusinessStack() {
         }}
         
       />
-
       <Stack.Screen
         name="BusinessDetails"
         component={BusinessDetails}
         options={{header: () => <CustomHeader title="Details" />}}
+      />
+       <Stack.Screen
+        name="CustomCamera"
+        component={CustomCamera}
+        options={{header: () => <CustomHeader title="CustomCamera" />}}
       />
     </Stack.Navigator>
   );

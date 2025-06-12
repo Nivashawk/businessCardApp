@@ -230,7 +230,7 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
   const focusedRoute = state.routes[state.index];
   const routeName = getFocusedRouteNameFromRoute(focusedRoute);
 
-  if (routeName === 'CreateBusiness' || routeName === 'CustomCamera' || routeName === 'GenerateQR' || routeName === 'CreateEvent') {
+  if (routeName === 'CreateBusiness' || routeName === 'GenerateQR' || routeName === 'CreateEvent' || routeName === 'CustomCamera') {
     return null;
   }
 

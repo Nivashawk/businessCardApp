@@ -111,8 +111,13 @@ const EmptyCard = () => {
 };
 
 const CardStack = ({cardData}) => {
-  // ALL HOOKS MUST BE CALLED AT THE TOP LEVEL - NEVER CONDITIONALLY
-  
+  // Debug logging
+  console.log('CardStack Debug:', {
+    cardDataExists: !!cardData,
+    businessProfiles: cardData?.business_profiles,
+    businessProfilesLength: cardData?.business_profiles?.length,
+  });
+
   // Memoize the safe card data to prevent unnecessary re-renders
   const safeCardData = useMemo(() => {
     const profiles = cardData?.business_profiles;
@@ -159,6 +164,7 @@ const CardStack = ({cardData}) => {
 
   // Callback to move top card to back
   const moveTopCardToBack = useCallback(() => {
+    console.log('Moving top card to back, current cards length:', cards.length);
     if (cards.length <= 1) return; // Don't rotate if only one card
     
     setCards(prev => {
@@ -170,13 +176,14 @@ const CardStack = ({cardData}) => {
 
   // Reset animation state
   const resetAnimationState = useCallback(() => {
+    console.log('Resetting animation state');
     setIsAnimating(false);
   }, []);
 
-  // ALWAYS declare pan gesture - condition is handled inside
+  // Pan gesture with improved handling
   const pan = Gesture.Pan()
-    .enabled(!isAnimating && cardLength > 0) // Disable during animation
     .onStart(() => {
+      console.log('Pan gesture started');
       runOnJS(setIsAnimating)(true);
     })
     .onUpdate(e => {
@@ -184,13 +191,15 @@ const CardStack = ({cardData}) => {
       offsetY.value = e.translationY;
     })
     .onEnd(e => {
-      const threshold = width * 0.3; // 30% of screen width
+      console.log('Pan gesture ended, translationX:', e.translationX);
+      const threshold = width * 0.25; // Reduced threshold for easier swiping
       
       if (Math.abs(e.translationX) > threshold) {
+        console.log('Swiping card away');
         // Swipe away animation
         offsetX.value = withTiming(
           e.translationX > 0 ? width : -width,
-          {duration: 300},
+          {duration: 250},
           (finished) => {
             if (finished) {
               offsetX.value = 0;
@@ -201,9 +210,10 @@ const CardStack = ({cardData}) => {
           },
         );
       } else {
+        console.log('Snapping card back');
         // Snap back animation
-        offsetX.value = withTiming(0, {duration: 200});
-        offsetY.value = withTiming(0, {duration: 200}, (finished) => {
+        offsetX.value = withTiming(0, {duration: 150});
+        offsetY.value = withTiming(0, {duration: 150}, (finished) => {
           if (finished) {
             runOnJS(resetAnimationState)();
           }
@@ -223,19 +233,23 @@ const CardStack = ({cardData}) => {
 
   // Render function for background cards
   const backgroundCards = useMemo(() => {
+    console.log('Rendering background cards, cardLength:', cardLength);
     if (cardLength <= 1) return [];
 
     return cards.slice(1).map((card, index) => {
-      if (!card?.id) return null;
+      if (!card?.id) {
+        console.log('Skipping card without ID at index:', index);
+        return null;
+      }
       
+      console.log('Rendering background card:', card.id, 'at index:', index);
       return (
         <Card
           key={`${card.id}-${index}`}
           card={card}
           style={[
-            styles.card,
             {
-              top: (index + 1) * -20,
+              top: (index + 1) * -15, // Positive value to stack downward slightly
               zIndex: -(index + 1),
               marginTop: marginTop,
             },
@@ -251,20 +265,20 @@ const CardStack = ({cardData}) => {
       {cardLength === 0 ? (
         <EmptyCard />
       ) : (
-        <>
-          {/* Render background cards */}
-          {backgroundCards}
-          
-          {/* Render top card with gesture */}
-          {cards[0] && (
-            <GestureDetector gesture={pan}>
+        <GestureDetector gesture={pan}>
+          <View style={styles.stackContainer}>
+            {/* Render background cards */}
+            {backgroundCards}
+            
+            {/* Render top card with gesture */}
+            {cards[0] && (
               <Card 
                 card={cards[0]} 
                 style={[topCardAnimatedStyle, styles.topCard]} 
               />
-            </GestureDetector>
-          )}
-        </>
+            )}
+          </View>
+        </GestureDetector>
       )}
     </View>
   );
@@ -272,10 +286,15 @@ const CardStack = ({cardData}) => {
 
 const styles = StyleSheet.create({
   container: {
-    height: height * 0.4, // Fixed: was 0.001 which made container too small
+    height: height * 0.5, // Increased from 0.4 to 0.5
     justifyContent: 'flex-start',
     alignItems: 'center',
     backgroundColor: colors.background,
+  },
+  stackContainer: {
+    width: width * 0.95,
+    height: height * 0.4,
+    position: 'relative',
   },
   card: {
     width: width * 0.95,

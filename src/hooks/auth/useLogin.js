@@ -21,7 +21,7 @@ const useLogin = () => {
   const {data, loading, error} = otpData;
 
   useEffect(() => {
-    console.log('otp response', data?.result?.status);
+    // console.log('otp response', data?.result?.status);
 
     if (data?.result?.status === 'success') {
       navigation.navigate('Verify', {purpose: 'Login', email: email});

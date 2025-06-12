@@ -1,4 +1,4 @@
-import React, {useState, useEffect, forwardRef, useImperativeHandle, use} from 'react';
+import React, {useState, useEffect, forwardRef, useImperativeHandle} from 'react';
 import {format} from 'date-fns';
 import {
   KeyboardAvoidingView,
@@ -14,41 +14,20 @@ import InputBox from '../../../components/inputs/textInput';
 import TextAreaBox from '../../../components/inputs/textArea';
 import PhoneNumberInput from '../../../components/inputs/phoneNumberInput';
 import DatePickerBox from '../../../components/inputs/datePicker';
-import { useSelector, useDispatch } from 'react-redux';
-import { updateBusinessBasicData } from '../../../redux/slices/business/businessBasic';
 
 const {width, height} = Dimensions.get('window');
 
-const Basic = forwardRef((props, ref) => {
-  const dispatch = useDispatch();
-  const businessData = useSelector(state => state.businessBasic);
-
-  useEffect(() => {
-    if (businessData) {
-      
-      setCompanyName(businessData.companyName || '');
-      setYourDesignation(businessData.yourDesignation || '');
-      setPhone(businessData.phone || '');
-      setEmail(businessData.email || '');
-      setDescription(businessData.description || '');
-      setIndustry(businessData.industry || '');
-      setServices(businessData.services || '');
-      setDOJ(businessData.DOJ || '');
-      // If selectedCode is stored, also add:
-      // setSelectedCode(businessData.selectedCode || '+91');
-    }
-  }, [businessData]);
-
-  // input values
-  const [companyName, setCompanyName] = useState('');
-  const [yourDesignation, setYourDesignation] = useState('');
-  const [phone, setPhone] = useState('');
+const Basic = forwardRef(({ initialData }, ref) => {
+  // Initialize state with initialData (from Redux)
+  const [companyName, setCompanyName] = useState(initialData?.companyName || '');
+  const [yourDesignation, setYourDesignation] = useState(initialData?.yourDesignation || '');
+  const [phone, setPhone] = useState(initialData?.phone || '');
   const [selectedCode, setSelectedCode] = useState('+91');
-  const [email, setEmail] = useState('');
-  const [description, setDescription] = useState('');
-  const [industry, setIndustry] = useState('');
-  const [services, setServices] = useState('');
-  const [DOJ, setDOJ] = useState('');
+  const [email, setEmail] = useState(initialData?.email || '');
+  const [description, setDescription] = useState(initialData?.description || '');
+  const [industry, setIndustry] = useState(initialData?.industry || '');
+  const [services, setServices] = useState(initialData?.services || '');
+  const [DOJ, setDOJ] = useState(initialData?.DOJ || '');
 
   // input errors
   const [companyError, setCompanyError] = useState('');
@@ -60,10 +39,26 @@ const Basic = forwardRef((props, ref) => {
   const [servicesError, setServicesError] = useState('');
   const [DOJError, setDOJError] = useState('');
 
+  // Update state when initialData changes (when user navigates back)
+  useEffect(() => {
+    if (initialData) {
+      console.log('Updating Basic form with initialData:', initialData);
+      setCompanyName(initialData.companyName || '');
+      setYourDesignation(initialData.yourDesignation || '');
+      setPhone(initialData.phone || '');
+      setEmail(initialData.email || '');
+      setDescription(initialData.description || '');
+      setIndustry(initialData.industry || '');
+      setServices(initialData.services || '');
+      setDOJ(initialData.DOJ || '');
+    }
+  }, [initialData]);
+
   useImperativeHandle(ref, () => ({
     validate: () => {
       let isValid = true;
 
+      // Uncomment these validations as needed
       // if (companyName.trim() === '') {
       //   setCompanyError('Company Name is required');
       //   isValid = false;
@@ -106,55 +101,41 @@ const Basic = forwardRef((props, ref) => {
       //   setIndustryError('');
       // }
 
-      //   if (!services || services.length === 0) {
-      //     setServicesError('Select at least one service');
-      //     isValid = false;
-      //   } else {
-      //     setServicesError('');
-      //   }
+      // if (!services || services.length === 0) {
+      //   setServicesError('Select at least one service');
+      //   isValid = false;
+      // } else {
+      //   setServicesError('');
+      // }
 
-      //   if (!DOJ) {
-      //     setDOJError('Date of Joining is required');
-      //     isValid = false;
-      //   } else {
-      //     setDOJError('');
-      //   }
+      // if (!DOJ) {
+      //   setDOJError('Date of Joining is required');
+      //   isValid = false;
+      // } else {
+      //   setDOJError('');
+      // }
 
       if (isValid) {
-        const formData = {
-          companyName,
-          yourDesignation,
-          phone,
-          email,
-          description,
-          industry,
-          services
-        };
-        console.log('Form Data:', formData);
-        dispatch(updateBusinessBasicData({
-          companyName,
-          yourDesignation,
-          phone,
-          email,
-          description,
-          industry,
-          services
-        }));
-        
+        console.log('Basic form validation passed');
       }
+      
       return isValid;
     },
 
-    // getData: () => ({
-    //   companyName,
-    //   yourDesignation,
-    //   phone,
-    //   email,
-    //   description,
-    //   industry,
-    //   services,
-    //   DOJ,
-    // }),
+    getData: () => {
+      const data = {
+        companyName,
+        yourDesignation,
+        phone,
+        email,
+        description,
+        industry,
+        services,
+        DOJ,
+      };
+      console.log('Getting Basic form data:', data);
+      return data;
+    },
   }));
 
   return (
@@ -176,7 +157,7 @@ const Basic = forwardRef((props, ref) => {
               error={companyError}
             />
             <InputBox
-              label="Your Desigination"
+              label="Your Designation"
               value={yourDesignation}
               onChangeText={setYourDesignation}
               placeholder="Enter your designation"
@@ -227,14 +208,12 @@ const Basic = forwardRef((props, ref) => {
               onChangeText={setServices}
               placeholder="Enter Services(comma separated)"
               keyboardType="default"
-              // required
               error={servicesError}
             />
             <DatePickerBox
               label="Date Associated with the Organization"
               value={DOJ}
               onChange={setDOJ}
-              // required
               error={DOJError}
             />
           </View>
@@ -252,10 +231,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   inner: {
-    // padding: 16,
     flexGrow: 1,
-    paddingTop: height*0.025,
-    paddingBottom: height*0.1
+    paddingTop: height * 0.025,
+    paddingBottom: height * 0.1
   },
 });
 

@@ -33,6 +33,11 @@ const getBusinessQRSlice = createSlice({
     loading: false,
     error: null,
   },
+   reducers: {
+    resetQRData: (state) => {
+      state.data = null;
+    },
+  },
   extraReducers: builder => {
     builder
       .addCase(getBusinessQR.pending, state => {
@@ -50,4 +55,5 @@ const getBusinessQRSlice = createSlice({
   },
 });
 
+export const { resetQRData } = getBusinessQRSlice.actions;
 export default getBusinessQRSlice.reducer;
