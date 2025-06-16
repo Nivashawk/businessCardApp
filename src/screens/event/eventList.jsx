@@ -8,7 +8,7 @@ import {
   Text,
   TextInput,
   Modal,
-  RefreshControl, // <-- Import RefreshControl
+  RefreshControl,
 } from 'react-native';
 import React, {useEffect, useState, useMemo, useCallback} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
@@ -26,16 +26,26 @@ const ListEvent = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState('');
-  const [selectedDateFilter, setSelectedDateFilter] = useState('all'); // all, today, week, month, past
+  const [selectedDateFilter, setSelectedDateFilter] = useState('all');
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [refreshing, setRefreshing] = useState(false); // <-- New state for refreshing
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedTab, setSelectedTab] = useState('active'); // 'active' or 'expired'
 
   const listEventsData = useSelector(
     state => state.listEventsData?.data?.response?.result?.events ?? [],
   );
-  const listEventsLoading = useSelector( // Get loading state for events
+  const listEventsLoading = useSelector(
     state => state.listEventsData?.loading,
   );
+
+  // Function to check if event is expired
+  const isEventExpired = useCallback((eventDate) => {
+    const today = new Date();
+    const event = new Date(eventDate);
+    today.setHours(0, 0, 0, 0);
+    event.setHours(0, 0, 0, 0);
+    return event < today;
+  }, []);
 
   // Function to fetch events
   const fetchEvents = useCallback(() => {
@@ -44,7 +54,7 @@ const ListEvent = () => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchEvents(); // Fetch events when screen gains focus
+      fetchEvents();
     }, [fetchEvents]),
   );
 
@@ -55,10 +65,25 @@ const ListEvent = () => {
     }
   }, [listEventsLoading, refreshing]);
 
+  // Separate events into active and expired
+  const categorizedEvents = useMemo(() => {
+    const active = [];
+    const expired = [];
+    
+    listEventsData.forEach(event => {
+      if (isEventExpired(event.event_date)) {
+        expired.push(event);
+      } else {
+        active.push(event);
+      }
+    });
+    
+    return { active, expired };
+  }, [listEventsData, isEventExpired]);
 
-  // Filter events based on search and date
+  // Filter events based on search, date, and selected tab
   const filteredEvents = useMemo(() => {
-    let filtered = listEventsData;
+    let filtered = selectedTab === 'active' ? categorizedEvents.active : categorizedEvents.expired;
 
     // Filter by search text (name)
     if (searchText.trim()) {
@@ -67,14 +92,14 @@ const ListEvent = () => {
       );
     }
 
-    // Filter by date
+    // Filter by date (works for both active and expired events)
     if (selectedDateFilter !== 'all') {
       const today = new Date();
-      today.setHours(0, 0, 0, 0); // Normalize today to start of day for accurate comparisons
+      today.setHours(0, 0, 0, 0);
 
       filtered = filtered.filter(event => {
         const eventDate = new Date(event.event_date);
-        eventDate.setHours(0, 0, 0, 0); // Normalize event date to start of day
+        eventDate.setHours(0, 0, 0, 0);
 
         switch (selectedDateFilter) {
           case 'today':
@@ -96,30 +121,36 @@ const ListEvent = () => {
     }
 
     return filtered;
-  }, [listEventsData, searchText, selectedDateFilter]);
+  }, [categorizedEvents, searchText, selectedDateFilter, selectedTab]);
 
   const handleEventPress = eventData => {
-    console.log('eventData', eventData);
-    // You might want to navigate to a detailed event view here
-    // navigation.navigate('EventDetails', { event: eventData });
+    // Only allow press for active events
+    if (selectedTab === 'active' && !isEventExpired(eventData.event_date)) {
+      console.log('eventData', eventData);
+      // navigation.navigate('EventDetails', { event: eventData });
+    }
   };
 
   const handleEdit = id => {
-    console.log('Edit event id:', id);
-    navigation.navigate('UpdateEvents', {id}); // Assuming 'UpdateEvents' is your edit screen
+    // Find the event to check if it's expired
+    const event = listEventsData.find(e => e.id === id);
+    if (event && !isEventExpired(event.event_date)) {
+      console.log('Edit event id:', id);
+      navigation.navigate('UpdateEvents', {id});
+    }
   };
 
   const handleDelete = id => {
+    // Allow deletion for both active and expired events
     console.log('Delete event id:', id);
     dispatch(deleteEvent({event_id:id}))
-      .unwrap() // Use unwrap to handle pending/fulfilled/rejected status
+      .unwrap()
       .then(() => {
         console.log('Event deleted successfully, refreshing list...');
-        handleManualRefresh(); // Refresh list after successful deletion
+        handleManualRefresh();
       })
       .catch(error => {
         console.error('Failed to delete event:', error);
-        // Handle error, e.g., show a toast message
       });
   };
 
@@ -128,19 +159,16 @@ const ListEvent = () => {
     navigation.navigate('CreateEvent');
   };
 
-  // Pull-to-refresh handler
   const onPullToRefresh = useCallback(() => {
-    setRefreshing(true); // Start showing the refresh indicator
-    fetchEvents(); // Trigger the fetch
+    setRefreshing(true);
+    fetchEvents();
   }, [fetchEvents]);
 
-  // Manual refresh for after delete
   const handleManualRefresh = () => {
     console.log('🔄 Manual refresh triggered');
-    setRefreshing(true); // Show indicator for manual refresh too
+    setRefreshing(true);
     fetchEvents();
   };
-
 
   const clearFilters = () => {
     setSearchText('');
@@ -162,14 +190,48 @@ const ListEvent = () => {
     </TouchableOpacity>
   );
 
+  const TabButton = ({title, value, isSelected, count}) => (
+    <TouchableOpacity
+      style={[styles.tabButton, isSelected && styles.tabButtonSelected]}
+      onPress={() => {
+        setSelectedTab(value);
+        // Clear filters when switching tabs
+        setSearchText('');
+        setSelectedDateFilter('all');
+      }}>
+      <Text style={[styles.tabButtonText, isSelected && styles.tabButtonTextSelected]}>
+        {title}
+      </Text>
+      <Text style={[styles.tabCountText, isSelected && styles.tabCountTextSelected]}>
+        ({count})
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
+      {/* Tab Navigation */}
+      <View style={styles.tabContainer}>
+        <TabButton
+          title="Active Events"
+          value="active"
+          isSelected={selectedTab === 'active'}
+          count={categorizedEvents.active.length}
+        />
+        <TabButton
+          title="Expired Events"
+          value="expired"
+          isSelected={selectedTab === 'expired'}
+          count={categorizedEvents.expired.length}
+        />
+      </View>
+
       {/* Search and Filter Header */}
       <View style={styles.headerContainer}>
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search events by name..."
+            placeholder={selectedTab === 'active' ? "Search events by name..." : "Search expired events by name..."}
             value={searchText}
             onChangeText={setSearchText}
             placeholderTextColor="#9CA3AF"
@@ -182,7 +244,7 @@ const ListEvent = () => {
         </View>
 
         {/* Active Filters Display */}
-        {(searchText || selectedDateFilter !== 'all') ? ( // Only show if filters are active
+        {(searchText || selectedDateFilter !== 'all') && (
           <View style={styles.activeFiltersContainer}>
             <Text style={styles.activeFiltersText}>
               Filters: {searchText && `"${searchText}"`}{' '}
@@ -192,7 +254,7 @@ const ListEvent = () => {
               <Text style={styles.clearFiltersText}>Clear All</Text>
             </TouchableOpacity>
           </View>
-        ) : null}
+        )}
       </View>
 
       {/* Events List */}
@@ -205,48 +267,56 @@ const ListEvent = () => {
             onPress={() => handleEventPress(item)}
             onEdit={() => handleEdit(item.id)}
             onDelete={() => handleDelete(item.id)}
+            isExpired={selectedTab === 'expired'}
+            disabled={selectedTab === 'expired'}
           />
         )}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.flatListContent}
         ListEmptyComponent={() => (
-          !listEventsLoading && filteredEvents.length === 0 ? ( // Only show empty state if not loading and filtered list is truly empty
+          !listEventsLoading && filteredEvents.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>📅</Text>
-              <Text style={styles.emptyTitle}>No events found</Text>
-              <Text style={styles.emptySubtitle}>
-                {searchText || selectedDateFilter !== 'all'
-                  ? 'Try adjusting your filters or clear them'
-                  : 'Create your first event to see it here'}
+              <Text style={styles.emptyText}>
+                {selectedTab === 'active' ? '📅' : '🗓️'}
               </Text>
-              {!(searchText || selectedDateFilter !== 'all') && ( // Offer to create event only if no filters are active
+              <Text style={styles.emptyTitle}>
+                {selectedTab === 'active' ? 'No active events found' : 'No expired events found'}
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                {selectedTab === 'active'
+                  ? (searchText || selectedDateFilter !== 'all'
+                      ? 'Try adjusting your filters or clear them'
+                      : 'Create your first event to see it here')
+                  : 'No expired events to display'}
+              </Text>
+              {selectedTab === 'active' && !(searchText || selectedDateFilter !== 'all') && (
                 <TouchableOpacity
                   style={styles.createEventButton}
-                  onPress={handleAddNewEvent}
-                >
+                  onPress={handleAddNewEvent}>
                   <Text style={styles.createEventButtonText}>Create Event Now</Text>
                 </TouchableOpacity>
               )}
             </View>
-          ) : null // Don't show empty component if loading or data is available
+          ) : null
         )}
-        // Pull-to-refresh implementation
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onPullToRefresh}
-            tintColor={colors.primary} // iOS spinner color
-            colors={[colors.primary]} // Android spinner color
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
       />
 
-      {/* Floating Add Button */}
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={handleAddNewEvent}>
-        <Text style={styles.floatingButtonText}>+</Text>
-      </TouchableOpacity>
+      {/* Floating Add Button - Only show for active events */}
+      {selectedTab === 'active' && (
+        <TouchableOpacity
+          style={styles.floatingButton}
+          onPress={handleAddNewEvent}>
+          <Text style={styles.floatingButtonText}>+</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Filter Modal */}
       <Modal
@@ -257,7 +327,9 @@ const ListEvent = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filter Events</Text>
+              <Text style={styles.modalTitle}>
+                Filter {selectedTab === 'active' ? 'Active' : 'Expired'} Events
+              </Text>
               <TouchableOpacity onPress={() => setShowFilterModal(false)}>
                 <Text style={styles.modalCloseText}>✕</Text>
               </TouchableOpacity>
@@ -270,26 +342,43 @@ const ListEvent = () => {
                 value="all"
                 isSelected={selectedDateFilter === 'all'}
               />
-              <FilterButton
-                title="Today"
-                value="today"
-                isSelected={selectedDateFilter === 'today'}
-              />
-              <FilterButton
-                title="This Week"
-                value="week"
-                isSelected={selectedDateFilter === 'week'}
-              />
-              <FilterButton
-                title="This Month"
-                value="month"
-                isSelected={selectedDateFilter === 'month'}
-              />
-              <FilterButton
-                title="Past Events"
-                value="past"
-                isSelected={selectedDateFilter === 'past'}
-              />
+              {selectedTab === 'active' ? (
+                <>
+                  <FilterButton
+                    title="Today"
+                    value="today"
+                    isSelected={selectedDateFilter === 'today'}
+                  />
+                  <FilterButton
+                    title="This Week"
+                    value="week"
+                    isSelected={selectedDateFilter === 'week'}
+                  />
+                  <FilterButton
+                    title="This Month"
+                    value="month"
+                    isSelected={selectedDateFilter === 'month'}
+                  />
+                </>
+              ) : (
+                <>
+                  <FilterButton
+                    title="Past Week"
+                    value="week"
+                    isSelected={selectedDateFilter === 'week'}
+                  />
+                  <FilterButton
+                    title="Past Month"
+                    value="month"
+                    isSelected={selectedDateFilter === 'month'}
+                  />
+                  <FilterButton
+                    title="All Past"
+                    value="past"
+                    isSelected={selectedDateFilter === 'past'}
+                  />
+                </>
+              )}
             </View>
 
             <View style={styles.modalActions}>
@@ -315,6 +404,55 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+
+  // Tab Styles
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+
+  tabButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginHorizontal: 4,
+    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+  },
+
+  tabButtonSelected: {
+    backgroundColor: colors.primary,
+  },
+
+  tabButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginRight: 4,
+  },
+
+  tabButtonTextSelected: {
+    color: '#FFFFFF',
+  },
+
+  tabCountText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+
+  tabCountTextSelected: {
+    color: '#FFFFFF',
   },
 
   headerContainer: {
@@ -362,6 +500,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
+  clearSearchButton: {
+    marginLeft: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+  },
+
+  clearSearchText: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+
   activeFiltersContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -370,7 +522,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     backgroundColor: '#F3F4F6',
     borderRadius: 8,
-    marginBottom: 8, // Added margin for spacing
+    marginBottom: 8,
   },
 
   activeFiltersText: {
@@ -387,7 +539,7 @@ const styles = StyleSheet.create({
 
   flatListContent: {
     padding: cardMargin,
-    paddingBottom: 100, // Space for floating button
+    paddingBottom: 100,
   },
 
   emptyContainer: {
@@ -412,7 +564,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     textAlign: 'center',
-    marginBottom: 20, // Added margin below subtitle
+    marginBottom: 20,
   },
 
   createEventButton: {

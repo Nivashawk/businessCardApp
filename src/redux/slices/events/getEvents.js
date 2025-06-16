@@ -35,6 +35,13 @@ const getEventSlice = createSlice({
     loading: false,
     error: null,
   },
+   reducers: {
+    resetGetEvents: (state) => {
+      state.data = null;
+      state.loading = false;
+      state.error = null;
+    },
+  },
   extraReducers: builder => {
     builder
       .addCase(getEvent.pending, state => {
@@ -48,8 +55,11 @@ const getEventSlice = createSlice({
       .addCase(getEvent.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
   },
 });
+
+export const { resetGetEvents } = getEventSlice.actions;
+
 
 export default getEventSlice.reducer;

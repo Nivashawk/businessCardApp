@@ -30,7 +30,7 @@ export const updateEvents = createAsyncThunk(
         state,
       );
       const reduxstate = thunkAPI.getState();
-      const partner_id = state.homeData?.data?.result?.data?.partner?.id
+      const partner_id = reduxstate.homeData?.data?.result?.data?.partner?.id
       console.log("partner id from update event", partner_id);
       
 
@@ -48,6 +48,7 @@ export const updateEvents = createAsyncThunk(
         },
       });
       console.log('Response Data:', response);
+      
       return response
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -63,6 +64,13 @@ const updateEventsSlice = createSlice({
     data: null,
     loading: false,
     error: null,
+  },
+   reducers: {
+    resetUpdateEvents: (state) => {
+      state.data = null;
+      state.loading = false;
+      state.error = null;
+    },
   },
   extraReducers: builder => {
     builder
@@ -80,5 +88,8 @@ const updateEventsSlice = createSlice({
       });
   },
 });
+
+
+export const { resetUpdateEvents } = updateEventsSlice.actions;
 
 export default updateEventsSlice.reducer;
