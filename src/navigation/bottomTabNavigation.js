@@ -230,7 +230,7 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
   const focusedRoute = state.routes[state.index];
   const routeName = getFocusedRouteNameFromRoute(focusedRoute);
 
-  if (routeName === 'CreateBusiness' || routeName === 'GenerateQR' || routeName === 'CreateEvent' || routeName === 'CustomCamera') {
+  if (routeName === 'CreateBusiness' || routeName === 'GenerateQR' || routeName === 'CreateEvent' || routeName === 'CustomCamera' || routeName === 'UpdateBusiness') {
     return null;
   }
 
@@ -341,7 +341,7 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
                 <AnimatedTabIcon focused={isFocused} dimensions={dimensions}>
                   {getTabIcon(route.name, isFocused, dimensions)}
                 </AnimatedTabIcon>
-                <Text
+                {/* <Text
                   style={[
                     styles.tabLabel,
                     {
@@ -356,7 +356,7 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
                     },
                   ]}>
                   {getTabLabel(route.name)}
-                </Text>
+                </Text> */}
               </TouchableOpacity>
             );
           })}
@@ -368,7 +368,7 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
 
 // Helper functions with better color contrast
 const getTabIcon = (routeName, focused, dimensions) => {
-  const iconSize = dimensions.isTablet ? 22 : dimensions.isLandscape ? 16 : 25;
+  const iconSize = dimensions.isTablet ? 22 : dimensions.isLandscape ? 16 : 26;
   const color = focused ? colors.primary : '#666666'; // Strong contrast for inactive icons
 
   switch (routeName) {

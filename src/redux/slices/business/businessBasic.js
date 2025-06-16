@@ -3,19 +3,22 @@ import {createSlice} from '@reduxjs/toolkit';
 const initialState = {
   currentTab: 0, // Added missing currentTab property
   companyName: '',
+  foundedYear: '',
+  gstNumber: '',
   yourDesignation: '',
   phone: '',
   email: '',
   description: '',
   industry: '',
   services: '',
+  
 
   street: '',
   street2: '',
   city: '',
   zip: '',
-  state_id: '',
-  country_id: '',
+  state_id: 0,
+  country_id: 0,
 
   website: '',
   promo_video: '',
@@ -45,6 +48,8 @@ const BusinessDataSlice = createSlice({
     updateBusinessBasicData: (state, action) => {
       const {
         companyName,
+        foundedYear,
+        gstNumber,
         yourDesignation,
         phone,
         email,
@@ -55,6 +60,8 @@ const BusinessDataSlice = createSlice({
 
       state.companyName = companyName;
       state.yourDesignation = yourDesignation;
+      state.foundedYear = foundedYear;
+      state.gstNumber = gstNumber;
       state.phone = phone;
       state.email = email;
       state.description = description;
@@ -106,7 +113,7 @@ const BusinessDataSlice = createSlice({
       state.social_google_business = social_google_business;
     },
     // Reset action to clear all business data except currentTab
-    resetBusinessData: (state) => {
+    resetBusinessData: state => {
       Object.keys(initialState).forEach(key => {
         if (key !== 'currentTab') {
           state[key] = initialState[key];
@@ -114,7 +121,7 @@ const BusinessDataSlice = createSlice({
       });
     },
     // Reset action to clear all data including currentTab
-    resetBusinessDataCompletely: (state) => {
+    resetBusinessDataCompletely: state => {
       Object.keys(initialState).forEach(key => {
         state[key] = initialState[key];
       });
@@ -129,7 +136,7 @@ export const {
   updateBusinessUploadData,
   updateBusinessSocialData,
   resetBusinessData,
-  resetBusinessDataCompletely 
+  resetBusinessDataCompletely,
 } = BusinessDataSlice.actions;
 
 export default BusinessDataSlice.reducer;

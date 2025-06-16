@@ -28,8 +28,8 @@ export const createEvents = createAsyncThunk(
         event_organiser,
         state,
       );
-      const state = thunkAPI.getState();
-      const partner_id = state.homeData?.data?.result?.data?.partner?.id;
+      const redux_state = thunkAPI.getState();
+      const partner_id = redux_state.homeData?.data?.result?.data?.partner?.id;
 
       const response = await apiClient.post('api/events/create', {
         params: {
@@ -49,12 +49,15 @@ export const createEvents = createAsyncThunk(
           type: 'success',
           text1: response?.result?.message,
         });
+        return response
       } else {
         Toast.show({
           type: 'error',
           text1: response?.error?.message,
         });
+        return response
       }
+      // return response;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message,

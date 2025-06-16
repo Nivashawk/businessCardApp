@@ -46,27 +46,89 @@ const Home = () => {
   const [partnerIdFromAsync, setPartnerIdFromAsync] = useState(null);
   const [isHomeData, setIsHomeData] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [partnerIdInitialized, setPartnerIdInitialized] = useState(false);
 
   const homeData =
     useSelector(state => state?.homeData?.data?.result?.data) ?? {};
 
   const homeLoading = useSelector(state => state?.homeData?.loading);
+  
+  // Get partner_id from Redux store (assuming it's stored in user or auth slice)
+  // Adjust the path according to your Redux store structure
+  const partnerIdFromRedux = useSelector(state => state?.login?.data?.result?.partner_id || state?.register.data?.result?.partner_id);
+  console.log('partnerIdFromRedux', partnerIdFromRedux);
+  
+
+  // Function to save partner_id to AsyncStorage
+  const savePartnerIdToStorage = useCallback(async (partnerId) => {
+    try {
+      await AsyncStorage.setItem('partner_id', partnerId.toString());
+      console.log('Partner ID saved to AsyncStorage:', partnerId);
+    } catch (error) {
+      console.error('Error saving partner_id to AsyncStorage:', error);
+    }
+  }, []);
 
   // Function to get partner_id from AsyncStorage
   const getPartnerIdFromStorage = useCallback(async () => {
     try {
       const partnerId = await AsyncStorage.getItem('partner_id');
-      setPartnerIdFromAsync(parseInt(partnerId));
+      if (partnerId) {
+        setPartnerIdFromAsync(parseInt(partnerId));
+        return parseInt(partnerId);
+      }
+      return null;
     } catch (error) {
       console.error('Error getting partner_id from AsyncStorage:', error);
       setPartnerIdFromAsync(null);
+      return null;
     }
   }, []);
 
-  // Load partner_id from AsyncStorage on component mount
+  // Initialize partner_id: prioritize Redux, then AsyncStorage
+  const initializePartnerId = useCallback(async () => {
+    try {
+      let finalPartnerId = null;
+
+      // First priority: Redux store (for initial login/register)
+      if (partnerIdFromRedux) {
+        finalPartnerId = partnerIdFromRedux;
+        console.log('Using partner_id from Redux:', finalPartnerId);
+        
+        // Save to AsyncStorage for future use
+        await savePartnerIdToStorage(finalPartnerId);
+        setPartnerIdFromAsync(finalPartnerId);
+      } else {
+        // Second priority: AsyncStorage (for subsequent uses)
+        const storedPartnerId = await getPartnerIdFromStorage();
+        if (storedPartnerId) {
+          finalPartnerId = storedPartnerId;
+          console.log('Using partner_id from AsyncStorage:', finalPartnerId);
+        }
+      }
+
+      setPartnerIdInitialized(true);
+      return finalPartnerId;
+    } catch (error) {
+      console.error('Error initializing partner_id:', error);
+      setPartnerIdInitialized(true);
+      return null;
+    }
+  }, [partnerIdFromRedux, getPartnerIdFromStorage, savePartnerIdToStorage]);
+
+  // Initialize partner_id on component mount
   useEffect(() => {
-    getPartnerIdFromStorage();
-  }, [getPartnerIdFromStorage]);
+    initializePartnerId();
+  }, [initializePartnerId]);
+
+  // Update AsyncStorage when Redux partner_id changes (on new login)
+  useEffect(() => {
+    if (partnerIdFromRedux && partnerIdFromRedux !== partnerIdFromAsync) {
+      console.log('Redux partner_id changed, updating AsyncStorage');
+      savePartnerIdToStorage(partnerIdFromRedux);
+      setPartnerIdFromAsync(partnerIdFromRedux);
+    }
+  }, [partnerIdFromRedux, partnerIdFromAsync, savePartnerIdToStorage]);
 
   // Memoized computation to check if business profiles exist and have data
   const hasBusinessProfiles = useMemo(() => {
@@ -86,30 +148,40 @@ const Home = () => {
     );
   }, [homeData?.events]);
 
-  // Get partner_id from AsyncStorage
-  const getPartnerId = useCallback(() => {
+  // Get the current partner_id (prioritize Redux, fallback to AsyncStorage)
+  const getCurrentPartnerId = useCallback(() => {
+    // First priority: Redux store
+    if (partnerIdFromRedux) {
+      return partnerIdFromRedux;
+    }
+    
+    // Second priority: AsyncStorage
     if (partnerIdFromAsync) {
       return partnerIdFromAsync;
     }
+    
     return null;
-  }, [partnerIdFromAsync]);
+  }, [partnerIdFromRedux, partnerIdFromAsync]);
 
   // Function to fetch home data
   const fetchHomeData = useCallback(() => {
-    const partner_id = getPartnerId();
+    const partner_id = getCurrentPartnerId();
     
     if (partner_id) {
+      console.log('Fetching home data with partner_id:', partner_id);
       dispatch(getHome({partner_id}));
+    } else {
+      console.log('No partner_id available for fetching home data');
     }
-  }, [dispatch, getPartnerId]);
+  }, [dispatch, getCurrentPartnerId]);
 
-  // Fetch data on screen focus - only when AsyncStorage partner_id is available
+  // Fetch data on screen focus - only when partner_id is available and initialized
   useFocusEffect(
     useCallback(() => {
-      if (partnerIdFromAsync) {
+      if (partnerIdInitialized && getCurrentPartnerId()) {
         fetchHomeData();
       }
-    }, [fetchHomeData, partnerIdFromAsync]),
+    }, [fetchHomeData, partnerIdInitialized, getCurrentPartnerId]),
   );
 
   // Stop refreshing indicator when data loading is complete

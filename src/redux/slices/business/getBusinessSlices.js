@@ -9,7 +9,7 @@ export const getBusiness = createAsyncThunk(
       const partner_id = state.homeData?.data?.result?.data?.partner?.id
       console.log('Attempting authentication with fetch-based API client');
       // Use the getFullResponse method to get access to headers
-      const response = await apiClient.post(`/api/business/${id}`,{
+      const response = await apiClient.post(`api/business/${id}`,{
         "params": {
             "partner_id": sharedBy !== null ? sharedBy : partner_id
         }

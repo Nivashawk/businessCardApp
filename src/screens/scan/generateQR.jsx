@@ -10,7 +10,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import React, {useState, useEffect, useMemo, useCallback} from 'react'; // Import useCallback
+import React, {useState, useEffect, useMemo, useCallback} from 'react';
 import QrCode from '../../../assets/QRcode.png';
 import SmallButton from '../../components/buttons/smallButton';
 import {colors} from '../../theme/colors';
@@ -20,32 +20,32 @@ import {useDispatch, useSelector} from 'react-redux';
 import {getBusinessQR, resetQRData} from '../../redux/slices/business/generateQRSlices';
 import {listBusiness} from '../../redux/slices/business/listBusinessSlices';
 import {listEvents} from '../../redux/slices/events/listEvents';
-import {useFocusEffect} from '@react-navigation/native'; // Import useFocusEffect
+import {useFocusEffect} from '@react-navigation/native';
 
 const {width, height} = Dimensions.get('window');
 
 const GenerateQR = () => {
   const [selectedBusiness, setSelectedBusiness] = useState('');
   const [selectedEvent, setSelectedEvent] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // This local loading state is also handled by Redux loading
+  const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
 
   // Redux selectors
   const {
     data: businessListData,
-    loading: businessLoading, // Get loading state from redux
+    loading: businessLoading,
     error: businessError,
   } = useSelector(state => state.listBusinessData);
 
   const {
     data: eventListData,
-    loading: eventLoading, // Get loading state from redux
+    loading: eventLoading,
     error: eventError,
   } = useSelector(state => state.listEventsData);
 
   const {
     data: qrData,
-    loading: qrLoading, // Get loading state from redux
+    loading: qrLoading,
     error: qrError,
   } = useSelector(state => state.QRData);
 
@@ -57,7 +57,6 @@ const GenerateQR = () => {
   const EventListData = eventListData?.response?.result?.events ?? [];
   const QRData = qrData?.result?.data ?? null;
 
-
   const businessOptions = useMemo(
     () => BusinessListData?.map(c => ({label: c.name, value: c.id})) ?? [],
     [BusinessListData],
@@ -68,19 +67,24 @@ const GenerateQR = () => {
     [EventListData],
   );
 
+  // Find the selected business option for dropdown display
+  const selectedBusinessOption = useMemo(() => {
+    return businessOptions.find(option => option.value === selectedBusiness) || null;
+  }, [businessOptions, selectedBusiness]);
+
+  const selectedEventOption = useMemo(() => {
+    return eventOptions.find(option => option.value === selectedEvent) || null;
+  }, [eventOptions, selectedEvent]);
+
   const selectedBusinessName = useMemo(() => {
-    const business = BusinessListData?.find(b => b.id === selectedBusiness);
-    return business?.name || '';
-  }, [BusinessListData, selectedBusiness]);
+    return selectedBusinessOption?.label || '';
+  }, [selectedBusinessOption]);
 
   const selectedEventName = useMemo(() => {
-    const event = EventListData?.find(e => e.id === selectedEvent);
-    return event?.name || '';
-  }, [EventListData, selectedEvent]);
-
+    return selectedEventOption?.label || '';
+  }, [selectedEventOption]);
   const hasQRCode = QRData?.qr_code;
   const hasBusinessUrl = QRData?.business_url;
-
 
   // Initial data fetch when component mounts
   useEffect(() => {
@@ -88,6 +92,25 @@ const GenerateQR = () => {
     dispatch(listBusiness());
     dispatch(listEvents());
   }, []);
+
+  // Effect to set primary business as default when business list loads
+  useEffect(() => {
+    if (BusinessListData && BusinessListData.length > 0 && businessOptions.length > 0 && !selectedBusiness) {
+      const primaryBusiness = BusinessListData.find(business => business.is_primary === true);
+      
+      if (primaryBusiness) {
+        // Find the matching option from businessOptions
+        const primaryBusinessOption = businessOptions.find(option => option.value === primaryBusiness.id);
+        
+        if (primaryBusinessOption) {
+          console.log('Setting primary business as default:', primaryBusinessOption);
+          setSelectedBusiness(primaryBusiness.id);
+          // Generate QR for primary business (without event initially)
+          generateQR(primaryBusiness.id, selectedEvent);
+        }
+      }
+    }
+  }, [BusinessListData, businessOptions, selectedBusiness, selectedEvent]);
 
   // useFocusEffect to reset state when the screen comes into focus
   useFocusEffect(
@@ -100,14 +123,10 @@ const GenerateQR = () => {
   );
 
   const generateQR = useCallback((businessId, eventId) => {
-    // This isLoading state should reflect the overall Redux loading
-    // setIsLoading(true); // No longer needed here if overallLoading is used
-
-    // You might want to handle error/success more explicitly here
-    dispatch(getBusinessQR({business_id: businessId, event_id: eventId}));
-
-    // setIsLoading(false); // This will always be false immediately, handle in Redux or separate useEffect
-  }, [dispatch]); // Dependency on dispatch
+    if (businessId) { // Only generate QR if we have a business ID
+      dispatch(getBusinessQR({business_id: businessId, event_id: eventId}));
+    }
+  }, [dispatch]);
 
   // Use useEffect to manage local isLoading based on Redux loading
   useEffect(() => {
@@ -115,19 +134,17 @@ const GenerateQR = () => {
     // setIsLoading(qrLoading);
   }, [qrLoading]);
 
-
   const handleSelectBusiness = useCallback(item => {
     console.log('Selected Business:', item);
     setSelectedBusiness(item.value);
     generateQR(item.value, selectedEvent);
-  }, [selectedEvent, generateQR]); // Dependencies: selectedEvent, generateQR
+  }, [selectedEvent, generateQR]);
 
   const handleSelectEvent = useCallback(item => {
     console.log('Selected Event:', item);
     setSelectedEvent(item.value);
     generateQR(selectedBusiness, item.value);
-  }, [selectedBusiness, generateQR]); // Dependencies: selectedBusiness, generateQR
-
+  }, [selectedBusiness, generateQR]);
 
   const handleShare = async () => {
     if (!hasBusinessUrl) {
@@ -185,7 +202,7 @@ const GenerateQR = () => {
               source={{uri: `data:image/png;base64,${QRData.qr_code}`}}
               resizeMode="contain"
             />
-            {overallLoading && ( // Use overallLoading here
+            {overallLoading && (
               <View style={styles.loadingOverlay}>
                 <ActivityIndicator size="large" color={colors.primary} />
               </View>
@@ -199,7 +216,7 @@ const GenerateQR = () => {
               resizeMode="contain"
             />
             <Text style={[typography.description, styles.placeholderText]}>
-              Select business and event to generate QR code
+              {selectedBusiness ? 'Generating QR code...' : 'Select business and event to generate QR code'}
             </Text>
           </View>
         )}
@@ -230,8 +247,8 @@ const GenerateQR = () => {
             label="Select Business"
             data={businessOptions}
             onSelect={handleSelectBusiness}
-            placeholder="Choose your business"
-            value={selectedBusiness} // Pass value to reset dropdown
+            placeholder={selectedBusinessOption?.label || "Choose your business"}
+            value={selectedBusinessOption} // Pass the full option object
           />
         </View>
 
@@ -240,8 +257,8 @@ const GenerateQR = () => {
             label="Select Event (Optional)"
             data={eventOptions}
             onSelect={handleSelectEvent}
-            placeholder="Choose an event"
-            value={selectedEvent} // Pass value to reset dropdown
+            placeholder={selectedEventOption?.label || "Choose an event"}
+            value={selectedEventOption} // Pass the full option object
           />
         </View>
       </View>
@@ -270,7 +287,7 @@ const GenerateQR = () => {
           How to use:
         </Text>
         <Text style={[typography.description, styles.instructionsText]}>
-          1. Select your business from the dropdown{'\n'}
+          1. Your primary business is selected by default{'\n'}
           2. Optionally select an event{'\n'}
           3. QR code will be generated automatically{'\n'}
           4. Share or download your QR code
@@ -426,8 +443,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary || colors.text,
     opacity: 0.8,
   },
-
-  
 });
 
 export default GenerateQR;

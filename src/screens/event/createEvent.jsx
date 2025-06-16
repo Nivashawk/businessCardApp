@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -17,24 +17,46 @@ import DatePickerBox from '../../components/inputs/datePicker';
 import {typography} from '../../theme/typography';
 import SmallButton from '../../components/buttons/smallButton';
 import Dropdown from '../../components/inputs/dropdown';
-import { useDispatch, useSelector } from 'react-redux';
-import { createEvents } from '../../redux/slices/events/createEvents';
-import { useNavigation } from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
+import {createEvents} from '../../redux/slices/events/createEvents';
+import {useNavigation} from '@react-navigation/native';
 
 const {width} = Dimensions.get('window');
+
 const data = [
-  {label: 'Option 1', value: '1'},
-  {label: 'Option 2', value: '2'},
-  {label: 'Option 3', value: '3'},
-  {label: 'Option 4', value: '4'},
-  {label: 'Option 5', value: '5'},
+  {label: 'Conference and Seminars', value: 'conference'},
+  {label: 'Product Launch', value: 'product_launch'},
+  {label: 'Trade Show', value: 'trade_show'},
+  {label: 'Corporate Retreat', value: 'corp_retreat'},
+  {label: 'Networking Events', value: 'networking_events'},
+  {label: 'Workshops', value: 'workshops'},
+  {label: 'Webinars', value: 'webinars'},
+  {label: 'Hackathons', value: 'hackathons'},
+  {label: 'Meetups', value: 'meetups'},
+  {label: 'Fundraisers', value: 'fundraisers'},
+  {label: 'Charity Events', value: 'charity_events'},
+  {label: 'Social Events', value: 'social_events'},
+  {label: 'Team Building', value: 'team_building'},
+  {label: 'Conventions', value: 'conventions'},
+  {label: 'Exhibitions', value: 'exhibitions'},
+  {label: 'Product Demo', value: 'product_demo'},
+  {label: 'Press Conference', value: 'press_conference'},
+  {label: 'Award Ceremony', value: 'award_ceremony'},
+  {label: 'Community Events', value: 'community_events'},
+  {label: 'Festivals', value: 'festivals'},
+  {label: 'Concerts', value: 'concerts'},
+  {label: 'Sports Events', value: 'sports_events'},
+  {label: 'Other', value: 'other'},
 ];
 
 const CreateEvent = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [event, setEvent] = useState('');
+
   const [eventError, setEventError] = useState('');
+  const [organiser, setOrganiser] = useState('');
+  const [organiserError, setOrganiserError] = useState('');
   const [description, setDescription] = useState('');
   const [descriptionError, setDescriptionError] = useState('');
   const [venue, setVenue] = useState('');
@@ -42,13 +64,29 @@ const CreateEvent = () => {
   const [eventdate, setEventDate] = useState(null);
   const [eventdateError, setEventDateError] = useState(null);
   const [eventType, setEventType] = useState('');
-  
+
   const loginState = useSelector(state => state.login);
-  console.log("loginState",loginState);
-  
+  console.log('loginState', loginState);
+  const createEvent = useSelector(state => state?.eventData);
+  console.log('creatEventdate =>', createEvent);
+
+  // useEffect(() => {
+  //     console.log('createEvent state:', createEvent);
+  //     // if (
+  //     //   createEvent?.status === 'Success'
+  //     // ) {
+  //     //   Toast.show({
+  //     //     type: 'success',
+  //     //     text1: createEvent.message,
+  //     //   });
+  //     //   setTimeout(() => {
+  //     //     navigation.goBack();
+  //     //   }, 500);
+  //     // }
+  //   }, [createEvent]);
 
   const handleSelect = item => {
-    setEventType(item);
+    setEventType(item?.value);
   };
 
   const handleSubmit = () => {
@@ -59,20 +97,24 @@ const CreateEvent = () => {
     setDescription('');
     setEventDate('');
     setEventType('');
+    setOrganiser('');
     setVenue('');
-    
-    dispatch(createEvents({ 
-      name: event, 
-      description, 
-      event_type: eventType, 
-      event_date: formatted, 
-      event_address: venue, 
-      event_organiser: "", 
-      state: "draft"
-    }));
 
-    navigation.goBack();
+    dispatch(
+      createEvents({
+        name: event,
+        description,
+        event_type: eventType,
+        event_date: formatted,
+        event_address: venue,
+        event_organiser: organiser,
+        state: 'draft',
+      }),
+    );
 
+    setTimeout(() => {
+      navigation.goBack();
+    }, 500);
   };
 
   return (
@@ -80,7 +122,6 @@ const CreateEvent = () => {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        
         {/* Header Section */}
         {/* <View style={styles.headerContainer}>
           <Text style={[typography.heading, styles.headerTitle]}>
@@ -94,75 +135,85 @@ const CreateEvent = () => {
             contentContainerStyle={styles.scrollContainer}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
-            
             <View style={styles.cardContainer}>
               <View style={styles.formContent}>
-              
-              {/* Event Name */}
-              <View style={styles.inputSection}>
-                <InputBox
-                  label="Event Name"
-                  value={event}
-                  onChangeText={setEvent}
-                  placeholder="Enter Event Name"
-                  keyboardType="default"
-                  required
-                  error={eventError}
-                />
-              </View>
+                {/* Event Name */}
+                <View style={styles.inputSection}>
+                  <InputBox
+                    label="Event Name"
+                    value={event}
+                    onChangeText={setEvent}
+                    placeholder="Enter Event Name"
+                    keyboardType="default"
+                    required
+                    error={eventError}
+                  />
+                </View>
 
-              {/* Description */}
-              <View style={styles.inputSection}>
-                <TextAreaBox
-                  label="Description"
-                  value={description}
-                  onChangeText={setDescription}
-                  placeholder="Enter Description"
-                  keyboardType="default"
-                  required
-                  error={descriptionError}
-                />
-              </View>
+                {/* Description */}
+                <View style={styles.inputSection}>
+                  <TextAreaBox
+                    label="Description"
+                    value={description}
+                    onChangeText={setDescription}
+                    placeholder="Enter Description"
+                    keyboardType="default"
+                    required
+                    error={descriptionError}
+                  />
+                </View>
 
-              {/* Date and Event Type Row */}
-              <View style={styles.rowSection}>
-                <View style={styles.columnWrapper}>
-                  <View style={styles.leftColumn}>
-                    <DatePickerBox
-                      label="Event Date"
-                      value={eventdate}
-                      onChange={setEventDate}
-                      required
-                      error={eventdateError}
-                    />
-                  </View>
-                  <View style={styles.rightColumn}>
-                    <Dropdown
-                      label="Event Type"
-                      data={data}
-                      onSelect={handleSelect}
-                      placeholder="Select an event"
-                    />
+                {/* Date and Event Type Row */}
+                <View style={styles.rowSection}>
+                  <View style={styles.columnWrapper}>
+                    <View style={styles.leftColumn}>
+                      <DatePickerBox
+                        label="Event Date"
+                        value={eventdate}
+                        onChange={setEventDate}
+                        required
+                        error={eventdateError}
+                      />
+                    </View>
+                    <View style={styles.rightColumn}>
+                      <Dropdown
+                        label="Event Type"
+                        data={data}
+                        onSelect={handleSelect}
+                        placeholder="Select an event"
+                      />
+                    </View>
                   </View>
                 </View>
-              </View>
 
-              {/* Venue */}
-              <View style={styles.inputSection}>
-                <TextAreaBox
-                  label="Venue Name"
-                  value={venue}
-                  onChangeText={setVenue}
-                  placeholder="Enter Venue Name"
-                  keyboardType="default"
-                  required
-                  error={venueError}
-                />
-              </View>
+                <View style={styles.inputSection}>
+                  <InputBox
+                    label="Event Organiser"
+                    value={organiser}
+                    onChangeText={setOrganiser}
+                    placeholder="Enter Event Organiser"
+                    keyboardType="default"
+                    required
+                    error={organiserError}
+                  />
+                </View>
 
-          <View style={styles.buttonSection}>
-            <SmallButton title="Create" onPress={handleSubmit} />
-          </View>
+                {/* Venue */}
+                <View style={styles.inputSection}>
+                  <TextAreaBox
+                    label="Venue Name"
+                    value={venue}
+                    onChangeText={setVenue}
+                    placeholder="Enter Venue Name"
+                    keyboardType="default"
+                    required
+                    error={venueError}
+                  />
+                </View>
+
+                <View style={styles.buttonSection}>
+                  <SmallButton title="Create" onPress={handleSubmit} />
+                </View>
               </View>
             </View>
           </ScrollView>
@@ -223,8 +274,8 @@ const styles = StyleSheet.create({
   rowSection: {
     marginBottom: 20,
     // backgroundColor: "black",
-    alignItems: "center",
-    justifyContent:"center"
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   columnWrapper: {
     flexDirection: 'row',

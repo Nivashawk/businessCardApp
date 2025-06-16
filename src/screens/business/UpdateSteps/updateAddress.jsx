@@ -4,7 +4,6 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import {format} from 'date-fns';
 import {
   KeyboardAvoidingView,
   ScrollView,
@@ -15,12 +14,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import {colors} from '../../../theme/colors';
 import InputBox from '../../../components/inputs/textInput';
-import TextAreaBox from '../../../components/inputs/textArea';
-import PhoneNumberInput from '../../../components/inputs/phoneNumberInput';
-import DatePickerBox from '../../../components/inputs/datePicker';
-import Dropdown from '../../../components/inputs/dropdown';
 import DropdownWSearch from '../../../components/inputs/dropdownWSearch';
 import {useSelector, useDispatch} from 'react-redux';
 import {updateBusinessAddressData} from '../../../redux/slices/business/businessBasic';
@@ -31,31 +25,13 @@ const {width, height} = Dimensions.get('window');
 
 const UpdateAddress = forwardRef((props, ref) => {
   const dispatch = useDispatch();
-  const businessData = useSelector(state => state.businessData);
+  const businessData = useSelector(state => state.businessBasic);
   const countries = useSelector(state => state?.countries?.data?.result?.data);
   const states = useSelector(state => state?.states?.data?.result?.data);
 
-  useEffect(() => {
-    console.log('businessData', businessData);
-    if (businessData) {
-      setStreet(businessData.street || '');
-      setStreet2(businessData.street2 || '');
-      setCity(businessData.city || '');
-      setPinCode(businessData.zip || '');
-      setState(businessData.state_id || '');
-      setCountry(businessData.country_id || '');
-      // If selectedCode is stored, also add:
-      // setSelectedCode(businessData.selectedCode || '+91');
-    }
-  }, [businessData]);
-
-  useEffect(() => {
-    dispatch(getCountry());
-  }, [dispatch]);
   // input values
   const [street, setStreet] = useState('');
   const [street2, setStreet2] = useState('');
-  const [area, setArea] = useState('');
   const [city, setCity] = useState('');
   const [pinCode, setPinCode] = useState('');
   const [state, setState] = useState('');
@@ -64,105 +40,97 @@ const UpdateAddress = forwardRef((props, ref) => {
   // input errors
   const [streetError, setStreetError] = useState('');
   const [street2Error, setStreet2Error] = useState('');
-  const [areaError, setAreaError] = useState('');
   const [cityError, setCityError] = useState('');
   const [pinCodeError, setPinCodeError] = useState('');
   const [stateError, setStateError] = useState('');
   const [countryError, setCountryError] = useState('');
 
+  // Initialize form with existing data
+  useEffect(() => {
+    if (businessData) {
+      setStreet(businessData.street || '');
+      setStreet2(businessData.street2 || '');
+      setCity(businessData.city || '');
+      setPinCode(businessData.zip || '');
+      setState(businessData.state_id || '');
+      setCountry(businessData.country_id || '');
+    }
+  }, [businessData]);
+
+  useEffect(() => {
+    dispatch(getCountry());
+  }, [dispatch]);
+
   useImperativeHandle(ref, () => ({
     validate: () => {
       let isValid = true;
 
-      // if (street.trim() === '') {
-      //   setStreetError('Street is required');
-      //   isValid = false;
-      // } else {
-      //   setStreetError('');
-      // }
+      // Clear previous errors
+      setStreetError('');
+      setStreet2Error('');
+      setCityError('');
+      setPinCodeError('');
+      setStateError('');
+      setCountryError('');
 
-      // if (street2.trim() === '') {
-      //   setStreet2Error('Street is required');
-      //   isValid = false;
-      // } else {
-      //   setStreet2Error('');
-      // }
+      // Validation logic (uncomment as needed)
+      if (street.trim() === '') {
+        setStreetError('Street is required');
+        isValid = false;
+      }
 
-      // // if (area.trim() === '') {
-      // //   setAreaError('Area is required');
-      // //   isValid = false;
-      // // } else {
-      // //   setAreaError('');
-      // // }
+      if (city.trim() === '') {
+        setCityError('City is required');
+        isValid = false;
+      }
 
-      // if (city.trim() === '') {
-      //   setCityError('City is required');
-      //   isValid = false;
-      // } else {
-      //   setCityError('');
-      // }
+      if (pinCode.trim() === '') {
+        setPinCodeError('Pin Code is required');
+        isValid = false;
+      }
 
-      // if (pinCode.trim() === '') {
-      //   setPinCodeError('pinCode is required');
-      //   isValid = false;
-      // } else {
-      //   setPinCodeError('');
-      // }
+      if (!state) {
+        setStateError('State is required');
+        isValid = false;
+      }
 
-      // if (state.trim() === '') {
-      //   setStateError('State is required');
-      //   isValid = false;
-      // } else {
-      //   setStateError('');
-      // }
+      if (!country) {
+        setCountryError('Country is required');
+        isValid = false;
+      }
 
-      // if (country.trim() === '') {
-      //   setCountryError('Country is required');
-      //   isValid = false;
-      // } else {
-      //   setCountryError('');
-      // }
-
+      // Update Redux store with current form data
       if (isValid) {
         const formData = {
           street,
-          area,
+          street2,
           city,
-          pinCode,
-          state,
-          country,
+          zip: pinCode,
+          state_id: state,
+          country_id: country,
         };
-        console.log('Form Address:', formData);
-        dispatch(
-          updateBusinessAddressData({
-            street,
-            street2,
-            city,
-            zip: pinCode,
-            state_id: state,
-            country_id: country,
-          }),
-        );
+        
+        dispatch(updateBusinessAddressData(formData));
       }
 
       return isValid;
     },
-
-    // getData: () => ({
-    //   street,
-    //   area,
-    //   city,
-    //   pinCode,
-    //   state,
-    //   country,
-    // }),
   }));
 
   const handleSelectCountry = item => {
-    console.log('country dropdown', item);
-    setCountry(item);
+    setCountry(item.value);
     setCountryError('');
     dispatch(getState({country_code: item.value}));
+  };
+
+  const handleSelectState = item => {
+    if (!country) {
+      setCountryError('Please select a country first');
+    } else {
+      setCountryError('');
+      setState(item.value);
+      setStateError('');
+    }
   };
 
   return (
@@ -180,27 +148,17 @@ const UpdateAddress = forwardRef((props, ref) => {
               onSelect={handleSelectCountry}
               required={true}
               requiredText="Please select a country"
-
-              // placeholder={eventType}
+              error={countryError}
             />
             <DropdownWSearch
               label="State"
               data={states?.map(c => ({label: c.name, value: c.id})) ?? []}
-              onSelect={item => {
-                if (!country) {
-                  setCountryError('Please select a country first');
-                } else {
-                  setCountryError('');
-                  setState(item.value);
-                }
-              }}
+              onSelect={handleSelectState}
               required={true}
               requiredText="Please select a state"
               disabled={!country}
-
-              // placeholder={eventType}
+              error={stateError}
             />
-
             <InputBox
               label="City"
               value={city}
@@ -220,29 +178,19 @@ const UpdateAddress = forwardRef((props, ref) => {
               error={streetError}
             />
             <InputBox
-              label="Street2"
+              label="Street 2"
               value={street2}
               onChangeText={setStreet2}
-              placeholder="Street2"
+              placeholder="Street 2 (Optional)"
               keyboardType="default"
               error={street2Error}
             />
-            {/* <InputBox
-              label="Area"
-              value={area}
-              onChangeText={setArea}
-              placeholder="Area"
-              keyboardType="default"
-              required
-              error={areaError}
-            /> */}
-
             <InputBox
-              label="PinCode"
+              label="Pin Code"
               value={pinCode}
               onChangeText={setPinCode}
-              placeholder="PinCode"
-              keyboardType="default"
+              placeholder="Pin Code"
+              keyboardType="numeric"
               required
               error={pinCodeError}
             />
@@ -261,8 +209,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   inner: {
-    // backgroundColor:colors.secondary,
-    // padding: 16,
     flexGrow: 1,
     paddingTop: height * 0.025,
     paddingBottom: height * 0.1,

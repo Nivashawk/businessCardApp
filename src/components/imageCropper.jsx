@@ -33,6 +33,8 @@ const ImageCropper = ({navigation, type, onImageSelected}) => {
             height: 300,
             cropping: true,
           });
+          console.log("cropped_images",cropped);
+          
           onImageSelected?.(type, cropped);
         } catch (error) {
           Alert.alert('Error', 'Cropping failed');

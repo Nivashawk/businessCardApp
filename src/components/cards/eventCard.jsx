@@ -75,7 +75,7 @@ const EventCard = ({event, onPress, onEdit, onDelete}) => {
           <Text style={styles.detailLabel}>Location</Text>
           <View style={styles.locationContainer}>
             <Text style={styles.detailValueLocation}>
-              {event.event_address || 'TBA'}
+              {event.event_address || 'N/A'}
             </Text>
           </View>
         </View>
@@ -84,7 +84,7 @@ const EventCard = ({event, onPress, onEdit, onDelete}) => {
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Organizer</Text>
           <Text style={styles.detailValue}>
-            {event.partner_id?.[1] || event.event_organiser || 'TBA'}
+            {event.event_organiser || 'N/A'}
           </Text>
         </View>
 
@@ -92,7 +92,7 @@ const EventCard = ({event, onPress, onEdit, onDelete}) => {
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Type</Text>
           <Text style={styles.detailValue}>
-            {parseEventType(event.event_type)}
+            {event.event_type || 'N/A'}
           </Text>
         </View>
       </View>

@@ -218,7 +218,7 @@ const ReferAndEarn = () => {
 
         <View style={styles.rewardInfo}>
           <Text style={styles.rewardText}>
-            💰 Earn ₹10 for each successful referral
+            💰 Earn 5 points for each successful referral
           </Text>
         </View>
       </Animated.View>

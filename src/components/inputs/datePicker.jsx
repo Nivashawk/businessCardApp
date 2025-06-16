@@ -21,6 +21,7 @@ const DatePickerBox = ({
   placeholder = 'Select a date',
   mode = 'date',
   display = 'default',
+  restrictPastDates = true, // New flag to control minimum date
 }) => {
   const [showPicker, setShowPicker] = useState(false);
 
@@ -58,7 +59,7 @@ const DatePickerBox = ({
           mode={mode}
           display={display}
           onChange={onChangeDate}
-          minimumDate={new Date()}
+          minimumDate={restrictPastDates ? new Date() : undefined} // Conditional minimum date
         />
       )}
 

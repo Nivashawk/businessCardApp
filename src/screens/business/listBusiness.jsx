@@ -1,11 +1,11 @@
-import {View, StyleSheet, Dimensions, FlatList, Text, RefreshControl} from 'react-native'; // Import RefreshControl
-import React, {useEffect, useState, useCallback} from 'react'; // Import useState and useCallback
+import {View, StyleSheet, Dimensions, FlatList, Text, RefreshControl} from 'react-native';
+import React, {useEffect, useState, useCallback} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import BusinessServiceCard from '../../components/cards/businessServiceCard';
 import Upload from '../../../assets/store.png';
-import Add from '../../../assets/add.png'; // Assuming this is for the Add card
+import Add from '../../../assets/add.png';
 import {colors} from '../../theme/colors';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useFocusEffect} from '@react-navigation/native'; // Add useFocusEffect
 import {listBusiness} from '../../redux/slices/business/listBusinessSlices';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -18,7 +18,7 @@ const itemWidth = (width - cardMargin * (numColumns + 1)) / numColumns;
 const getFormattedData = (data, columns) => {
   const fullData = [
     ...data,
-    {id: 'add', name: 'Add New Business', isAddCard: true, image: Add}, // Added image for Add card
+    {id: 'add', name: 'Add New Business', isAddCard: true, image: Add},
   ];
   const remainder = fullData.length % columns;
   if (remainder !== 0) {
@@ -47,9 +47,8 @@ const ListBusiness = () => {
     state => state.listBusinessData?.loading ?? false,
   );
   const listBusinessStatus = useSelector(
-    state => state.listBusinessData?.status, // Assuming you have a 'status' in your slice (e.g., 'idle', 'loading', 'succeeded', 'failed')
+    state => state.listBusinessData?.status,
   );
-
 
   console.log('ListBusiness Data:', listBusinessData);
   console.log('Is Loading:', isLoading);
@@ -58,13 +57,20 @@ const ListBusiness = () => {
   const fetchBusinesses = useCallback(() => {
     console.log('Dispatching listBusiness action...');
     dispatch(listBusiness());
-  }, []);
+  }, [dispatch]);
 
   // Initial data fetch on component mount
-  
   useEffect(() => {
     fetchBusinesses();
   }, [fetchBusinesses]);
+
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Screen focused, refreshing data...');
+      fetchBusinesses();
+    }, [fetchBusinesses])
+  );
 
   // Monitor loading state to stop refreshing indicator
   useEffect(() => {
@@ -76,7 +82,7 @@ const ListBusiness = () => {
   // Handle pull to refresh
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchBusinesses(); // Trigger the fetch
+    fetchBusinesses();
   }, [fetchBusinesses]);
 
   const handleOnPress = item => {
@@ -96,14 +102,13 @@ const ListBusiness = () => {
       return <View style={[styles.cardWrapper, {width: itemWidth}]} />;
     }
 
-    // Determine the image based on whether it's the "Add New Business" card
     const cardImage = item.isAddCard ? Add : Upload;
 
     return (
       <View style={[styles.cardWrapper, {width: itemWidth}]}>
         <BusinessServiceCard
-          title={item.name}
-          image={cardImage} // Use the determined image
+          item={item}
+          image={cardImage}
           onPress={() => handleOnPress(item)}
           isAddCard={item.isAddCard}
         />
@@ -138,15 +143,14 @@ const ListBusiness = () => {
         numColumns={numColumns}
         contentContainerStyle={styles.listContainer}
         ListHeaderComponent={renderHeader}
-        ListEmptyComponent={!isLoading && listBusinessData.length === 0 ? renderEmptyState : null} // Show empty state only if not loading and data is empty
+        ListEmptyComponent={!isLoading && listBusinessData.length === 0 ? renderEmptyState : null}
         showsVerticalScrollIndicator={false}
-        // Pull-to-refresh props
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.primary} // Customize spinner color for iOS
-            colors={[colors.primary]} // Customize spinner color for Android
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
       />

@@ -95,8 +95,8 @@ export const createBusiness = createAsyncThunk(
           street2,
           city,
           zip,
-          state_id,
-          country_id,
+          state_id:parseInt(state_id),
+          country_id:parseInt(country_id),
           website,
           promo_video,
           business_card_front,
@@ -114,19 +114,19 @@ export const createBusiness = createAsyncThunk(
         },
       });
       console.log('Response creat business Data:', response);
-      const status = 'Success';
-      if (status === response?.result?.status) {
-        Toast.show({
-          type: 'success',
-          text1: response?.result?.message,
-        });
+      // const status = 'Success';
+      // if (response?.status) {
+      //   Toast.show({
+      //     type: 'success',
+      //     text1: response?.result?.message,
+      //   });
 
-      } else {
-        Toast.show({
-          type: 'error',
-          text1: response?.error?.message,
-        });
-      }
+      // } else {
+      //   Toast.show({
+      //     type: 'error',
+      //     text1: response?.error?.message,
+      //   });
+      // }
       return response;
     } catch (error) {
       return thunkAPI.rejectWithValue(

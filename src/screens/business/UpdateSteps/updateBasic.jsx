@@ -1,5 +1,4 @@
-import React, {useState, useEffect, forwardRef, useImperativeHandle, use} from 'react';
-import {format} from 'date-fns';
+import React, {useState, useEffect, forwardRef, useImperativeHandle} from 'react';
 import {
   KeyboardAvoidingView,
   ScrollView,
@@ -23,22 +22,6 @@ const UpdateBasic = forwardRef((props, ref) => {
   const dispatch = useDispatch();
   const businessData = useSelector(state => state.businessBasic);
 
-  useEffect(() => {
-    if (businessData) {
-      
-      setCompanyName(businessData.companyName || '');
-      setYourDesignation(businessData.yourDesignation || '');
-      setPhone(businessData.phone || '');
-      setEmail(businessData.email || '');
-      setDescription(businessData.description || '');
-      setIndustry(businessData.industry || '');
-      setServices(businessData.services || '');
-      setDOJ(businessData.DOJ || '');
-      // If selectedCode is stored, also add:
-      // setSelectedCode(businessData.selectedCode || '+91');
-    }
-  }, [businessData]);
-
   // input values
   const [companyName, setCompanyName] = useState('');
   const [yourDesignation, setYourDesignation] = useState('');
@@ -60,66 +43,66 @@ const UpdateBasic = forwardRef((props, ref) => {
   const [servicesError, setServicesError] = useState('');
   const [DOJError, setDOJError] = useState('');
 
+  // Initialize form with existing data
+  useEffect(() => {
+    if (businessData) {
+      setCompanyName(businessData.companyName || '');
+      setYourDesignation(businessData.yourDesignation || '');
+      setPhone(businessData.phone || '');
+      setEmail(businessData.email || '');
+      setDescription(businessData.description || '');
+      setIndustry(businessData.industry || '');
+      setServices(businessData.services || '');
+      setDOJ(businessData.DOJ || '');
+    }
+  }, [businessData]);
+
   useImperativeHandle(ref, () => ({
     validate: () => {
       let isValid = true;
 
-      // if (companyName.trim() === '') {
-      //   setCompanyError('Company Name is required');
-      //   isValid = false;
-      // } else {
-      //   setCompanyError('');
-      // }
+      // Clear previous errors
+      setCompanyError('');
+      setYourDesignationError('');
+      setPhoneError('');
+      setemailError('');
+      setDescriptionError('');
+      setIndustryError('');
+      setServicesError('');
+      setDOJError('');
 
-      // if (yourDesignation.trim() === '') {
-      //   setYourDesignationError('Designation is required');
-      //   isValid = false;
-      // } else {
-      //   setYourDesignationError('');
-      // }
+      // Validation logic (uncomment as needed)
+      if (companyName.trim() === '') {
+        setCompanyError('Company Name is required');
+        isValid = false;
+      }
 
-      // if (!/^\d{10}$/.test(phone)) {
-      //   setPhoneError('Phone must be a 10-digit number');
-      //   isValid = false;
-      // } else {
-      //   setPhoneError('');
-      // }
+      if (yourDesignation.trim() === '') {
+        setYourDesignationError('Designation is required');
+        isValid = false;
+      }
 
-      // if (!/\S+@\S+\.\S+/.test(email)) {
-      //   setemailError('Enter a valid email');
-      //   isValid = false;
-      // } else {
-      //   setemailError('');
-      // }
+      if (!/^\d{10}$/.test(phone)) {
+        setPhoneError('Phone must be a 10-digit number');
+        isValid = false;
+      }
 
-      // if (description.trim() === '') {
-      //   setDescriptionError('Description is required');
-      //   isValid = false;
-      // } else {
-      //   setDescriptionError('');
-      // }
+      if (email && !/\S+@\S+\.\S+/.test(email)) {
+        setemailError('Enter a valid email');
+        isValid = false;
+      }
 
-      // if (!industry || industry.length === 0) {
-      //   setIndustryError('Select at least one industry');
-      //   isValid = false;
-      // } else {
-      //   setIndustryError('');
-      // }
+      if (description.trim() === '') {
+        setDescriptionError('Description is required');
+        isValid = false;
+      }
 
-      //   if (!services || services.length === 0) {
-      //     setServicesError('Select at least one service');
-      //     isValid = false;
-      //   } else {
-      //     setServicesError('');
-      //   }
+      if (industry.trim() === '') {
+        setIndustryError('Industry is required');
+        isValid = false;
+      }
 
-      //   if (!DOJ) {
-      //     setDOJError('Date of Joining is required');
-      //     isValid = false;
-      //   } else {
-      //     setDOJError('');
-      //   }
-
+      // Update Redux store with current form data
       if (isValid) {
         const formData = {
           companyName,
@@ -128,33 +111,15 @@ const UpdateBasic = forwardRef((props, ref) => {
           email,
           description,
           industry,
-          services
+          services,
+          DOJ,
         };
-        console.log('Form Data:', formData);
-        dispatch(updateBusinessBasicData({
-          companyName,
-          yourDesignation,
-          phone,
-          email,
-          description,
-          industry,
-          services
-        }));
         
+        dispatch(updateBusinessBasicData(formData));
       }
+
       return isValid;
     },
-
-    // getData: () => ({
-    //   companyName,
-    //   yourDesignation,
-    //   phone,
-    //   email,
-    //   description,
-    //   industry,
-    //   services,
-    //   DOJ,
-    // }),
   }));
 
   return (
@@ -176,10 +141,10 @@ const UpdateBasic = forwardRef((props, ref) => {
               error={companyError}
             />
             <InputBox
-              label="Your Desigination (Nivas S)"
+              label="Your Designation"
               value={yourDesignation}
               onChangeText={setYourDesignation}
-              placeholder="Enter your email address"
+              placeholder="Enter your designation"
               keyboardType="default"
               required
               error={yourDesignationError}
@@ -225,16 +190,14 @@ const UpdateBasic = forwardRef((props, ref) => {
               label="Services"
               value={services}
               onChangeText={setServices}
-              placeholder="Enter Services(comma separated)"
+              placeholder="Enter Services (comma separated)"
               keyboardType="default"
-              // required
               error={servicesError}
             />
             <DatePickerBox
               label="Event Date Associated with the Organization"
               value={DOJ}
               onChange={setDOJ}
-              // required
               error={DOJError}
             />
           </View>
@@ -252,10 +215,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   inner: {
-    // padding: 16,
     flexGrow: 1,
-    paddingTop: height*0.025,
-    paddingBottom: height*0.1
+    paddingTop: height * 0.025,
+    paddingBottom: height * 0.1
   },
 });
 

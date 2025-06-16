@@ -24,11 +24,29 @@ import {updateEvents} from '../../redux/slices/events/updateEvents';
 
 const {width} = Dimensions.get('window');
 const data = [
-  {label: 'Option 1', value: '1'},
-  {label: 'Option 2', value: '2'},
-  {label: 'Option 3', value: '3'},
-  {label: 'Option 1', value: '1'},
-  {label: 'Option 2', value: '2'},
+  {label: 'Conference and Seminars', value: 'conference'},
+  {label: 'Product Launch', value: 'product_launch'},
+  {label: 'Trade Show', value: 'trade_show'},
+  {label: 'Corporate Retreat', value: 'corp_retreat'},
+  {label: 'Networking Events', value: 'networking_events'},
+  {label: 'Workshops', value: 'workshops'},
+  {label: 'Webinars', value: 'webinars'},
+  {label: 'Hackathons', value: 'hackathons'},
+  {label: 'Meetups', value: 'meetups'},
+  {label: 'Fundraisers', value: 'fundraisers'},
+  {label: 'Charity Events', value: 'charity_events'},
+  {label: 'Social Events', value: 'social_events'},
+  {label: 'Team Building', value: 'team_building'},
+  {label: 'Conventions', value: 'conventions'},
+  {label: 'Exhibitions', value: 'exhibitions'},
+  {label: 'Product Demo', value: 'product_demo'},
+  {label: 'Press Conference', value: 'press_conference'},
+  {label: 'Award Ceremony', value: 'award_ceremony'},
+  {label: 'Community Events', value: 'community_events'},
+  {label: 'Festivals', value: 'festivals'},
+  {label: 'Concerts', value: 'concerts'},
+  {label: 'Sports Events', value: 'sports_events'},
+  {label: 'Other', value: 'other'},
 ];
 
 const UpdateEvent = () => {
@@ -57,6 +75,7 @@ const UpdateEvent = () => {
   const [eventdateError, setEventDateError] = useState(null);
   const [eventType, setEventType] = useState('');
   const [eventDatePlaceholder, setEventDatePlaceholder] = useState('');
+  const [eventTypePlaceholder, setEventTypePlaceholder] = useState('');
 
   useEffect(() => {
     if (eventData) {
@@ -64,6 +83,7 @@ const UpdateEvent = () => {
       setDescription(eventData.description || '');
       setVenue(eventData.event_address || '');
       setEventDatePlaceholder(eventData.event_date || null);
+      setEventTypePlaceholder(eventData.event_type || null)
 
       // Safely parse event_type
       let parsedType = null;
@@ -159,7 +179,7 @@ const UpdateEvent = () => {
             label="Select Event"
             data={data}
             onSelect={handleSelect}
-            placeholder={eventType}
+            placeholder={eventTypePlaceholder || 'select a event'}
           />
           <TextAreaBox
             label="Venue Name"

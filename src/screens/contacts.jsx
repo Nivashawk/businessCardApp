@@ -14,9 +14,11 @@ import {
   RefreshControl, // <-- Import RefreshControl
 } from 'react-native';
 import {colors} from '../theme/colors';
-import { useDispatch, useSelector } from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {sharedBusiness} from '../redux/slices/business/sharedBusinessSlices';
 import {receivedBusiness} from '../redux/slices/business/receivedBusinessSlices';
+import {getBusiness} from '../redux/slices/business/getBusinessSlices';
+import {useNavigation} from '@react-navigation/native';
 
 const {width} = Dimensions.get('window');
 
@@ -77,7 +79,6 @@ const FilterModal = ({
   useEffect(() => {
     setTempFilters(filters);
   }, [filters]);
-
 
   return (
     <Modal
@@ -244,7 +245,9 @@ const SharedContactCard = ({item, onPress}) => {
             <Text style={cardStyles.businessName} numberOfLines={1}>
               {item.business_name || 'Unknown Business'}
             </Text>
-            <Text style={cardStyles.businessId}>ID: {item.business_id || 'N/A'}</Text>
+            <Text style={cardStyles.businessId}>
+              ID: {item.business_id || 'N/A'}
+            </Text>
           </View>
         </View>
         <View
@@ -266,7 +269,9 @@ const SharedContactCard = ({item, onPress}) => {
             </Text>
           </View>
           <View style={cardStyles.recipientDetails}>
-            <Text style={cardStyles.recipientName}>{item.recipient_name || 'Unknown Recipient'}</Text>
+            <Text style={cardStyles.recipientName}>
+              {item.recipient_name || 'Unknown Recipient'}
+            </Text>
             <Text style={cardStyles.recipientId}>
               Recipient ID: {item.recipient_id || 'N/A'}
             </Text>
@@ -327,7 +332,9 @@ const ReceivedContactCard = ({item, onPress}) => {
             <Text style={cardStyles.businessName} numberOfLines={1}>
               {item.business_name || 'Unknown Business'}
             </Text>
-            <Text style={cardStyles.businessId}>ID: {item.business_id || 'N/A'}</Text>
+            <Text style={cardStyles.businessId}>
+              ID: {item.business_id || 'N/A'}
+            </Text>
           </View>
         </View>
         <View
@@ -349,7 +356,9 @@ const ReceivedContactCard = ({item, onPress}) => {
             </Text>
           </View>
           <View style={cardStyles.recipientDetails}>
-            <Text style={cardStyles.recipientName}>{item.shared_by_name || 'Unknown Sender'}</Text>
+            <Text style={cardStyles.recipientName}>
+              {item.shared_by_name || 'Unknown Sender'}
+            </Text>
             <Text style={cardStyles.recipientId}>
               Sender ID: {item.shared_by_id || 'N/A'}
             </Text>
@@ -370,6 +379,7 @@ const ReceivedContactCard = ({item, onPress}) => {
 
 // Main Component
 const Contacts = () => {
+  const navigation = useNavigation();
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState('Shared Contacts');
   const [searchQuery, setSearchQuery] = useState('');
@@ -385,16 +395,19 @@ const Contacts = () => {
   const sharedContactsData = useSelector(
     state => state.sharedBusiness?.data?.result?.data ?? [],
   );
-  const sharedBusinessLoading = useSelector(state => state.sharedBusiness?.loading); // <-- Get loading state
+  const sharedBusinessLoading = useSelector(
+    state => state.sharedBusiness?.loading,
+  ); // <-- Get loading state
 
   const receivedContactsData = useSelector(
     state => state.receivedBusiness?.data?.result?.data ?? [],
   );
-  const receivedBusinessLoading = useSelector(state => state.receivedBusiness?.loading); // <-- Get loading state
+  const receivedBusinessLoading = useSelector(
+    state => state.receivedBusiness?.loading,
+  ); // <-- Get loading state
 
   // Combined loading state for refresh control
   const isLoading = sharedBusinessLoading || receivedBusinessLoading;
-
 
   // Function to fetch all contacts
   const fetchAllContacts = useCallback(() => {
@@ -419,7 +432,6 @@ const Contacts = () => {
     setRefreshing(true); // Start showing the refresh indicator
     fetchAllContacts(); // Trigger fetch for both types
   }, [fetchAllContacts]);
-
 
   // Get current data based on active tab
   const getCurrentData = () => {
@@ -448,7 +460,8 @@ const Contacts = () => {
 
       // Event type filter
       const matchesEventType =
-        filters.eventType === 'ALL' || item.event_name?.toUpperCase() === filters.eventType;
+        filters.eventType === 'ALL' ||
+        item.event_name?.toUpperCase() === filters.eventType;
 
       // Business name filter
       const matchesBusinessName =
@@ -471,17 +484,16 @@ const Contacts = () => {
       if (filters.dateRange !== 'ALL') {
         const dateField =
           activeTab === 'Shared Contacts' ? item.shared_at : item.share_date; // Corrected to share_date for received
-        
+
         const itemDate = new Date(dateField);
         const now = new Date();
-        now.setHours(0,0,0,0); // Normalize 'now' to start of day
+        now.setHours(0, 0, 0, 0); // Normalize 'now' to start of day
 
         // Handle invalid dates from backend
         if (isNaN(itemDate.getTime())) {
           return false; // Exclude items with invalid dates
         }
-        itemDate.setHours(0,0,0,0); // Normalize itemDate to start of day
-
+        itemDate.setHours(0, 0, 0, 0); // Normalize itemDate to start of day
 
         switch (filters.dateRange) {
           case 'TODAY':
@@ -508,10 +520,33 @@ const Contacts = () => {
         matchesDateRange
       );
     });
-  }, [activeTab, searchQuery, filters, sharedContactsData, receivedContactsData]); // Add data dependencies
+  }, [
+    activeTab,
+    searchQuery,
+    filters,
+    sharedContactsData,
+    receivedContactsData,
+  ]); // Add data dependencies
 
   const handleCardPress = item => {
     console.log('Card pressed:', item);
+
+    if (item.recipient_id) {
+      navigation.navigate('Business', {
+        screen: 'BusinessDetails',
+        params: {
+          data: {id: item?.business_id},
+        },
+      });
+    } else {
+      navigation.navigate('Home', {
+        screen: 'BusinessDetails2',
+        params: {
+          data: `https://erp.thumps.app/business/view?business_id=${item.business_id}&shared_by=${item.shared_by_id}&type=1`,
+        },
+      });
+    }
+
     // You can navigate to a detail screen or perform other actions here
   };
 
@@ -637,7 +672,7 @@ const Contacts = () => {
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={colors.primary} // iOS spinner color
-            colors={[colors.primary]}   // Android spinner color
+            colors={[colors.primary]} // Android spinner color
           />
         }
       />

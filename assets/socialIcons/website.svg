@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="webGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Globe/Earth background -->
+  <circle cx="50" cy="50" r="40" fill="url(#webGradient)" stroke="#1e40af" stroke-width="2"/>
+  
+  <!-- Latitude lines -->
+  <ellipse cx="50" cy="50" rx="40" ry="20" fill="none" stroke="white" stroke-width="1.5" opacity="0.7"/>
+  <ellipse cx="50" cy="50" rx="40" ry="30" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+  
+  <!-- Longitude lines -->
+  <ellipse cx="50" cy="50" rx="20" ry="40" fill="none" stroke="white" stroke-width="1.5" opacity="0.7"/>
+  <ellipse cx="50" cy="50" rx="30" ry="40" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+  
+  <!-- Equator line -->
+  <line x1="10" y1="50" x2="90" y2="50" stroke="white" stroke-width="2" opacity="0.8"/>
+  
+  <!-- WWW text -->
+  <text x="50" y="30" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="8" font-weight="bold" opacity="0.9">WWW</text>
+  
+  <!-- Link chain symbol at bottom -->
+  <g transform="translate(40, 65)">
+    <rect x="0" y="0" width="8" height="4" rx="2" fill="none" stroke="white" stroke-width="1.5"/>
+    <rect x="4" y="2" width="8" height="4" rx="2" fill="none" stroke="white" stroke-width="1.5"/>
+    <line x1="4" y1="2" x2="8" y2="4" stroke="white" stroke-width="1.5"/>
+  </g>
+  
+  <!-- Small dots representing network nodes -->
+  <circle cx="25" cy="35" r="1.5" fill="white" opacity="0.8"/>
+  <circle cx="75" cy="35" r="1.5" fill="white" opacity="0.8"/>
+  <circle cx="25" cy="65" r="1.5" fill="white" opacity="0.8"/>
+  <circle cx="75" cy="65" r="1.5" fill="white" opacity="0.8"/>
+</svg>

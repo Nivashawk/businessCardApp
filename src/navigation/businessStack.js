@@ -5,6 +5,7 @@ import {getHeaderOptions} from '../theme/headerOptions';
 import BusinessDetails from '../screens/business/businessDetails';
 import CreateBusiness from '../screens/business/createBusiness';
 import ListBusiness from '../screens/business/listBusiness';
+import UpdateBusiness from '../screens/business/updateBusiness';
 
 import CustomCamera from '../screens/business/steps/customCamera';
 
@@ -26,14 +27,20 @@ export default function BusinessStack() {
         options={{
           header: () => <CustomHeader title="Create Business" />,
         }}
-        
+      />
+      <Stack.Screen
+        name="UpdateBusiness"
+        component={UpdateBusiness}
+        options={{
+          header: () => <CustomHeader title="Update Business" />,
+        }}
       />
       <Stack.Screen
         name="BusinessDetails"
         component={BusinessDetails}
         options={{header: () => <CustomHeader title="Details" />}}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="CustomCamera"
         component={CustomCamera}
         options={{header: () => <CustomHeader title="CustomCamera" />}}

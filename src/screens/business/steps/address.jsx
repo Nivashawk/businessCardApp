@@ -67,8 +67,6 @@ const Address = forwardRef(({initialData}, ref) => {
   useEffect(() => {
     if (initialData) {
       console.log('Updating Address form with initialData:', initialData);
-      console.log('Available countries:', countries);
-      console.log('Available states:', states);
 
       setStreet(initialData.street || '');
       setStreet2(initialData.street2 || '');
@@ -87,7 +85,7 @@ const Address = forwardRef(({initialData}, ref) => {
       console.log('Setting country value:', countryValue);
       console.log('Setting state value:', stateValue);
     }
-  }, [initialData, countries, states]);
+  }, []);
 
   // Load states when country changes
   useEffect(() => {
@@ -146,14 +144,17 @@ const Address = forwardRef(({initialData}, ref) => {
       if (isValid) {
         console.log('Address form validation passed');
         // Dispatch the data to Redux when validation passes
+        console.log('parseInt(state)', parseInt(state));
+         console.log('parseInt(country)', parseInt(country));
+        
         dispatch(
           updateBusinessAddressData({
             street,
             street2,
             city,
             zip: pinCode,
-            state_id: state,
-            country_id: country,
+            state_id: parseInt(state),
+            country_id: parseInt(country),
           }),
         );
       }
@@ -181,7 +182,8 @@ const Address = forwardRef(({initialData}, ref) => {
 
   const handleSelectCountry = item => {
     console.log('country dropdown selected:', item);
-    const countryValue = String(item.value);
+    const countryValue = item.value;
+    console.log('countryValue',countryValue);
     setCountry(countryValue);
     setCountryError('');
     setState(''); // Reset state when country changes
@@ -192,7 +194,7 @@ const Address = forwardRef(({initialData}, ref) => {
       setCountryError('Please select a country first');
     } else {
       setCountryError('');
-      const stateValue = String(item.value);
+      const stateValue = item.value;
       setState(stateValue);
       setStateError('');
     }

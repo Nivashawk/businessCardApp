@@ -110,6 +110,7 @@ const BusinessDetails2 = ({}) => {
   const [businessId, setBusinessId] = useState(null);
   const [sharedBy, setSharedBy] = useState(null);
   const [eventId, setEventId] = useState(null);
+  const [shouldShowModal, setShouldShowModal] = useState(true); // New state to control modal visibility
 
   // Get business data from Redux store
   const BusinessData = useSelector(
@@ -139,6 +140,10 @@ const BusinessDetails2 = ({}) => {
       setBusinessId(params.business_id);
       setSharedBy(params.shared_by);
       setEventId(params.event_id || "");
+      
+      // Check if type=1 exists in the URL
+      // If type=1 exists, don't show modal; otherwise, show modal
+      setShouldShowModal(params.type !== '1');
     }
   }, [data]);
 
@@ -151,9 +156,9 @@ const BusinessDetails2 = ({}) => {
     }
   }, [businessId]);
 
-  // Show modal when business data is successfully loaded
+  // Show modal when business data is successfully loaded AND shouldShowModal is true
   useEffect(() => {
-    if (BusinessData && !isLoading && businessId) {
+    if (BusinessData && !isLoading && businessId && shouldShowModal) {
       // Add a small delay to ensure smooth transition
       const timer = setTimeout(() => {
         setShowSaveContactModal(true);
@@ -161,7 +166,7 @@ const BusinessDetails2 = ({}) => {
       
       return () => clearTimeout(timer);
     }
-  }, [BusinessData, isLoading, businessId]);
+  }, [BusinessData, isLoading, businessId, shouldShowModal]);
 
   const handleModalClose = () => {
     setShowSaveContactModal(false);
@@ -170,47 +175,53 @@ const BusinessDetails2 = ({}) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor={colors.background} barStyle="dark-content" />
-      <TabSwitcher activeTab={activeTab} setActiveTab={setActiveTab} />
+
+      {/* Header without Edit Button */}
+      <View style={styles.headerContainer}>
+        <View style={styles.tabContainer}>
+          {['Business Details', 'Business Card'].map(tab => (
+            <TouchableOpacity
+              key={tab}
+              onPress={() => {
+                console.log('Tab pressed:', tab);
+                setActiveTab(tab);
+              }}
+              style={[
+                styles.simpleTab,
+                activeTab === tab && styles.activeSimpleTab,
+              ]}
+              activeOpacity={0.7}>
+              <Text
+                style={[
+                  styles.simpleTabText,
+                  activeTab === tab && styles.activeSimpleTabText,
+                ]}>
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
       {activeTab === 'Business Details' ? (
         <BusinessDetailsTab />
       ) : (
         <BusinessCard />
       )}
       
-      {/* Save Contact Modal */}
-      <SaveContactModal
-        visible={showSaveContactModal}
-        onClose={handleModalClose}
-        businessData={BusinessData}
-        paramData={{businessId:businessId, sharedBy:sharedBy, eventId:eventId}}
-        dispatch={dispatch}
-      />
+      {/* Save Contact Modal - Only render if shouldShowModal is true */}
+      {shouldShowModal && (
+        <SaveContactModal
+          visible={showSaveContactModal}
+          onClose={handleModalClose}
+          businessData={BusinessData}
+          paramData={{businessId:businessId, sharedBy:sharedBy, eventId:eventId}}
+          dispatch={dispatch}
+        />
+      )}
     </SafeAreaView>
   );
 };
-
-const TabSwitcher = ({activeTab, setActiveTab}) => (
-  <View style={styles.tabContainer}>
-    {['Business Details', 'Business Card'].map(tab => (
-      <TouchableOpacity
-        key={tab}
-        onPress={() => {
-          console.log('Tab pressed:', tab);
-          setActiveTab(tab);
-        }}
-        style={[styles.simpleTab, activeTab === tab && styles.activeSimpleTab]}
-        activeOpacity={0.7}>
-        <Text
-          style={[
-            styles.simpleTabText,
-            activeTab === tab && styles.activeSimpleTabText,
-          ]}>
-          {tab}
-        </Text>
-      </TouchableOpacity>
-    ))}
-  </View>
-);
 
 const BusinessDetailsTab = () => {
   const BusinessData = useSelector(
@@ -231,6 +242,126 @@ const BusinessDetailsTab = () => {
     }
   };
 
+  const handleSocialPress = (platform, value) => {
+    // Check if the value is already a full URL
+    const isFullUrl =
+      value.startsWith('http://') || value.startsWith('https://');
+
+    if (isFullUrl) {
+      // If it's already a full URL, use it directly
+      Linking.openURL(value);
+      return;
+    }
+
+    // If it's not a full URL, construct the URL based on platform
+    let url = '';
+    switch (platform) {
+      case 'instagram':
+        // Handle both @username and username formats
+        const instaHandle = value.startsWith('@') ? value.substring(1) : value;
+        url = `https://instagram.com/${instaHandle}`;
+        break;
+      case 'facebook':
+        url = `https://facebook.com/${value}`;
+        break;
+      case 'linkedin':
+        url = `https://linkedin.com/in/${value}`;
+        break;
+      case 'twitter':
+        // Handle both @username and username formats
+        const twitterHandle = value.startsWith('@')
+          ? value.substring(1)
+          : value;
+        url = `https://twitter.com/${twitterHandle}`;
+        break;
+      case 'youtube':
+        // Handle different YouTube URL formats
+        if (
+          value.includes('channel/') ||
+          value.includes('c/') ||
+          value.includes('user/')
+        ) {
+          url = `https://youtube.com/${value}`;
+        } else {
+          url = `https://youtube.com/c/${value}`;
+        }
+        break;
+      case 'google_business':
+        url = value;
+        break;
+      default:
+        url = value;
+    }
+    Linking.openURL(url);
+  };
+
+  // Function to get available social media platforms
+  const getAvailableSocialMedia = () => {
+    const socialMedia = [];
+
+    if (BusinessData?.social_insta && BusinessData.social_insta.trim() !== '') {
+      socialMedia.push({
+        platform: 'instagram',
+        value: BusinessData.social_insta,
+        icon: Instagram,
+      });
+    }
+
+    if (BusinessData?.social_fb && BusinessData.social_fb.trim() !== '') {
+      socialMedia.push({
+        platform: 'facebook',
+        value: BusinessData.social_fb,
+        icon: Facebook,
+      });
+    }
+
+    if (
+      BusinessData?.social_linkedin &&
+      BusinessData.social_linkedin.trim() !== ''
+    ) {
+      socialMedia.push({
+        platform: 'linkedin',
+        value: BusinessData.social_linkedin,
+        icon: LinkedIn,
+      });
+    }
+
+    if (
+      BusinessData?.social_twitter &&
+      BusinessData.social_twitter.trim() !== ''
+    ) {
+      socialMedia.push({
+        platform: 'twitter',
+        value: BusinessData.social_twitter,
+        icon: Telegram, // Using Telegram icon for Twitter as per your imports
+      });
+    }
+
+    if (
+      BusinessData?.social_youtube &&
+      BusinessData.social_youtube.trim() !== ''
+    ) {
+      socialMedia.push({
+        platform: 'youtube',
+        value: BusinessData.social_youtube,
+        icon: Telegram, // You might want to add a YouTube icon
+      });
+    }
+
+    if (
+      BusinessData?.social_google_business &&
+      BusinessData.social_google_business.trim() !== ''
+    ) {
+      socialMedia.push({
+        platform: 'google_business',
+        value: BusinessData.social_google_business,
+        icon: Telegram, // You might want to add a Google Business icon
+      });
+    }
+
+    return socialMedia;
+  };
+
   if (!BusinessData) {
     return (
       <View style={styles.loadingContainer}>
@@ -238,6 +369,8 @@ const BusinessDetailsTab = () => {
       </View>
     );
   }
+
+  const availableSocialMedia = getAvailableSocialMedia();
 
   return (
     <ScrollView
@@ -261,23 +394,33 @@ const BusinessDetailsTab = () => {
 
         {/* Quick Contact Actions */}
         <View style={styles.quickContactContainer}>
-          <TouchableOpacity
-            style={styles.quickContactButton}
-            onPress={() => handleContactPress('phone', BusinessData?.phone)}>
-            <PhoneIcon width={18} height={18} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickContactButton}
-            onPress={() => handleContactPress('email', BusinessData?.email)}>
-            <MailIcon width={18} height={18} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickContactButton}
-            onPress={() =>
-              handleContactPress('website', BusinessData?.website)
-            }>
-            <WebsiteIcon width={18} height={18} />
-          </TouchableOpacity>
+          {BusinessData?.business_mobile && (
+            <TouchableOpacity
+              style={styles.quickContactButton}
+              onPress={() =>
+                handleContactPress('phone', BusinessData?.business_mobile)
+              }>
+              <PhoneIcon width={18} height={18} fill={'#ffffff'} />
+            </TouchableOpacity>
+          )}
+          {BusinessData?.business_email && (
+            <TouchableOpacity
+              style={styles.quickContactButton}
+              onPress={() =>
+                handleContactPress('email', BusinessData?.business_email)
+              }>
+              <MailIcon width={18} height={18} />
+            </TouchableOpacity>
+          )}
+          {BusinessData?.website && BusinessData.website.trim() !== '' && (
+            <TouchableOpacity
+              style={styles.quickContactButton}
+              onPress={() =>
+                handleContactPress('website', BusinessData?.website)
+              }>
+              <WebsiteIcon width={18} height={18} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.quickContactButton}>
             <Whatsapp width={18} height={18} />
           </TouchableOpacity>
@@ -296,14 +439,14 @@ const BusinessDetailsTab = () => {
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Services</Text>
           <Text style={styles.infoCardValue}>
-            {BusinessData?.services || 'General Services'}
+            {BusinessData?.services_products || 'General Services'}
           </Text>
         </View>
 
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Founded</Text>
           <Text style={styles.infoCardValue}>
-            {BusinessData?.foundedDate || '2020'}
+            {BusinessData?.founded_year || 'N/A'}
           </Text>
         </View>
       </View>
@@ -314,7 +457,9 @@ const BusinessDetailsTab = () => {
         <View style={styles.mapContainer}>
           <Text style={styles.mapPlaceholderText}>Interactive Map</Text>
           <Text style={styles.addressText}>
-            {BusinessData?.address || 'Address not available'}
+            {BusinessData?.street ||
+              BusinessData?.city ||
+              'Address not available'}
           </Text>
         </View>
       </View>
@@ -323,15 +468,15 @@ const BusinessDetailsTab = () => {
       <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>Registration Details</Text>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>GST Number</Text>
+          <Text style={styles.detailLabel}>Business ID</Text>
           <Text style={styles.detailValue}>
-            {BusinessData?.gstNumber || 'Not registered'}
+            {BusinessData?.id || 'Not available'}
           </Text>
         </View>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Business Type</Text>
+          <Text style={styles.detailLabel}>Status</Text>
           <Text style={styles.detailValue}>
-            {BusinessData?.businessType || 'Private Limited'}
+            {BusinessData?.active ? 'Active' : 'Inactive'}
           </Text>
         </View>
       </View>
@@ -342,75 +487,105 @@ const BusinessDetailsTab = () => {
         <View style={styles.founderCard}>
           <View style={styles.founderAvatar}>
             <Text style={styles.founderInitial}>
-              {BusinessData?.designation?.charAt(0) || 'F'}
+              {BusinessData?.partner_name?.charAt(0) || 'F'}
             </Text>
           </View>
           <View style={styles.founderInfo}>
             <Text style={styles.founderName}>
-              {BusinessData?.designation || 'Founder Name'}
+              {BusinessData?.partner_name || 'Partner Name'}
             </Text>
             <Text style={styles.founderDesignation}>
-              {BusinessData?.partner_name || 'Chief Executive Officer'}
+              {BusinessData?.designation || 'Position'}
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Social Media Section */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Connect With Us</Text>
-        <View style={styles.socialMediaContainer}>
-          <TouchableOpacity style={styles.socialButton}>
-            <Facebook width={20} height={20} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <Instagram width={20} height={20} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <LinkedIn width={20} height={20} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <Telegram width={20} height={20} />
+      {/* Social Media Section - Only show if there are social media accounts */}
+      {availableSocialMedia.length > 0 && (
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Connect With Us</Text>
+          <View style={styles.socialMediaContainer}>
+            {availableSocialMedia.map((social, index) => {
+              const IconComponent = social.icon;
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.socialButton}
+                  onPress={() =>
+                    handleSocialPress(social.platform, social.value)
+                  }>
+                  <IconComponent width={20} height={20} />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      )}
+    </ScrollView>
+  );
+};
+
+const BusinessCard = () => {
+  const BusinessData = useSelector(
+    state => state.getBusinessData?.data?.result?.data ?? null,
+  );
+
+  return (
+    <ScrollView
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}>
+      <View style={styles.cardSection}>
+        <Text style={styles.sectionTitle}>Business Logo</Text>
+        <View style={styles.businessCardAvatar}>
+         <Image
+            source={{
+              uri: `data:image/jpeg;base64,${BusinessData?.logo}`,
+            }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+        </View>
+      </View>
+
+      <View style={styles.cardSection}>
+        <Text style={styles.sectionTitle}>Business Cards</Text>
+        <View style={styles.businessCardImage}>
+          <Image
+            source={{
+              uri: `data:image/jpeg;base64,${BusinessData?.business_card_front}`,
+            }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+          {/* <Text style={styles.cardPlaceholderText}>Front Card Design</Text> */}
+        </View>
+        <View style={styles.businessCardImage}>
+          <Image
+            source={{
+              uri: `data:image/jpeg;base64,${BusinessData?.business_card_back}`,
+            }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+        </View>
+      </View>
+
+      <View style={styles.cardSection}>
+        <Text style={styles.sectionTitle}>Promotional Video</Text>
+        <View style={styles.videoContainer}>
+          <Text style={styles.videoLabel}>Company Introduction</Text>
+          <Text style={styles.videoLink}>
+            https://youtube.com/company-intro
+          </Text>
+          <TouchableOpacity style={styles.playButton}>
+            <Text style={styles.playButtonText}>▶ Play Video</Text>
           </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
   );
 };
-
-const BusinessCard = () => (
-  <ScrollView
-    contentContainerStyle={styles.scrollContent}
-    showsVerticalScrollIndicator={false}>
-    <View style={styles.cardSection}>
-      <Text style={styles.sectionTitle}>Business Avatar</Text>
-      <View style={styles.businessCardAvatar}>
-        <Text style={styles.avatarText}>BC</Text>
-      </View>
-    </View>
-
-    <View style={styles.cardSection}>
-      <Text style={styles.sectionTitle}>Business Cards</Text>
-      <View style={styles.businessCardImage}>
-        <Text style={styles.cardPlaceholderText}>Front Card Design</Text>
-      </View>
-      <View style={styles.businessCardImage}>
-        <Text style={styles.cardPlaceholderText}>Back Card Design</Text>
-      </View>
-    </View>
-
-    <View style={styles.cardSection}>
-      <Text style={styles.sectionTitle}>Promotional Video</Text>
-      <View style={styles.videoContainer}>
-        <Text style={styles.videoLabel}>Company Introduction</Text>
-        <Text style={styles.videoLink}>https://youtube.com/company-intro</Text>
-        <TouchableOpacity style={styles.playButton}>
-          <Text style={styles.playButtonText}>▶ Play Video</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </ScrollView>
-);
 
 // Modal Styles
 const modalStyles = StyleSheet.create({
@@ -521,7 +696,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
-  tabContainer: {
+  // Updated header container without edit button
+  headerContainer: {
     backgroundColor: '#ffffff',
     paddingHorizontal: 16,
     paddingTop: 8,
@@ -530,6 +706,8 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
     shadowRadius: 3,
+  },
+  tabContainer: {
     flexDirection: 'row',
   },
   simpleTab: {
@@ -554,37 +732,6 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
   activeSimpleTabText: {
-    color: '#ffffff',
-    fontWeight: '600',
-  },
-  tabBackground: {
-    flexDirection: 'row',
-    backgroundColor: '#f1f3f4',
-    borderRadius: 25,
-    padding: 4,
-    marginBottom: 8,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 20,
-    zIndex: 1,
-  },
-  activeTab: {
-    backgroundColor: colors.primary,
-    elevation: 2,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6b7280',
-  },
-  activeTabText: {
     color: '#ffffff',
     fontWeight: '600',
   },
@@ -802,88 +949,97 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   // Business Card Styles
-  cardSection: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    padding: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  businessCardAvatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
-    elevation: 4,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  avatarText: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  businessCardImage: {
-    width: '100%',
-    height: 180,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderStyle: 'dashed',
-  },
-  cardPlaceholderText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#6b7280',
-  },
-  videoContainer: {
-    padding: 16,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  videoLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
-  videoLink: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  playButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 24,
-    elevation: 2,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  playButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
-
-export default BusinessDetails2;
+    cardSection: {
+      backgroundColor: '#ffffff',
+      marginHorizontal: 16,
+      marginBottom: 16,
+      borderRadius: 12,
+      padding: 20,
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: 1},
+      shadowOpacity: 0.1,
+      shadowRadius: 3,
+    },
+    businessCardAvatar: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      backgroundColor: colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      alignSelf: 'center',
+      elevation: 4,
+      shadowColor: colors.primary,
+      shadowOffset: {width: 0, height: 2},
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+    },
+    avatarText: {
+      fontSize: 36,
+      fontWeight: 'bold',
+      color: '#ffffff',
+    },
+    businessCardImage: {
+      width: '100%',
+      height: 180,
+      backgroundColor: '#f3f4f6',
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: '#e5e7eb',
+      borderStyle: 'dashed',
+    },
+    cardPlaceholderText: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: '#6b7280',
+    },
+    videoContainer: {
+      padding: 16,
+      backgroundColor: '#f9fafb',
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    videoLabel: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#1f2937',
+      marginBottom: 8,
+    },
+    videoLink: {
+      fontSize: 12,
+      color: '#6b7280',
+      marginBottom: 12,
+      textAlign: 'center',
+    },
+    playButton: {
+      backgroundColor: colors.primary,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 24,
+      elevation: 2,
+      shadowColor: colors.primary,
+      shadowOffset: {width: 0, height: 2},
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+    },
+    playButtonText: {
+      color: '#ffffff',
+      fontSize: 14,
+      fontWeight: '600',
+    },
+      image: {
+      // marginTop: 15,
+      width:'100%',
+      height: '100%',
+      borderRadius: 10,
+      alignSelf: 'center',
+      borderWidth: 1,
+      borderColor: '#ddd',
+    },
+  });
+  
+  export default BusinessDetails2;

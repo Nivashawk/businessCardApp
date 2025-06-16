@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   icon: {
-    fontSize: 22,
+    fontSize: 36,
     fontWeight: '600',
     width: 30,
     textAlign: 'center',

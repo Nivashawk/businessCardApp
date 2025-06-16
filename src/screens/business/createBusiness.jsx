@@ -26,12 +26,13 @@ import {
 import {TabBarStyle} from '../../theme/tabBar';
 import {useFocusEffect} from '@react-navigation/native';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import { resetCreateBusiness } from '../../redux/slices/business/createBusinessSlices';
+import {resetCreateBusiness} from '../../redux/slices/business/createBusinessSlices';
 import {colors} from '../../theme/colors';
 import Basic from './steps/basic';
 import Address from './steps/address';
 import Upload from './steps/upload';
 import Social from './steps/social';
+import Toast from 'react-native-toast-message';
 
 const {width, height} = Dimensions.get('window');
 
@@ -40,16 +41,21 @@ const CreateBusiness = () => {
   const route = useRoute();
   const dispatch = useDispatch();
   const businessData = useSelector(state => state.businessData);
-  
+
   // Get current tab from Redux state
-  const currentTabFromRedux = useSelector(state => state.businessData.currentTab || 0);
-  
+  const currentTabFromRedux = useSelector(
+    state => state.businessData.currentTab || 0,
+  );
+
   // Get initial tab from route params (this takes priority)
   const initialTabFromRoute = route.params?.initialTab;
-  
+
   // Determine which tab to start with
-  const initialTab = initialTabFromRoute !== undefined ? initialTabFromRoute : currentTabFromRedux;
-  
+  const initialTab =
+    initialTabFromRoute !== undefined
+      ? initialTabFromRoute
+      : currentTabFromRedux;
+
   const [index, setIndex] = useState(initialTab);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasNavigatedAway, setHasNavigatedAway] = useState(false);
@@ -72,21 +78,21 @@ const CreateBusiness = () => {
         setIndex(route.params.initialTab);
         progress.setValue(route.params.initialTab / 4);
         // Clear the route param so it doesn't interfere with future navigation
-        navigation.setParams({ initialTab: undefined });
+        navigation.setParams({initialTab: undefined});
       } else {
         // Use Redux state for tab persistence
         setIndex(currentTabFromRedux);
         progress.setValue(currentTabFromRedux / 4);
       }
-      
+
       setIsSubmitted(false);
       setHasNavigatedAway(false);
       dispatch(resetCreateBusiness());
-      
+
       return () => {
         setHasNavigatedAway(true);
       };
-    }, [route.params?.initialTab, currentTabFromRedux, navigation, dispatch])
+    }, [route.params?.initialTab, currentTabFromRedux, navigation, dispatch]),
   );
 
   // // Reset tab state when component unmounts completely
@@ -102,7 +108,7 @@ const CreateBusiness = () => {
   useEffect(() => {
     console.log('submit status', isSubmitted);
     console.log('businessData', businessData);
-    
+
     if (isSubmitted && index === 3 && !hasNavigatedAway) {
       console.log('Triggering API call from last step');
       if (businessData) {
@@ -110,7 +116,9 @@ const CreateBusiness = () => {
         dispatch(
           createBusiness({
             name: businessData.companyName,
+            founded_year: businessData.foundedYear,
             designation: businessData.yourDesignation,
+            gst: businessData.gstNumber,
             business_mobile: businessData.phone,
             business_email: businessData.email,
             public_summary: businessData.description,
@@ -125,9 +133,9 @@ const CreateBusiness = () => {
             country_id: businessData.country_id,
             website: businessData.website,
             promo_video: businessData.promo_video,
-            business_card_front: businessData.business_card_front,
-            business_card_back: businessData.business_card_back,
-            logo: businessData.logo,
+            business_card_front: businessData.business_card_front?.base64,
+            business_card_back: businessData.business_card_back?.base64,
+            logo: businessData.logo?.base64,
             social_insta: businessData.social_insta,
             social_linkedin: businessData.social_linkedin,
             social_twitter: businessData.social_twitter,
@@ -144,10 +152,18 @@ const CreateBusiness = () => {
   }, [businessData, isSubmitted, index, hasNavigatedAway, dispatch]);
 
   useEffect(() => {
-    console.log("BusinessCreated state:", BusinessCreated);
-    if (BusinessCreated?.status === "Success" && !hasNavigatedAway && isSubmitted) {
+    console.log('BusinessCreated state:', BusinessCreated);
+    if (
+      BusinessCreated?.status === 'Success' &&
+      !hasNavigatedAway &&
+      isSubmitted
+    ) {
       dispatch(resetBusinessData());
       dispatch(setCurrentTab(0)); // Reset tab after successful creation
+      Toast.show({
+        type: 'success',
+        text1: BusinessCreated.message,
+      });
       setTimeout(() => {
         navigation.goBack();
       }, 500);
@@ -197,7 +213,7 @@ const CreateBusiness = () => {
     if (currentRef.current?.getData) {
       const stepData = currentRef.current.getData();
       console.log(`Saving step ${index} data:`, stepData);
-      
+
       switch (index) {
         case 0: // Basic step
           dispatch(updateBusinessBasicData(stepData));
@@ -209,22 +225,28 @@ const CreateBusiness = () => {
           const uploadData = {
             website: stepData.website || '',
             promo_video: stepData.promo_video || stepData.promoVideo || null,
-            business_card_front: stepData.business_card_front || stepData.businessCardFront || null,
-            business_card_back: stepData.business_card_back || stepData.businessCardBack || null,
+            business_card_front:
+              stepData.business_card_front ||
+              stepData.businessCardFront ||
+              null,
+            business_card_back:
+              stepData.business_card_back || stepData.businessCardBack || null,
             logo: stepData.logo || null,
           };
           console.log('Saving upload data:', uploadData);
           dispatch(updateBusinessUploadData(uploadData));
           break;
         case 3: // Social step
-          dispatch(updateBusinessSocialData({
-            social_insta: stepData.instagram || '',
-            social_linkedin: stepData.linkedin || '',
-            social_twitter: stepData.twitter || '',
-            social_fb: stepData.facebook || '',
-            social_youtube: stepData.youtube || '',
-            social_google_business: stepData.business || '',
-          }));
+          dispatch(
+            updateBusinessSocialData({
+              social_insta: stepData.instagram || '',
+              social_linkedin: stepData.linkedin || '',
+              social_twitter: stepData.twitter || '',
+              social_fb: stepData.facebook || '',
+              social_youtube: stepData.youtube || '',
+              social_google_business: stepData.business || '',
+            }),
+          );
           break;
       }
     }
@@ -263,7 +285,7 @@ const CreateBusiness = () => {
   // Enhanced function to get current step data with better upload handling
   const getCurrentStepData = () => {
     console.log('Getting data for step:', index, 'businessData:', businessData);
-    
+
     switch (index) {
       case 0: // Basic step
         return {
@@ -275,6 +297,8 @@ const CreateBusiness = () => {
           industry: businessData.industry || '',
           services: businessData.services || '',
           DOJ: businessData.DOJ || businessData.date_of_joining || '',
+          foundedYear: businessData.foundedYear || '',
+          gstNumber: businessData.gstNumber || '',
         };
       case 1: // Address step
         return {
@@ -319,11 +343,10 @@ const CreateBusiness = () => {
   const StepComponent = steps[index].Component;
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
       {/* Progress Bar */}
       <View style={styles.progressContainer}>
         <Animated.View
@@ -345,32 +368,32 @@ const CreateBusiness = () => {
           <TouchableOpacity
             key={step.key}
             onPress={() => handleTabPress(i)}
-            style={[
-              styles.tab,
-              index === i && styles.activeTab
-            ]}>
-            <View style={[
-              styles.stepNumber,
-              index === i && styles.activeStepNumber,
-              i < index && styles.completedStepNumber
-            ]}>
-              <Text style={[
-                styles.stepNumberText,
-                index === i && styles.activeStepNumberText,
-                i < index && styles.completedStepNumberText
+            style={[styles.tab, index === i && styles.activeTab]}>
+            <View
+              style={[
+                styles.stepNumber,
+                index === i && styles.activeStepNumber,
+                i < index && styles.completedStepNumber,
               ]}>
+              <Text
+                style={[
+                  styles.stepNumberText,
+                  index === i && styles.activeStepNumberText,
+                  i < index && styles.completedStepNumberText,
+                ]}>
                 {i + 1}
               </Text>
             </View>
-            
-            <Text style={[
-              styles.tabText, 
-              index === i && styles.activeTabText,
-              i < index && styles.completedTabText
-            ]}>
+
+            <Text
+              style={[
+                styles.tabText,
+                index === i && styles.activeTabText,
+                i < index && styles.completedTabText,
+              ]}>
               {step.label}
             </Text>
-            
+
             {index === i && <View style={styles.activeTabIndicator} />}
           </TouchableOpacity>
         ))}
@@ -378,12 +401,16 @@ const CreateBusiness = () => {
 
       {/* Step Content */}
       <Animated.View {...panResponder.panHandlers} style={styles.stepContainer}>
-        <StepComponent 
-          ref={steps[index].ref} 
+        <StepComponent
+          ref={steps[index].ref}
           initialData={getCurrentStepData()}
-          onDataChange={index === 2 ? (data) => {
-            console.log('Upload component data changed:', data);
-          } : undefined}
+          onDataChange={
+            index === 2
+              ? data => {
+                  console.log('Upload component data changed:', data);
+                }
+              : undefined
+          }
         />
       </Animated.View>
 

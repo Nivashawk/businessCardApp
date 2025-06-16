@@ -21,6 +21,8 @@ import getBusinessQRReducer  from './slices/business/generateQRSlices';
 import saveBusinessSliceReducer  from './slices/business/saveBusinessSlices';
 import sharedBusinessSliceReducer from './slices/business/sharedBusinessSlices';
 import receivedBusinessSliceReducer  from './slices/business/receivedBusinessSlices';
+import updateBusinessSliceReducer from './slices/business/updateBusinessSlices';
+import getIndustryReducer from './slices/business/getIndustrySlices';
 
 import createEventReducer from './slices/events/createEvents';
 import listEventsReducer  from './slices/events/listEvents';
@@ -50,6 +52,8 @@ const rootReducer = {
   saveBusiness: saveBusinessSliceReducer,
   sharedBusiness: sharedBusinessSliceReducer,
   receivedBusiness: receivedBusinessSliceReducer,
+  updateBusiness: updateBusinessSliceReducer,
+  industries: getIndustryReducer,
 
   eventData : createEventReducer,
   listEventsData : listEventsReducer,

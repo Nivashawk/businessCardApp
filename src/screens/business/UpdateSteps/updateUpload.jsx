@@ -57,9 +57,9 @@ const UpdateUpload = forwardRef((props, ref) => {
   const [websiteError, setWebsiteError] = useState('');
   const [promoError, setPromoError] = useState('');
 
-  const [selectedFrontImage, setSelectedFrontImage] = useState(null);
-  const [selectedBackImage, setSelectedBackImage] = useState(null);
-  const [selectedLogoImage, setSelectedLogoImage] = useState(null);
+  const [selectedFrontImage, setSelectedFrontImage] = useState('');
+  const [selectedBackImage, setSelectedBackImage] = useState('');
+  const [selectedLogoImage, setSelectedLogoImage] = useState('');
   const [currentImageType, setCurrentImageType] = useState(null); // 'front' | 'back' | 'logo'
 
   const bottomSheetModalRef = useRef(null);
@@ -71,24 +71,36 @@ const UpdateUpload = forwardRef((props, ref) => {
   }, []);
 
   const handleImageSelected = async (type, image) => {
-    if (!image?.path) return;
+    console.log('handleImageSelected called with:', { type, image });
+    
+    if (!image) {
+      console.log('No image provided');
+      return;
+    }
+    
+    if (!image.path) {
+      console.log('Image path missing. Image object:', image);
+      return;
+    }
 
     try {
+      console.log('Reading file from path:', image.path);
       const base64Data = await RNFS.readFile(image.path, 'base64');
-      const imageData = {
-        ...image,
-        base64: base64Data,
-      };
-
+      console.log("base64 string length:", base64Data.length);
+      
+      // Store only the base64 string directly
       switch (type) {
         case 'front':
-          setSelectedFrontImage(imageData);
+          setSelectedFrontImage(base64Data);
+          console.log('Front image set');
           break;
         case 'back':
-          setSelectedBackImage(imageData);
+          setSelectedBackImage(base64Data);
+          console.log('Back image set');
           break;
         case 'logo':
-          setSelectedLogoImage(imageData);
+          setSelectedLogoImage(base64Data);
+          console.log('Logo image set');
           break;
       }
 
@@ -115,13 +127,14 @@ const UpdateUpload = forwardRef((props, ref) => {
         };
         console.log('Form upload:', formData);
 
+        // Send the base64 strings directly
         dispatch(
           updateBusinessUploadData({
             website,
             promo_video: promo,
-            business_card_front: selectedFrontImage?.base64 || '',
-            business_card_back: selectedBackImage?.base64 || '',
-            logo: selectedLogoImage?.base64 || '',
+            business_card_front: selectedFrontImage?.base64,
+            business_card_back: selectedBackImage?.base64,
+            logo: selectedLogoImage?.base64,
           }),
         );
       }
@@ -163,7 +176,7 @@ const UpdateUpload = forwardRef((props, ref) => {
                 />
                 {selectedFrontImage && (
                   <Image
-                    source={{uri: `data:image/jpeg;base64,${selectedFrontImage.base64}`}}
+                    source={{uri: `data:image/jpeg;base64,${selectedFrontImage}`}}
                     style={styles.image}
                   />
                 )}
@@ -174,7 +187,7 @@ const UpdateUpload = forwardRef((props, ref) => {
                 />
                 {selectedBackImage && (
                   <Image
-                    source={{uri: `data:image/jpeg;base64,${selectedBackImage.base64}`}}
+                    source={{uri: `data:image/jpeg;base64,${selectedBackImage}`}}
                     style={styles.image}
                   />
                 )}
@@ -185,7 +198,7 @@ const UpdateUpload = forwardRef((props, ref) => {
                 />
                 {selectedLogoImage && (
                   <Image
-                    source={{uri: `data:image/jpeg;base64,${selectedLogoImage.base64}`}}
+                    source={{uri: `data:image/jpeg;base64,${selectedLogoImage}`}}
                     style={styles.image}
                   />
                 )}

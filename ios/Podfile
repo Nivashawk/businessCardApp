@@ -14,7 +14,7 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-target 'businessCardApp' do
+target 'ThumpsApp' do
   config = use_native_modules!
 
   # pod 'react-native-worklets-core', :path => '../node_modules/react-native-worklets-core', :modular_headers => true

@@ -8,26 +8,26 @@ import {
   Dimensions,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { colors } from '../../theme/colors';
+import {colors} from '../../theme/colors';
 import Add from '../../../assets/add.png';
 
 // import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const {width} = Dimensions.get('window');
 
-const BusinessServiceCard = ({title, image, onPress, isAddCard = false}) => {
+const BusinessServiceCard = ({item, image, onPress, isAddCard = false}) => {
   if (isAddCard) {
     return (
       <TouchableOpacity style={styles.addCard} onPress={onPress}>
         <View style={styles.addCardContent}>
           <View style={styles.addIconContainer}>
-          {Add ? (
-            <Image source={Add} style={styles.businessImage} />
-          ) : (
-            <View style={styles.defaultIconContainer}>
-              <Icon name="business" size={28} color="#FFFFFF" />
-            </View>
-          )}
+            {Add ? (
+              <Image source={Add} style={styles.businessImage} />
+            ) : (
+              <View style={styles.defaultIconContainer}>
+                <Icon name="business" size={28} color="#FFFFFF" />
+              </View>
+            )}
           </View>
           <Text style={styles.addCardText}>Add New{'\n'}Business</Text>
         </View>
@@ -42,7 +42,6 @@ const BusinessServiceCard = ({title, image, onPress, isAddCard = false}) => {
         start={{x: 1, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.gradientBackground}>
-        
         {/* Business Image/Icon */}
         <View style={styles.imageContainer}>
           {image ? (
@@ -57,14 +56,21 @@ const BusinessServiceCard = ({title, image, onPress, isAddCard = false}) => {
         {/* Business Name */}
         <View style={styles.titleContainer}>
           <Text style={styles.title} numberOfLines={2}>
-            {title}
+            {item?.name}
           </Text>
         </View>
 
         {/* Status Indicator */}
         <View style={styles.statusContainer}>
-          <View style={styles.statusDot} />
-          <Text style={styles.statusText}>Active</Text>
+          <View
+            style={[
+              styles.statusDot,
+              {backgroundColor: item?.active ? '#4ADE80' : 'red'},
+            ]}
+          />
+          <Text style={styles.statusText}>
+            {item?.active ? 'Active' : 'Inactive'}
+          </Text>
         </View>
 
         {/* Arrow Icon */}
@@ -150,7 +156,7 @@ const styles = StyleSheet.create({
     top: 12,
     right: 12,
   },
-  
+
   // Add Card Styles
   addCard: {
     height: 140,
