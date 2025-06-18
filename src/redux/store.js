@@ -10,6 +10,8 @@ import registerReducer from './slices/auth/registerSlices';
 import sentOTPReducer from './slices/auth/sendOTPSlices';
 import loginReducer from './slices/auth/loginSlices';
 import odooConnectReducer  from './slices/auth/odooConnectSlices';
+import DeactivateReducer  from './slices/auth/accountDeactivateSlices';
+import DeleteReducer  from './slices/auth/accountDeleteSlices';
 
 import createBusinessReducer  from './slices/business/createBusinessSlices';
 import BusinessDataSliceReducer  from './slices/business/businessBasic';
@@ -41,6 +43,8 @@ const rootReducer = {
   OTPData : sentOTPReducer,
   login: loginReducer,
   odooConnect: odooConnectReducer,
+  accountDeactivate: DeactivateReducer,
+  accountDelete: DeleteReducer,
 
   createBusiness: createBusinessReducer,
   businessData: BusinessDataSliceReducer,

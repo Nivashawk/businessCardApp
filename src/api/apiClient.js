@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSelector } from 'react-redux';
 
 
-const API_BASE_URL = 'https://erp.thumps.app/';
+const API_BASE_URL = 'https://thumps.app/';
 // const API_BASE_URL = 'https://8913-2405-201-e01a-d894-e518-c1f4-790a-c3be.ngrok-free.app/';
 const DEFAULT_TIMEOUT = 10000; // 10 seconds
 

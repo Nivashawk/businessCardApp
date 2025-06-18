@@ -21,7 +21,8 @@ import {useDispatch, useSelector} from 'react-redux';
 import {colors} from '../../theme/colors';
 import {typography} from '../../theme/typography';
 import {updateBusiness} from '../../redux/slices/business/updateBusinessSlices';
-
+import {getCountry} from '../../redux/slices/business/getCountrySlices';
+import {getState} from '../../redux/slices/business/getStateSlices';
 // Import custom components
 import DropdownWSearch from '../../components/inputs/dropdownWSearch';
 import DatePickerBox from '../../components/inputs/datePicker';
@@ -35,6 +36,7 @@ import {
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import ImageCropper from '../../components/imageCropper'; // Adjust path as needed
 import RNFS from 'react-native-fs'; // Import RNFS
+import {getIndustry} from '../../redux/slices/business/getIndustrySlices';
 
 const {width, height} = Dimensions.get('window'); // Destructure width and height
 
@@ -42,9 +44,26 @@ const UpdateBusiness = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const route = useRoute();
-  
+  const industryData = useSelector(
+    state => state.industries?.data?.result?.data ?? [],
+  );
+  // console.log('industryData from update', industryData);
   const {businessData} = route.params || {};
+
+  const countries = useSelector(state => state?.countries?.data?.result?.data);
+  const states = useSelector(state => state?.states?.data?.result?.data);
+
+  console.log("from redux in update business",states);
   
+
+  useEffect(() => {
+    dispatch(getIndustry());
+    dispatch(getCountry());
+    if (formData.country_id) {
+      dispatch(getState({country_code: formData.country_id}));
+    }
+  }, [formData?.country_id, dispatch]);
+
   // For now, using mock data - replace with actual Redux selectors
   const [countriesData, setCountriesData] = useState([
     {id: 1, name: 'India'},
@@ -52,7 +71,7 @@ const UpdateBusiness = () => {
     {id: 3, name: 'United Kingdom'},
     // Add more countries as needed
   ]);
-  
+
   const [statesData, setStatesData] = useState([
     {id: 1, name: 'Tamil Nadu', country_id: 1},
     {id: 2, name: 'Karnataka', country_id: 1},
@@ -61,7 +80,7 @@ const UpdateBusiness = () => {
     {id: 5, name: 'Texas', country_id: 2},
     // Add more states as needed
   ]);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     active: true,
@@ -108,17 +127,17 @@ const UpdateBusiness = () => {
   const [selectedBackImage, setSelectedBackImage] = useState(null);
   const [selectedLogoImage, setSelectedLogoImage] = useState(null);
   const [currentImageType, setCurrentImageType] = useState(null);
-
+  // const [industry, setIndustry] = useState("");
   const bottomSheetModalRef = useRef(null);
   const snapPoints = useMemo(() => ['50%', '80%'], []);
 
   // Helper function to reconstruct image object from base64
   const reconstructImageFromBase64 = (base64String, imageType) => {
     if (!base64String || typeof base64String !== 'string') return null;
-    
+
     // Check if the base64String already contains the data URI prefix
-    const uri = base64String.startsWith('data:') 
-      ? base64String 
+    const uri = base64String.startsWith('data:')
+      ? base64String
       : `data:image/jpeg;base64,${base64String}`;
 
     return {
@@ -131,31 +150,87 @@ const UpdateBusiness = () => {
     };
   };
 
+  //   const findAndSetIndustry = (industryValue, availableIndustries) => {
+
+  //     console.log("inside filter industry");
+  //     console.log(industryValue, availableIndustries);
+
+  //   if (!industryValue || !availableIndustries || availableIndustries.length === 0) {
+  //     setIndustry('');
+  //     return;
+  //   }
+
+  //   // Convert industryValue to string for consistent comparison
+  //   const industryId = String(industryValue);
+
+  //   // Find the matching industry object
+  //   const matchedIndustry = availableIndustries.find(
+  //     item => String(item.id) === industryId
+  //   );
+
+  //   if (matchedIndustry) {
+  //     console.log('Found matching industry:', matchedIndustry);
+  //     // Set the industry value that matches the dropdown's expected format
+  //     setIndustry(matchedIndustry?.name);
+  //   } else {
+  //     console.log('No matching industry found for ID:', industryId);
+  //     setIndustry('');
+  //   }
+  // };
+
   // Initialize form with existing business data
   useEffect(() => {
     if (businessData) {
+      const initialIndustry = businessData.business_industry
+        ? {
+            label: businessData.business_industry_name,
+            value: String(businessData.business_industry),
+          }
+        : null;
+
+      const initialCountry = businessData.business_country_id
+        ? {
+            label: businessData.business_country_id_name,
+            value: String(businessData.business_country_id),
+          }
+        : null;
+
+      const initialState = businessData.business_state_id
+        ? {
+            label: businessData.business_state_id_name,
+            value: String(businessData.business_state_id),
+          }
+        : null;
       setFormData({
         name: businessData.name || '',
         active: businessData.active !== undefined ? businessData.active : true,
         business_email: businessData.business_email || '',
         business_mobile: businessData.business_mobile || '',
-        industry: businessData.industry || '',
+        industry: parseInt(initialIndustry?.value) || '',
+        industryObject: initialIndustry,
+
         business_type: businessData.business_type || 'individual',
         designation: businessData.designation || '',
-        is_primary: businessData.is_primary !== undefined ? businessData.is_primary : true,
+        is_primary:
+          businessData.is_primary !== undefined
+            ? businessData.is_primary
+            : true,
         website: businessData.website || '',
         street: businessData.street || '',
         street2: businessData.street2 || '',
         city: businessData.city || '',
         zip: businessData.zip || '',
-        state_id: businessData.state_id || '',
-        country_id: businessData.country_id || null,
+        state_id: parseInt(initialState?.value) || '',
+        stateObject: initialState,
+        country_id: parseInt(initialCountry?.value) || '',
+        countryObject: initialCountry,
         // These will be managed by selectedImage states
-        logo: '', 
+        logo: '',
         business_card_front: '',
         business_card_back: '',
         promo_video: businessData.promo_video || '',
-        is_public: businessData.is_public !== undefined ? businessData.is_public : true,
+        is_public:
+          businessData.is_public !== undefined ? businessData.is_public : true,
         public_summary: businessData.public_summary || '',
         partner_id: businessData.partner_id || null,
         partner_name: businessData.partner_name || '',
@@ -175,14 +250,22 @@ const UpdateBusiness = () => {
 
       // Initialize image states
       if (businessData.business_card_front) {
-        setSelectedFrontImage(reconstructImageFromBase64(businessData.business_card_front, 'front'));
+        setSelectedFrontImage(
+          reconstructImageFromBase64(businessData.business_card_front, 'front'),
+        );
       }
       if (businessData.business_card_back) {
-        setSelectedBackImage(reconstructImageFromBase64(businessData.business_card_back, 'back'));
+        setSelectedBackImage(
+          reconstructImageFromBase64(businessData.business_card_back, 'back'),
+        );
       }
       if (businessData.logo) {
-        setSelectedLogoImage(reconstructImageFromBase64(businessData.logo, 'logo'));
+        setSelectedLogoImage(
+          reconstructImageFromBase64(businessData.logo, 'logo'),
+        );
       }
+
+      // findAndSetIndustry(businessData.business_industry, industryData);
     }
   }, [businessData]);
 
@@ -190,48 +273,73 @@ const UpdateBusiness = () => {
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    
+
     // Clear error for this field when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
-        [field]: null
+        [field]: null,
       }));
     }
   };
 
+  // Handle industry selection
+  const handleSelectIndustry = item => {
+    setFormData(prev => ({
+      ...prev,
+      industry: item.value, // for backend submission
+      industryObject: item, // for dropdown display
+    }));
+    setErrors(prev => ({...prev, industry: null}));
+  };
+
   // Handle country selection
-  const handleSelectCountry = (item) => {
-    handleInputChange('country_id', item.value);
-    // Reset state when country changes
-    handleInputChange('state_id', '');
-    setErrors(prev => ({...prev, country_id: null}));
+  const handleSelectCountry = item => {
+    setFormData(prev => ({
+      ...prev,
+      country_id: item.value,
+      countryObject: item,
+      state_id: '', // clear previously selected state
+      stateObject: null, // clear selected state object
+    }));
+    setErrors(prev => ({
+      ...prev,
+      country_id: null,
+      state_id: null, // clear error on state as well
+    }));
+
+    // Fetch states for this country if needed (you already use useEffect)
+    dispatch(getState({country_code: item.value}));
   };
 
   // Handle state selection
-  const handleSelectState = (item) => {
-    handleInputChange('state_id', item.value);
+  const handleSelectState = item => {
+    setFormData(prev => ({
+      ...prev,
+      state_id: item.value, // for backend submission
+      stateObject: item, // for dropdown display
+    }));
+    // handleInputChange('state_id', item.value);
     setErrors(prev => ({...prev, state_id: null}));
   };
 
   // Handle date change
-  const handleDateChange = (date) => {
+  const handleDateChange = date => {
     handleInputChange('associated_date', date);
     setErrors(prev => ({...prev, associated_date: null}));
   };
 
   // Filter states based on selected country
-  const getFilteredStates = () => {
-    if (!formData.country_id) return [];
-    return statesData.filter(state => state.country_id === parseInt(formData.country_id));
-  };
+
 
   // Get selected country name
   const getSelectedCountryName = () => {
     if (!formData.country_id) return '';
-    const country = countriesData.find(c => c.id === parseInt(formData.country_id));
+    const country = countriesData.find(
+      c => c.id === parseInt(formData.country_id),
+    );
     return country ? country.name : '';
   };
 
@@ -257,7 +365,7 @@ const UpdateBusiness = () => {
 
     try {
       bottomSheetModalRef.current?.dismiss();
-      
+
       // Add a small delay to allow the bottom sheet to dismiss visually
       setTimeout(async () => {
         try {
@@ -284,7 +392,6 @@ const UpdateBusiness = () => {
           Alert.alert('Error', 'Failed to read image file. Please try again.');
         }
       }, 300); // 300ms delay
-      
     } catch (err) {
       console.error('Error in handleImageSelected:', err);
     }
@@ -314,7 +421,10 @@ const UpdateBusiness = () => {
       newErrors.business_mobile = 'Please enter a valid 10-digit mobile number';
     }
 
-    if (formData.mobile_2 && !/^\d{10}$/.test(formData.mobile_2.replace(/\D/g, ''))) {
+    if (
+      formData.mobile_2 &&
+      !/^\d{10}$/.test(formData.mobile_2.replace(/\D/g, ''))
+    ) {
       newErrors.mobile_2 = 'Please enter a valid 10-digit mobile number';
     }
 
@@ -326,7 +436,12 @@ const UpdateBusiness = () => {
       newErrors.zip = 'Please enter a valid postal code';
     }
 
-    if (formData.gst && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gst)) {
+    if (
+      formData.gst &&
+      !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(
+        formData.gst,
+      )
+    ) {
       newErrors.gst = 'Please enter a valid GST number';
     }
 
@@ -341,17 +456,21 @@ const UpdateBusiness = () => {
   // Handle form submission
   const handleSubmit = async () => {
     if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please fix the errors before submitting');
+      Alert.alert(
+        'Validation Error',
+        'Please fix the errors before submitting',
+      );
       return;
     }
 
     setLoading(true);
-    
+
     try {
+      const { countryObject, stateObject,industryObject , ...filteredFormData } = formData;
       // Prepare update data with business ID and base64 images
       const updateData = {
         id: businessData.id,
-        ...formData,
+        ...filteredFormData,
         logo: selectedLogoImage?.base64 || '',
         business_card_front: selectedFrontImage?.base64 || '',
         business_card_back: selectedBackImage?.base64 || '',
@@ -359,13 +478,15 @@ const UpdateBusiness = () => {
 
       // Dispatch update action
       await dispatch(updateBusiness(updateData)).unwrap(); // Await the unwrap() for better error handling
-      
-      Alert.alert('Success', 'Business details updated successfully!');
+
+      // Alert.alert('Success', 'Business details updated successfully!');
       navigation.goBack();
-      
     } catch (error) {
       console.error('Update business error:', error);
-      Alert.alert('Error', error.message || 'Failed to update business details. Please try again.');
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to update business details. Please try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -379,21 +500,21 @@ const UpdateBusiness = () => {
       [
         {
           text: 'Keep Editing',
-          style: 'cancel'
+          style: 'cancel',
         },
         {
           text: 'Discard',
           style: 'destructive',
-          onPress: () => navigation.goBack()
-        }
-      ]
+          onPress: () => navigation.goBack(),
+        },
+      ],
     );
   };
 
   // Render image preview
   const renderImagePreview = (imageData, label) => {
     if (!imageData || (!imageData.uri && !imageData.base64)) return null;
-    
+
     let imageUri = imageData.uri;
     if (!imageUri && imageData.base64) {
       imageUri = `data:image/jpeg;base64,${imageData.base64}`;
@@ -402,11 +523,16 @@ const UpdateBusiness = () => {
     return (
       <View style={styles.imagePreview}>
         <Text style={styles.imagePreviewLabel}>{label}</Text>
-        <Image 
-          source={{uri: imageUri}} 
+        <Image
+          source={{uri: imageUri}}
           style={styles.previewImage}
           resizeMode="cover"
-          onError={(error) => console.error(`Error loading ${label} image:`, error.nativeEvent.error)}
+          onError={error =>
+            console.error(
+              `Error loading ${label} image:`,
+              error.nativeEvent.error,
+            )
+          }
         />
       </View>
     );
@@ -416,18 +542,23 @@ const UpdateBusiness = () => {
     <GestureHandlerRootView style={styles.container}>
       <BottomSheetModalProvider>
         <SafeAreaView style={styles.container}>
-          <StatusBar backgroundColor={colors.background} barStyle="dark-content" />
-          
+          <StatusBar
+            backgroundColor={colors.background}
+            barStyle="dark-content"
+          />
+
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
+            <TouchableOpacity
+              onPress={handleCancel}
+              style={styles.cancelButton}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
-            
+
             <Text style={styles.headerTitle}>Update Business</Text>
-            
-            <TouchableOpacity 
-              onPress={handleSubmit} 
+
+            <TouchableOpacity
+              onPress={handleSubmit}
               style={[styles.saveButton, loading && styles.saveButtonDisabled]}
               disabled={loading}>
               <Text style={styles.saveButtonText}>
@@ -436,31 +567,34 @@ const UpdateBusiness = () => {
             </TouchableOpacity>
           </View>
 
-          <KeyboardAvoidingView 
+          <KeyboardAvoidingView
             style={styles.keyboardAvoid}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-              <ScrollView 
+              <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled">
-
                 {/* Basic Information */}
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Basic Information</Text>
-                  
+
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Business Name *</Text>
                     <TextInput
-                      style={[styles.textInput, errors.name && styles.inputError]}
+                      style={[
+                        styles.textInput,
+                        errors.name && styles.inputError,
+                      ]}
                       value={formData.name}
-                      onChangeText={(value) => handleInputChange('name', value)}
+                      onChangeText={value => handleInputChange('name', value)}
                       placeholder="Enter business name"
                       placeholderTextColor="#9ca3af"
                     />
-                    {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+                    {errors.name && (
+                      <Text style={styles.errorText}>{errors.name}</Text>
+                    )}
                   </View>
 
                   <View style={styles.inputContainer}>
@@ -468,7 +602,9 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={[styles.textInput, styles.multilineInput]}
                       value={formData.public_summary}
-                      onChangeText={(value) => handleInputChange('public_summary', value)}
+                      onChangeText={value =>
+                        handleInputChange('public_summary', value)
+                      }
                       placeholder="Describe your business"
                       placeholderTextColor="#9ca3af"
                       multiline
@@ -478,13 +614,18 @@ const UpdateBusiness = () => {
                   </View>
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Industry</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={formData.industry}
-                      onChangeText={(value) => handleInputChange('industry', value)}
-                      placeholder="e.g., Technology, Healthcare, Retail"
-                      placeholderTextColor="#9ca3af"
+                    <DropdownWSearch
+                      label="Industry"
+                      data={
+                        industryData?.map(c => ({
+                          label: c.name,
+                          value: String(c.id),
+                        })) ?? []
+                      }
+                      onSelect={handleSelectIndustry}
+                      selectedValue={formData.industryObject}
+                      placeholder="Select an industry"
+                      error={errors.industry}
                     />
                   </View>
 
@@ -493,7 +634,9 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={styles.textInput}
                       value={formData.business_type}
-                      onChangeText={(value) => handleInputChange('business_type', value)}
+                      onChangeText={value =>
+                        handleInputChange('business_type', value)
+                      }
                       placeholder="e.g., individual, company, partnership"
                       placeholderTextColor="#9ca3af"
                     />
@@ -504,7 +647,9 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={[styles.textInput, styles.multilineInput]}
                       value={formData.services_products}
-                      onChangeText={(value) => handleInputChange('services_products', value)}
+                      onChangeText={value =>
+                        handleInputChange('services_products', value)
+                      }
                       placeholder="What services or products do you offer?"
                       placeholderTextColor="#9ca3af"
                       multiline
@@ -518,7 +663,9 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={styles.textInput}
                       value={formData.founded_year}
-                      onChangeText={(value) => handleInputChange('founded_year', value)}
+                      onChangeText={value =>
+                        handleInputChange('founded_year', value)
+                      }
                       placeholder="e.g., 2020"
                       placeholderTextColor="#9ca3af"
                       keyboardType="numeric"
@@ -540,72 +687,104 @@ const UpdateBusiness = () => {
                 {/* Contact Information */}
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Contact Information</Text>
-                  
+
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Business Mobile *</Text>
                     <TextInput
-                      style={[styles.textInput, errors.business_mobile && styles.inputError]}
+                      style={[
+                        styles.textInput,
+                        errors.business_mobile && styles.inputError,
+                      ]}
                       value={formData.business_mobile}
-                      onChangeText={(value) => handleInputChange('business_mobile', value)}
+                      onChangeText={value =>
+                        handleInputChange('business_mobile', value)
+                      }
                       placeholder="Enter mobile number"
                       placeholderTextColor="#9ca3af"
                       keyboardType="phone-pad"
                     />
-                    {errors.business_mobile && <Text style={styles.errorText}>{errors.business_mobile}</Text>}
+                    {errors.business_mobile && (
+                      <Text style={styles.errorText}>
+                        {errors.business_mobile}
+                      </Text>
+                    )}
                   </View>
 
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Secondary Mobile</Text>
                     <TextInput
-                      style={[styles.textInput, errors.mobile_2 && styles.inputError]}
+                      style={[
+                        styles.textInput,
+                        errors.mobile_2 && styles.inputError,
+                      ]}
                       value={formData.mobile_2}
-                      onChangeText={(value) => handleInputChange('mobile_2', value)}
+                      onChangeText={value =>
+                        handleInputChange('mobile_2', value)
+                      }
                       placeholder="Enter secondary mobile number"
                       placeholderTextColor="#9ca3af"
                       keyboardType="phone-pad"
                     />
-                    {errors.mobile_2 && <Text style={styles.errorText}>{errors.mobile_2}</Text>}
+                    {errors.mobile_2 && (
+                      <Text style={styles.errorText}>{errors.mobile_2}</Text>
+                    )}
                   </View>
 
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Business Email *</Text>
                     <TextInput
-                      style={[styles.textInput, errors.business_email && styles.inputError]}
+                      style={[
+                        styles.textInput,
+                        errors.business_email && styles.inputError,
+                      ]}
                       value={formData.business_email}
-                      onChangeText={(value) => handleInputChange('business_email', value)}
+                      onChangeText={value =>
+                        handleInputChange('business_email', value)
+                      }
                       placeholder="Enter email address"
                       placeholderTextColor="#9ca3af"
                       keyboardType="email-address"
                       autoCapitalize="none"
                     />
-                    {errors.business_email && <Text style={styles.errorText}>{errors.business_email}</Text>}
+                    {errors.business_email && (
+                      <Text style={styles.errorText}>
+                        {errors.business_email}
+                      </Text>
+                    )}
                   </View>
 
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Website</Text>
                     <TextInput
-                      style={[styles.textInput, errors.website && styles.inputError]}
+                      style={[
+                        styles.textInput,
+                        errors.website && styles.inputError,
+                      ]}
                       value={formData.website}
-                      onChangeText={(value) => handleInputChange('website', value)}
+                      onChangeText={value =>
+                        handleInputChange('website', value)
+                      }
                       placeholder="https://www.example.com"
                       placeholderTextColor="#9ca3af"
                       keyboardType="url"
                       autoCapitalize="none"
                     />
-                    {errors.website && <Text style={styles.errorText}>{errors.website}</Text>}
+                    {errors.website && (
+                      <Text style={styles.errorText}>{errors.website}</Text>
+                    )}
                   </View>
                 </View>
 
                 {/* Location */}
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Location</Text>
-                  
+
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Street Address</Text>
                     <TextInput
                       style={styles.textInput}
                       value={formData.street}
-                      onChangeText={(value) => handleInputChange('street', value)}
+                      onChangeText={value => handleInputChange('street', value)}
                       placeholder="Enter street address"
                       placeholderTextColor="#9ca3af"
                     />
@@ -616,7 +795,9 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={styles.textInput}
                       value={formData.street2}
-                      onChangeText={(value) => handleInputChange('street2', value)}
+                      onChangeText={value =>
+                        handleInputChange('street2', value)
+                      }
                       placeholder="Enter additional address info"
                       placeholderTextColor="#9ca3af"
                     />
@@ -627,7 +808,7 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={styles.textInput}
                       value={formData.city}
-                      onChangeText={(value) => handleInputChange('city', value)}
+                      onChangeText={value => handleInputChange('city', value)}
                       placeholder="Enter city name"
                       placeholderTextColor="#9ca3af"
                     />
@@ -636,26 +817,31 @@ const UpdateBusiness = () => {
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Postal Code</Text>
                     <TextInput
-                      style={[styles.textInput, errors.zip && styles.inputError]}
+                      style={[
+                        styles.textInput,
+                        errors.zip && styles.inputError,
+                      ]}
                       value={formData.zip}
-                      onChangeText={(value) => handleInputChange('zip', value)}
+                      onChangeText={value => handleInputChange('zip', value)}
                       placeholder="Enter postal code"
                       placeholderTextColor="#9ca3af"
                       keyboardType="numeric"
                     />
-                    {errors.zip && <Text style={styles.errorText}>{errors.zip}</Text>}
+                    {errors.zip && (
+                      <Text style={styles.errorText}>{errors.zip}</Text>
+                    )}
                   </View>
 
                   {/* Updated Country with DropdownWSearch */}
                   <View style={styles.inputContainer}>
                     <DropdownWSearch
                       label="Country"
-                      data={countriesData.map(country => ({
+                      data={countries?.map(country => ({
                         label: country.name,
                         value: String(country.id),
                       }))}
                       onSelect={handleSelectCountry}
-                      value={String(formData.country_id || '')}
+                      selectedValue={formData.countryObject}
                       placeholder="Select a country"
                       error={errors.country_id}
                     />
@@ -665,12 +851,12 @@ const UpdateBusiness = () => {
                   <View style={styles.inputContainer}>
                     <DropdownWSearch
                       label="State"
-                      data={getFilteredStates().map(state => ({
+                      data={states?.map(state => ({
                         label: state.name,
                         value: String(state.id),
                       }))}
                       onSelect={handleSelectState}
-                      value={String(formData.state_id || '')}
+                      selectedValue={formData.stateObject}
                       placeholder="Select a state"
                       error={errors.state_id}
                       disabled={!formData.country_id}
@@ -681,13 +867,15 @@ const UpdateBusiness = () => {
                 {/* Leadership */}
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Leadership</Text>
-                  
+
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Partner/Owner Name</Text>
                     <TextInput
                       style={styles.textInput}
                       value={formData.partner_name}
-                      onChangeText={(value) => handleInputChange('partner_name', value)}
+                      onChangeText={value =>
+                        handleInputChange('partner_name', value)
+                      }
                       placeholder="Enter partner/owner name"
                       placeholderTextColor="#9ca3af"
                     />
@@ -698,7 +886,9 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={styles.textInput}
                       value={formData.designation}
-                      onChangeText={(value) => handleInputChange('designation', value)}
+                      onChangeText={value =>
+                        handleInputChange('designation', value)
+                      }
                       placeholder="e.g., CEO, Founder, Manager"
                       placeholderTextColor="#9ca3af"
                     />
@@ -708,42 +898,56 @@ const UpdateBusiness = () => {
                 {/* Business Documents */}
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Business Documents</Text>
-                  
+
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>GST Number</Text>
                     <TextInput
-                      style={[styles.textInput, errors.gst && styles.inputError]}
+                      style={[
+                        styles.textInput,
+                        errors.gst && styles.inputError,
+                      ]}
                       value={formData.gst}
-                      onChangeText={(value) => handleInputChange('gst', value.toUpperCase())}
+                      onChangeText={value =>
+                        handleInputChange('gst', value.toUpperCase())
+                      }
                       placeholder="Enter GST number"
                       placeholderTextColor="#9ca3af"
                       autoCapitalize="characters"
                     />
-                    {errors.gst && <Text style={styles.errorText}>{errors.gst}</Text>}
+                    {errors.gst && (
+                      <Text style={styles.errorText}>{errors.gst}</Text>
+                    )}
                   </View>
 
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>PAN Number</Text>
                     <TextInput
-                      style={[styles.textInput, errors.pan && styles.inputError]}
+                      style={[
+                        styles.textInput,
+                        errors.pan && styles.inputError,
+                      ]}
                       value={formData.pan}
-                      onChangeText={(value) => handleInputChange('pan', value.toUpperCase())}
+                      onChangeText={value =>
+                        handleInputChange('pan', value.toUpperCase())
+                      }
                       placeholder="Enter PAN number"
                       placeholderTextColor="#9ca3af"
                       autoCapitalize="characters"
                     />
-                    {errors.pan && <Text style={styles.errorText}>{errors.pan}</Text>}
+                    {errors.pan && (
+                      <Text style={styles.errorText}>{errors.pan}</Text>
+                    )}
                   </View>
                 </View>
 
                 {/* Business Media */}
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Business Media</Text>
-                  
+
                   {/* Logo */}
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Business Logo</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.imagePickerButton}
                       onPress={() => openBottomSheet('logo')}>
                       <Text style={styles.imagePickerText}>
@@ -756,24 +960,31 @@ const UpdateBusiness = () => {
                   {/* Business Card Front */}
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Business Card (Front)</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.imagePickerButton}
                       onPress={() => openBottomSheet('front')}>
                       <Text style={styles.imagePickerText}>
-                        {selectedFrontImage ? 'Change Card Front' : 'Upload Card Front'}
+                        {selectedFrontImage
+                          ? 'Change Card Front'
+                          : 'Upload Card Front'}
                       </Text>
                     </TouchableOpacity>
-                    {renderImagePreview(selectedFrontImage, 'Current Card Front')}
+                    {renderImagePreview(
+                      selectedFrontImage,
+                      'Current Card Front',
+                    )}
                   </View>
 
                   {/* Business Card Back */}
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Business Card (Back)</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.imagePickerButton}
                       onPress={() => openBottomSheet('back')}>
                       <Text style={styles.imagePickerText}>
-                        {selectedBackImage ? 'Change Card Back' : 'Upload Card Back'}
+                        {selectedBackImage
+                          ? 'Change Card Back'
+                          : 'Upload Card Back'}
                       </Text>
                     </TouchableOpacity>
                     {renderImagePreview(selectedBackImage, 'Current Card Back')}
@@ -785,7 +996,9 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={styles.textInput}
                       value={formData.promo_video}
-                      onChangeText={(value) => handleInputChange('promo_video', value)}
+                      onChangeText={value =>
+                        handleInputChange('promo_video', value)
+                      }
                       placeholder="Enter promotional video URL"
                       placeholderTextColor="#9ca3af"
                       autoCapitalize="none"
@@ -796,13 +1009,15 @@ const UpdateBusiness = () => {
                 {/* Social Media */}
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Social Media</Text>
-                  
+
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Instagram</Text>
                     <TextInput
                       style={styles.textInput}
                       value={formData.social_insta}
-                      onChangeText={(value) => handleInputChange('social_insta', value)}
+                      onChangeText={value =>
+                        handleInputChange('social_insta', value)
+                      }
                       placeholder="@username or full URL"
                       placeholderTextColor="#9ca3af"
                       autoCapitalize="none"
@@ -814,7 +1029,9 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={styles.textInput}
                       value={formData.social_fb}
-                      onChangeText={(value) => handleInputChange('social_fb', value)}
+                      onChangeText={value =>
+                        handleInputChange('social_fb', value)
+                      }
                       placeholder="Username or full URL"
                       placeholderTextColor="#9ca3af"
                       autoCapitalize="none"
@@ -826,7 +1043,9 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={styles.textInput}
                       value={formData.social_linkedin}
-                      onChangeText={(value) => handleInputChange('social_linkedin', value)}
+                      onChangeText={value =>
+                        handleInputChange('social_linkedin', value)
+                      }
                       placeholder="Username or full URL"
                       placeholderTextColor="#9ca3af"
                       autoCapitalize="none"
@@ -838,7 +1057,9 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={styles.textInput}
                       value={formData.social_twitter}
-                      onChangeText={(value) => handleInputChange('social_twitter', value)}
+                      onChangeText={value =>
+                        handleInputChange('social_twitter', value)
+                      }
                       placeholder="@username or full URL"
                       placeholderTextColor="#9ca3af"
                       autoCapitalize="none"
@@ -850,7 +1071,9 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={styles.textInput}
                       value={formData.social_youtube}
-                      onChangeText={(value) => handleInputChange('social_youtube', value)}
+                      onChangeText={value =>
+                        handleInputChange('social_youtube', value)
+                      }
                       placeholder="Channel URL"
                       placeholderTextColor="#9ca3af"
                       autoCapitalize="none"
@@ -862,7 +1085,9 @@ const UpdateBusiness = () => {
                     <TextInput
                       style={styles.textInput}
                       value={formData.social_google_business}
-                      onChangeText={(value) => handleInputChange('social_google_business', value)}
+                      onChangeText={value =>
+                        handleInputChange('social_google_business', value)
+                      }
                       placeholder="Google Business profile URL"
                       placeholderTextColor="#9ca3af"
                       autoCapitalize="none"
@@ -894,7 +1119,9 @@ const UpdateBusiness = () => {
           <BottomSheetView style={styles.modalContentContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Upload Image</Text>
-              <TouchableOpacity onPress={closeBottomSheet} style={styles.closeButton}>
+              <TouchableOpacity
+                onPress={closeBottomSheet}
+                style={styles.closeButton}>
                 <Text style={styles.closeButtonText}>×</Text>
               </TouchableOpacity>
             </View>
@@ -927,7 +1154,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
     shadowRadius: 3,
   },
@@ -976,7 +1203,7 @@ const styles = StyleSheet.create({
     padding: 20,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
     shadowRadius: 3,
   },

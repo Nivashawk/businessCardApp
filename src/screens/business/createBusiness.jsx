@@ -346,7 +346,7 @@ const CreateBusiness = () => {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
       {/* Progress Bar */}
       <View style={styles.progressContainer}>
         <Animated.View
@@ -400,7 +400,12 @@ const CreateBusiness = () => {
       </View>
 
       {/* Step Content */}
-      <Animated.View {...panResponder.panHandlers} style={styles.stepContainer}>
+      <Animated.ScrollView style={styles.stepContainer}
+    contentContainerStyle={{flexGrow: 1}}
+    keyboardShouldPersistTaps="handled"
+    showsVerticalScrollIndicator={true}
+    
+    {...panResponder.panHandlers} >
         <StepComponent
           ref={steps[index].ref}
           initialData={getCurrentStepData()}
@@ -412,7 +417,7 @@ const CreateBusiness = () => {
               : undefined
           }
         />
-      </Animated.View>
+      </Animated.ScrollView>
 
       {/* Navigation Buttons */}
       <View style={styles.navButtons}>

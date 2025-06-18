@@ -36,7 +36,7 @@ export const registerUser = createAsyncThunk(
 
         // Dispatch related actions
         thunkAPI.dispatch(purpose("Register"));
-        thunkAPI.dispatch(isOTPVerified());
+        thunkAPI.dispatch(isOTPVerified(true));
 
         // Store login status and partner_id in AsyncStorage
         try {

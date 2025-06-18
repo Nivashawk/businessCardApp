@@ -87,6 +87,12 @@ export const useOTPVerification = () => {
           text1: 'OTP Resent',
           text2: 'A new verification code has been sent to your email',
         });
+      }else if(result.status === "error"){
+        Toast.show({
+          type: 'success',
+          text1: 'OTP Resent',
+          text2: result.message,
+        });
       }
     } catch (error) {
       Toast.show({

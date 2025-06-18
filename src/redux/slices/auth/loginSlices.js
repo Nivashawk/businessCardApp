@@ -33,7 +33,7 @@ export const loginUser = createAsyncThunk(
         
         // Dispatch Redux actions
         thunkAPI.dispatch(purpose("Login"));
-        thunkAPI.dispatch(isOTPVerified());
+        thunkAPI.dispatch(isOTPVerified(true));
         
         // Store data in AsyncStorage with enhanced logging
         try {

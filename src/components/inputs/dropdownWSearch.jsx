@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,13 +14,14 @@ import {
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 
-const DropdownWSearch = ({
+const DropdownWSearch = React.memo(({
   data = [],
   label = '',
   placeholder = 'Select an item',
   onSelect = () => {},
   valueField = 'value',
   labelField = 'label',
+  selectedValue = null,
   containerStyle = {},
   dropdownStyle = {},
   itemStyle = {},
@@ -29,26 +30,72 @@ const DropdownWSearch = ({
   disabled = false,
   required = false,
   requiredText = 'This field is required',
+  error = '',
+  searchPlaceholder = 'Search...',
+  noDataText = 'No data found',
+  loading = false,
 }) => {
   const [visible, setVisible] = useState(false);
   const [selected, setSelected] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const [searchText, setSearchText] = useState('');
   const [touched, setTouched] = useState(false);
+  
   const dropdownButtonRef = useRef(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const windowHeight = Dimensions.get('window').height;
 
-  const showError = required && touched && !selected;
+  // Memoize the comparison value to prevent unnecessary re-renders
+  const selectedValueKey = useMemo(() => {
+    return selectedValue ? `${selectedValue[valueField]}-${selectedValue[labelField]}` : null;
+  }, [selectedValue, valueField, labelField]);
 
-  const toggleDropdown = () => {
-    if (disabled) return;
+  // Use useCallback to prevent unnecessary re-creation of the effect
+  const updateSelectedValue = useCallback(() => {
+    // Only update if selectedValue has actually changed
+    if (!selectedValue && selected) {
+      setSelected(null);
+      return;
+    }
+    
+    if (selectedValue && (!selected || selected[valueField] !== selectedValue[valueField])) {
+      setSelected(selectedValue);
+    }
+  }, [selectedValue, selected, valueField]);
+
+  // Fixed useEffect to prevent infinite loops
+  useEffect(() => {
+    updateSelectedValue();
+  }, [selectedValueKey]); // Use the memoized key instead of the object
+
+  // Memoize filtered data to prevent unnecessary filtering
+  const filteredData = useMemo(() => {
+    if (!Array.isArray(data)) return [];
+    
+    if (!searchText.trim()) {
+      return data;
+    }
+    
+    return data.filter((item) =>
+      item[labelField]?.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }, [data, searchText, labelField]);
+
+  const showError = (required && touched && !selected) || !!error;
+
+  const toggleDropdown = useCallback(() => {
+    if (disabled || loading) return;
     setTouched(true);
-    if (visible) close();
-    else open();
-  };
+    if (visible) {
+      close();
+    } else {
+      open();
+    }
+  }, [disabled, loading, visible]);
 
-  const open = () => {
+  const open = useCallback(() => {
+    if (!dropdownButtonRef.current) return;
+    
     dropdownButtonRef.current.measure((fx, fy, width, height, px, py) => {
       const spaceBelow = windowHeight - py - height;
       const spaceNeeded = Math.min(300, data.length * 50);
@@ -61,51 +108,55 @@ const DropdownWSearch = ({
       });
 
       setVisible(true);
+      
+      // Use requestAnimationFrame to avoid scheduling updates during render
+      requestAnimationFrame(() => {
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+      });
+    });
+  }, [windowHeight, data.length, fadeAnim]);
+
+  const close = useCallback(() => {
+    requestAnimationFrame(() => {
       Animated.timing(fadeAnim, {
-        toValue: 1,
+        toValue: 0,
         duration: 200,
         useNativeDriver: true,
-      }).start();
+      }).start(() => {
+        setVisible(false);
+        setSearchText('');
+      });
     });
-  };
+  }, [fadeAnim]);
 
-  const close = () => {
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      setVisible(false);
-      setSearchText('');
-    });
-  };
-
-  const onItemPress = (item) => {
+  const onItemPress = useCallback((item) => {
     setSelected(item);
     onSelect(item);
     close();
-  };
+  }, [onSelect, close]);
 
-  const filteredData = data.filter((item) =>
-    item[labelField].toLowerCase().includes(searchText.toLowerCase())
-  );
+  const renderItem = useCallback(({ item }) => {
+    const isSelected = selected && item[valueField] === selected[valueField];
+    
+    return (
+      <TouchableOpacity
+        style={[
+          styles.item,
+          itemStyle,
+          isSelected ? [styles.selectedItem, selectedItemStyle] : {},
+        ]}
+        onPress={() => onItemPress(item)}
+      >
+        <Text style={styles.itemText}>{item[labelField]}</Text>
+      </TouchableOpacity>
+    );
+  }, [selected, valueField, itemStyle, selectedItemStyle, onItemPress, labelField]);
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.item,
-        itemStyle,
-        selected && item[valueField] === selected[valueField]
-          ? [styles.selectedItem, selectedItemStyle]
-          : {},
-      ]}
-      onPress={() => onItemPress(item)}
-    >
-      <Text>{item[labelField]}</Text>
-    </TouchableOpacity>
-  );
-
-  const renderDropdown = () => {
+  const renderDropdown = useCallback(() => {
     const modalStyles = [
       styles.dropdownModal,
       dropdownPosition.above
@@ -120,8 +171,18 @@ const DropdownWSearch = ({
     ];
 
     return (
-      <Modal visible={visible} transparent animationType="none" onRequestClose={close}>
-        <TouchableOpacity style={styles.overlay} onPress={close} activeOpacity={1}>
+      <Modal 
+        visible={visible} 
+        transparent 
+        animationType="none" 
+        onRequestClose={close}
+        statusBarTranslucent={true}
+      >
+        <TouchableOpacity 
+          style={styles.overlay} 
+          onPress={close} 
+          activeOpacity={1}
+        >
           <Animated.View
             style={[
               modalStyles,
@@ -142,53 +203,97 @@ const DropdownWSearch = ({
             <SafeAreaView style={listContainerStyle}>
               <View style={styles.searchContainer}>
                 <TextInput
-                  placeholder="Search..."
+                  placeholder={searchPlaceholder}
                   placeholderTextColor="#999"
                   value={searchText}
                   onChangeText={setSearchText}
                   style={styles.searchInput}
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
               </View>
-              <FlatList
-                data={filteredData}
-                renderItem={renderItem}
-                keyExtractor={(item, index) => index.toString()}
-                showsVerticalScrollIndicator={true}
-                style={styles.flatList}
-                keyboardShouldPersistTaps="handled"
-              />
+              {filteredData.length > 0 ? (
+                <FlatList
+                  data={filteredData}
+                  renderItem={renderItem}
+                  keyExtractor={(item, index) => `${item[valueField]}-${index}`}
+                  showsVerticalScrollIndicator={true}
+                  style={styles.flatList}
+                  keyboardShouldPersistTaps="handled"
+                  removeClippedSubviews={true}
+                  maxToRenderPerBatch={10}
+                  windowSize={10}
+                />
+              ) : (
+                <View style={styles.noDataContainer}>
+                  <Text style={styles.noDataText}>
+                    {loading ? 'Loading...' : noDataText}
+                  </Text>
+                </View>
+              )}
             </SafeAreaView>
           </Animated.View>
         </TouchableOpacity>
       </Modal>
     );
-  };
+  }, [
+    visible, 
+    dropdownPosition, 
+    windowHeight, 
+    dropdownStyle, 
+    fadeAnim, 
+    searchPlaceholder, 
+    searchText, 
+    filteredData, 
+    renderItem, 
+    valueField, 
+    loading, 
+    noDataText, 
+    close
+  ]);
+
+  const errorMessage = error || (showError ? requiredText : '');
+
+  const displayText = useMemo(() => {
+    if (loading) return 'Loading...';
+    if (selected) return selected[labelField];
+    return placeholder;
+  }, [loading, selected, labelField, placeholder]);
 
   return (
     <View style={[styles.container, containerStyle]}>
       {label ? (
-        <Text style={[styles.label, labelStyle, typography.inputLabel]}>{label} {required && <Text style={styles.required}>*</Text>}</Text>
+        <Text style={[styles.label, labelStyle, typography.inputLabel]}>
+          {label} {required && <Text style={styles.required}>*</Text>}
+        </Text>
       ) : null}
       <TouchableOpacity
         ref={dropdownButtonRef}
         style={[
           styles.button,
           dropdownStyle,
-          disabled && styles.disabled,
-          showError && styles.errorBorder,
+          (disabled || loading) && styles.disabled,
+          (showError || error) && styles.errorBorder,
         ]}
         onPress={toggleDropdown}
-        disabled={disabled}
+        disabled={disabled || loading}
+        activeOpacity={0.7}
       >
-        <Text style={styles.buttonText}>
-          {selected ? selected[labelField] : placeholder}
+        <Text style={[
+          styles.buttonText,
+          (!selected && !loading) && styles.placeholderText
+        ]}>
+          {displayText}
+        </Text>
+        <Text style={styles.dropdownIcon}>
+          {loading ? '⟳' : (visible ? '▲' : '▼')}
         </Text>
       </TouchableOpacity>
-      {showError && <Text style={styles.errorText}>{requiredText}</Text>}
+      {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
       {visible && renderDropdown()}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -197,6 +302,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     marginBottom: 5,
+    color: '#333',
   },
   button: {
     flexDirection: 'row',
@@ -211,6 +317,15 @@ const styles = StyleSheet.create({
   buttonText: {
     flex: 1,
     fontSize: 16,
+    color: '#333',
+  },
+  placeholderText: {
+    color: '#999',
+  },
+  dropdownIcon: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 10,
   },
   disabled: {
     opacity: 0.5,
@@ -251,6 +366,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f5f5f5',
   },
+  itemText: {
+    fontSize: 16,
+    color: '#333',
+  },
   selectedItem: {
     backgroundColor: '#e6f7ff',
   },
@@ -267,11 +386,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     fontSize: 16,
+    color: '#333',
   },
-    required: {
+  required: {
     color: colors.status_red,
+  },
+  noDataContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  noDataText: {
+    color: '#666',
+    fontSize: 14,
   },
 });
 
 export default DropdownWSearch;
-

@@ -476,10 +476,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center', // Center content when no social links
   },
   socialBg: {
-    borderRadius: 10,
+    borderRadius: 15,
     flexWrap: 'wrap',
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.primary
     // Padding and gap are set dynamically
     // background color remains constant
   },
@@ -513,6 +514,7 @@ const styles = StyleSheet.create({
     elevation: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 10,
     // Width and Height are set dynamically in the component
     // Margin top is set dynamically in CardStack
   },

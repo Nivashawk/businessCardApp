@@ -3,8 +3,10 @@ import React, {
   useEffect,
   forwardRef,
   useImperativeHandle,
+  useMemo,
+  useCallback
 } from 'react';
-import {format} from 'date-fns';
+import {format, formatISO} from 'date-fns'; // Import formatISO here
 import {
   KeyboardAvoidingView,
   ScrollView,
@@ -19,7 +21,7 @@ import InputBox from '../../../components/inputs/textInput';
 import TextAreaBox from '../../../components/inputs/textArea';
 import PhoneNumberInput from '../../../components/inputs/phoneNumberInput';
 import DatePickerBox from '../../../components/inputs/datePicker';
-import YearPickerBox from '../../../components/inputs/yearPickerBox'; // New component for year selection
+import YearPickerBox from '../../../components/inputs/yearPickerBox';
 import {useDispatch, useSelector} from 'react-redux';
 import {getIndustry} from '../../../redux/slices/business/getIndustrySlices';
 import DropdownWSearch from '../../../components/inputs/dropdownWSearch';
@@ -47,7 +49,13 @@ const Basic = forwardRef(({initialData}, ref) => {
   );
   const [industry, setIndustry] = useState(initialData?.industry || '');
   const [services, setServices] = useState(initialData?.services || '');
-  const [DOJ, setDOJ] = useState(initialData?.DOJ || '');
+  // Initialize DOJ as a string, as it will be stored as such
+  // If initialData.DOJ is a Date object, convert it here, otherwise keep as is
+  const [DOJ, setDOJ] = useState(
+    initialData?.DOJ
+      ? (initialData.DOJ instanceof Date ? formatISO(initialData.DOJ) : initialData.DOJ)
+      : ''
+  );
 
   // New state variables
   const [foundedYear, setFoundedYear] = useState(
@@ -73,154 +81,145 @@ const Basic = forwardRef(({initialData}, ref) => {
     dispatch(getIndustry());
   }, [dispatch]);
 
-  // Helper function to find and match industry
-  const findAndSetIndustry = (industryValue, availableIndustries) => {
-    if (!industryValue || !availableIndustries || availableIndustries.length === 0) {
-      setIndustry('');
-      return;
-    }
+  // Memoize the transformed industry data to prevent unnecessary re-renders
+  const transformedIndustryData = useMemo(() => {
+    return industryData?.map(c => ({
+      label: c.name,
+      value: String(c.id),
+    })) ?? [];
+  }, [industryData]);
 
-    // Convert industryValue to string for consistent comparison
-    const industryId = String(industryValue);
-    
-    // Find the matching industry object
-    const matchedIndustry = availableIndustries.find(
-      item => String(item.id) === industryId
-    );
-
-    if (matchedIndustry) {
-      console.log('Found matching industry:', matchedIndustry);
-      // Set the industry value that matches the dropdown's expected format
-      setIndustry(matchedIndustry?.name);
-    } else {
-      console.log('No matching industry found for ID:', industryId);
-      setIndustry('');
+  // Memoize the selected industry object
+  const memoizedSelectedIndustry = useMemo(() => {
+    if (!industry || !industryData || industryData.length === 0) {
+      return null;
     }
-  };
+    const selected = industryData.find(item => String(item.id) === String(industry));
+    return selected ? { label: selected.name, value: String(selected.id) } : null;
+  }, [industry, industryData]);
 
   // Update state when initialData changes (when user navigates back)
   useEffect(() => {
     if (initialData) {
       console.log('Updating Basic form with initialData:', initialData);
-      console.log('Available industry data:', industryData);
-
+      
       setCompanyName(initialData.companyName || '');
       setYourDesignation(initialData.yourDesignation || '');
       setPhone(initialData.phone || '');
       setEmail(initialData.email || '');
       setDescription(initialData.description || '');
       setServices(initialData.services || '');
-      setDOJ(initialData.DOJ || '');
+      // Ensure DOJ is set as a serializable string here too
+      setDOJ(initialData.DOJ ? (initialData.DOJ instanceof Date ? formatISO(initialData.DOJ) : initialData.DOJ) : '');
       setFoundedYear(initialData.foundedYear || '');
       setGstNumber(initialData.gstNumber || '');
-
-      // Handle industry matching
-      findAndSetIndustry(initialData.industry, industryData);
+      setIndustry(String(initialData.industry || ''));
     }
-  }, [initialData, industryData]);
+  }, [initialData]);
 
-  // Separate useEffect to handle industry matching when industryData loads
-  useEffect(() => {
-    if (initialData?.industry && industryData && industryData.length > 0) {
-      console.log('Industry data loaded, re-matching industry...');
-      findAndSetIndustry(initialData.industry, industryData);
-    }
-  }, [industryData, initialData?.industry]);
+  // Memoize the handleSelectIndustry callback to prevent unnecessary re-renders
+  const handleSelectIndustry = useCallback((item) => {
+    console.log('industry dropdown selected:', item);
+    const industryValue = String(item.value);
+    setIndustry(industryValue);
+    setIndustryError('');
+  }, []);
+
+  // Handle DatePickerBox change
+  const handleDOJChange = useCallback((date) => {
+    // date-fns formatISO will convert a Date object to an ISO string
+    // If the date is null or undefined (e.g., cleared), set to empty string
+    const serializableDOJ = date ? formatISO(date) : '';
+    setDOJ(serializableDOJ);
+    setDOJError('');
+  }, []);
 
   useImperativeHandle(ref, () => ({
     validate: () => {
       let isValid = true;
+      
+      // Reset all errors
+      setCompanyError('');
+      setYourDesignationError('');
+      setPhoneError('');
+      setemailError('');
+      setDescriptionError('');
+      setIndustryError('');
+      setServicesError('');
+      setDOJError('');
+      setFoundedYearError('');
+      setGstNumberError('');
 
-      // Uncomment these validations as needed
-      // if (companyName.trim() === '') {
-      //   setCompanyError('Company Name is required');
-      //   isValid = false;
-      // } else {
-      //   setCompanyError('');
-      // }
-
-      // if (yourDesignation.trim() === '') {
-      //   setYourDesignationError('Designation is required');
-      //   isValid = false;
-      // } else {
-      //   setYourDesignationError('');
-      // }
-
-      // if (!/^\d{10}$/.test(phone)) {
-      //   setPhoneError('Phone must be a 10-digit number');
-      //   isValid = false;
-      // } else {
-      //   setPhoneError('');
-      // }
-
-      // if (!/\S+@\S+\.\S+/.test(email)) {
-      //   setemailError('Enter a valid email');
-      //   isValid = false;
-      // } else {
-      //   setemailError('');
-      // }
-
-      // if (description.trim() === '') {
-      //   setDescriptionError('Description is required');
-      //   isValid = false;
-      // } else {
-      //   setDescriptionError('');
-      // }
-
-      // if (!industry || industry.length === 0) {
-      //   setIndustryError('Select at least one industry');
-      //   isValid = false;
-      // } else {
-      //   setIndustryError('');
-      // }
-
-      // if (!services || services.length === 0) {
-      //   setServicesError('Select at least one service');
-      //   isValid = false;
-      // } else {
-      //   setServicesError('');
-      // }
-
-      // if (!DOJ) {
-      //   setDOJError('Date of Joining is required');
-      //   isValid = false;
-      // } else {
-      //   setDOJError('');
-      // }
-
-      // New validations for founded year and GST
-      // if (!foundedYear) {
-      //   setFoundedYearError('Founded year is required');
-      //   isValid = false;
-      // } else {
-      //   setFoundedYearError('');
-      // }
-
-      // GST validation (15 characters alphanumeric)
-      // if (gstNumber && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstNumber)) {
-      //   setGstNumberError('Enter a valid GST number');
-      //   isValid = false;
-      // } else {
-      //   setGstNumberError('');
-      // }
-
-      if (isValid) {
-        console.log('Basic form validation passed');
+      // Validate required fields
+      if (!companyName.trim()) {
+        setCompanyError('Company name is required');
+        isValid = false;
       }
+
+      if (!yourDesignation.trim()) {
+        setYourDesignationError('Designation is required');
+        isValid = false;
+      }
+
+      // Basic phone number validation (can be more robust)
+      if (!phone.trim()) {
+        setPhoneError('Phone number is required');
+        isValid = false;
+      } else if (phone.trim().length < 7) { // Example: minimum length
+        setPhoneError('Phone number is too short');
+        isValid = false;
+      }
+
+      if (!email.trim()) {
+        setemailError('Email is required');
+        isValid = false;
+      } else if (!/\S+@\S+\.\S+/.test(email)) {
+        setemailError('Please enter a valid email');
+        isValid = false;
+      }
+
+      if (!description.trim()) {
+        setDescriptionError('Business description is required');
+        isValid = false;
+      }
+
+      if (!industry) {
+        setIndustryError('Please select an industry');
+        isValid = false;
+      }
+
+      if (!foundedYear) {
+        setFoundedYearError('Founded year is required');
+        isValid = false;
+      }
+
+      // Validate GST number format if provided (optional, only if you want strict validation)
+      if (gstNumber && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstNumber)) {
+        setGstNumberError('Please enter a valid GST number');
+        isValid = false;
+      }
+
+      // DOJ validation if required
+      if (!DOJ) { // DOJ is already a string at this point
+        setDOJError('Date Associated with the Organization is required');
+        isValid = false;
+      }
+
 
       return isValid;
     },
 
     getData: () => {
+      // DOJ is already a serializable string (ISO 8601) because of handleDOJChange
       const data = {
         companyName,
         yourDesignation,
         phone,
         email,
         description,
-        industry: industry,
+        industry: industry, // industry is already a string ID
         services,
-        DOJ,
+        DOJ: DOJ, // Use the already serialized DOJ state
         foundedYear,
         gstNumber,
       };
@@ -228,26 +227,6 @@ const Basic = forwardRef(({initialData}, ref) => {
       return data;
     },
   }));
-
-  const handleSelectIndustry = item => {
-    console.log('industry dropdown selected:', item);
-    const industryValue = String(item.value);
-    setIndustry(industryValue);
-    setIndustryError('');
-  };
-
-  // Get the selected industry name for display purposes
-  const getSelectedIndustryName = () => {
-    if (!industry || !industryData || industryData.length === 0) {
-      return '';
-    }
-    
-    const selectedIndustry = industryData.find(
-      item => String(item.id) === String(industry)
-    );
-    
-    return selectedIndustry ? selectedIndustry.name : '';
-  };
 
   return (
     <KeyboardAvoidingView
@@ -276,7 +255,7 @@ const Basic = forwardRef(({initialData}, ref) => {
               required
               disabled={false}
               error={foundedYearError}
-              startYear={1800} // Optional: custom start year
+              startYear={1800}
             />
 
             <InputBox
@@ -333,17 +312,11 @@ const Basic = forwardRef(({initialData}, ref) => {
 
             <DropdownWSearch
               label="Industry"
-              data={
-                industryData?.map(c => ({
-                  label: c.name,
-                  value: String(c.id), // Ensure consistent string type
-                })) ?? []
-              }
+              data={transformedIndustryData}
               onSelect={handleSelectIndustry}
               required={true}
               requiredText="Please select a industry"
-              value={industry}
-              selectedValue={industry} // Add this if your dropdown component supports it
+              selectedValue={memoizedSelectedIndustry}
               placeholder="Select an industry"
               error={industryError}
             />
@@ -359,8 +332,10 @@ const Basic = forwardRef(({initialData}, ref) => {
 
             <DatePickerBox
               label="Date Associated with the Organization"
-              value={DOJ}
-              onChange={setDOJ}
+              // Pass a Date object if DOJ is an ISO string, otherwise null/undefined
+              // DatePickerBox will internally handle displaying this date
+              value={DOJ ? new Date(DOJ) : null}
+              onChange={handleDOJChange} // Use the new handler
               error={DOJError}
               restrictPastDates={false}
             />

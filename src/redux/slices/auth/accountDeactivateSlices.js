@@ -2,17 +2,19 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import apiClient from '../../../api/apiClient';
 
 // Async thunk for registering a user (POST request)
-export const sentOTP = createAsyncThunk(
-  'auth/sentOTP',
-  async ({email}, thunkAPI) => {
+export const Deactivate = createAsyncThunk(
+  'auth/deactivate',
+  async ({email, otp, token}, thunkAPI) => {
     // const navigation = useNavigation();
     try {
       console.log('Email:', email);
 
-      const url = 'api/send_otp';
+      const url = 'api/account/deactivate';
       const payload = {
-        params: {
+         params: {
           email: email,
+          otp: otp,
+          token: token,
         },
       };
 
@@ -29,7 +31,7 @@ export const sentOTP = createAsyncThunk(
   },
 );
 
-const sendOTPSlice = createSlice({
+const DeactivateSlice = createSlice({
   name: 'sendOTP',
   initialState: {
     data: null,
@@ -42,8 +44,8 @@ const sendOTPSlice = createSlice({
     resetOTPData: (state) => {
       state.data = null;
     },
-    isOTPVerified: (state, action) => {
-      state.otpVerified = action.payload
+    isOTPVerified: (state) => {
+      state.otpVerified = true
     },
     purpose: (state, action) => {
       state.purpose = action.payload
@@ -51,22 +53,22 @@ const sendOTPSlice = createSlice({
   },
   extraReducers: builder => {
     builder
-      .addCase(sentOTP.pending, state => {
+      .addCase(Deactivate.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(sentOTP.fulfilled, (state, action) => {
+      .addCase(Deactivate.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
       })
-      .addCase(sentOTP.rejected, (state, action) => {
+      .addCase(Deactivate.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
   },
 });
 
-export const { resetOTPData, isOTPVerified, purpose} = sendOTPSlice.actions;
+export const { resetOTPData, isOTPVerified, purpose} = DeactivateSlice.actions;
 
 
-export default sendOTPSlice.reducer;
+export default DeactivateSlice.reducer;

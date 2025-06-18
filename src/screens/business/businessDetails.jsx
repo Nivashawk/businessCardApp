@@ -347,7 +347,7 @@ const BusinessDetailsTab = ({handleEditBusiness}) => {
       </View>
 
       {/* Location Section */}
-      <View style={styles.sectionContainer}>
+      {/* <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>Location</Text>
         <View style={styles.mapContainer}>
           <Text style={styles.mapPlaceholderText}>Interactive Map</Text>
@@ -357,7 +357,7 @@ const BusinessDetailsTab = ({handleEditBusiness}) => {
               'Address not available'}
           </Text>
         </View>
-      </View>
+      </View> */}
 
       {/* Business Registration */}
       <View style={styles.sectionContainer}>

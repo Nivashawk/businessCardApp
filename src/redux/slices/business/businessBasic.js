@@ -11,6 +11,7 @@ const initialState = {
   description: '',
   industry: '',
   services: '',
+  DOJ:'',
   
 
   street: '',
@@ -56,6 +57,7 @@ const BusinessDataSlice = createSlice({
         description,
         industry,
         services,
+        DOJ
       } = action.payload;
 
       state.companyName = companyName;
@@ -67,6 +69,7 @@ const BusinessDataSlice = createSlice({
       state.description = description;
       state.industry = industry;
       state.services = services;
+      state.DOJ = DOJ;
     },
 
     updateBusinessAddressData: (state, action) => {
