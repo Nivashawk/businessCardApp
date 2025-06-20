@@ -327,7 +327,7 @@ const BusinessDetailsTab = ({handleEditBusiness}) => {
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Industry</Text>
           <Text style={styles.infoCardValue}>
-            {BusinessData?.industry || 'Not specified'}
+            {BusinessData?.business_industry_name || 'Not specified'}
           </Text>
         </View>
 

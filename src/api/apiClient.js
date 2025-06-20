@@ -91,11 +91,12 @@ const addHeaders = async (options = {}) => {
           headers['DB'] = 'thumps_dev';
           headers['Login'] = 'thumpsbot@yopmail.com';
           headers['Password'] = 'Welcome@123';
-        }else{
-          headers['login'] = useSelector(state => state.odooConnect?.email);
-          headers['password'] = 'Welcome@123';
-          headers['api-key'] = useSelector(state => state.odooConnect?.api-key);
         }
+        // else{
+        //   headers['login'] = useSelector(state => state.odooConnect?.email);
+        //   headers['password'] = 'Welcome@123';
+        //   headers['api-key'] = useSelector(state => state.odooConnect?.api-key);
+        // }
       } else {
         delete headers['Cookie'];
       }
