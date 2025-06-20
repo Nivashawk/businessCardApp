@@ -10,6 +10,8 @@ import {
   Dimensions,
   StatusBar,
   Linking,
+  Modal,
+  Alert,
 } from 'react-native';
 import {useRoute} from '@react-navigation/native';
 import {colors} from '../../theme/colors';
@@ -26,12 +28,16 @@ import LinkedIn from '../../../assets/socialIcons/linkedIn.svg';
 import Telegram from '../../../assets/socialIcons/telegram.svg';
 import Whatsapp from '../../../assets/whatsapp2.svg';
 
-const {width} = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
 const BusinessDetails = ({}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState('Business Details');
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageTitle, setSelectedImageTitle] = useState('');
+  
   const route = useRoute();
   const {data} = route.params;
   const id = data.id;
@@ -48,6 +54,18 @@ const BusinessDetails = ({}) => {
     console.log('Edit business pressed');
     // You can add navigation here like:
     navigation.navigate('UpdateBusiness', {businessData: BusinessData});
+  };
+
+  const handleImagePress = (imageUri, title) => {
+    setSelectedImage(imageUri);
+    setSelectedImageTitle(title);
+    setImageModalVisible(true);
+  };
+
+  const closeImageModal = () => {
+    setImageModalVisible(false);
+    setSelectedImage(null);
+    setSelectedImageTitle('');
   };
 
   return (
@@ -82,10 +100,56 @@ const BusinessDetails = ({}) => {
       </View>
 
       {activeTab === 'Business Details' ? (
-        <BusinessDetailsTab handleEditBusiness={handleEditBusiness} />
+        <BusinessDetailsTab 
+          handleEditBusiness={handleEditBusiness} 
+          handleImagePress={handleImagePress}
+        />
       ) : (
-        <BusinessCard />
+        <BusinessCard handleImagePress={handleImagePress} />
       )}
+
+      {/* Full-Screen Image Modal */}
+      <Modal
+        visible={imageModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeImageModal}>
+        <View style={styles.modalContainer}>
+          <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" />
+          
+          {/* Close Button */}
+          <TouchableOpacity 
+            style={styles.closeButton}
+            onPress={closeImageModal}
+            activeOpacity={0.7}>
+            <Text style={styles.closeButtonText}>✕</Text>
+          </TouchableOpacity>
+
+          {/* Image Title */}
+          {selectedImageTitle ? (
+            <View style={styles.imageTitleContainer}>
+              <Text style={styles.imageTitle}>{selectedImageTitle}</Text>
+            </View>
+          ) : null}
+
+          {/* Full Screen Image */}
+          <View style={styles.fullScreenImageContainer}>
+            <Image
+              source={{uri: selectedImage}}
+              style={styles.fullScreenImage}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Tap to close hint */}
+          <TouchableOpacity 
+            style={styles.tapToCloseArea}
+            onPress={closeImageModal}
+            activeOpacity={1}>
+            <Text style={styles.tapToCloseText}>Tap anywhere to close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
 
       {/* Option 2: Floating Action Button - Uncomment to use */}
       {/* 
@@ -100,7 +164,7 @@ const BusinessDetails = ({}) => {
   );
 };
 
-const BusinessDetailsTab = ({handleEditBusiness}) => {
+const BusinessDetailsTab = ({handleEditBusiness, handleImagePress}) => {
   const BusinessData = useSelector(
     state => state.getBusinessData?.data?.result?.data ?? null,
   );
@@ -255,11 +319,28 @@ const BusinessDetailsTab = ({handleEditBusiness}) => {
       showsVerticalScrollIndicator={false}>
       {/* Header Section with Edit Button - Option 1 */}
       <View style={styles.headerSection}>
-        <View style={styles.businessLogo}>
-          <Text style={styles.logoText}>
-            {BusinessData?.name?.charAt(0) || 'B'}
-          </Text>
-        </View>
+        <TouchableOpacity
+          style={styles.businessLogo}
+          onPress={() => 
+            BusinessData?.logo && 
+            handleImagePress(
+              `data:image/jpeg;base64,${BusinessData.logo}`, 
+              'Business Logo'
+            )
+          }
+          activeOpacity={0.8}>
+          {BusinessData?.logo ? (
+            <Image
+              source={{uri: `data:image/jpeg;base64,${BusinessData.logo}`}}
+              style={styles.logoImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text style={styles.logoText}>
+              {BusinessData?.name?.charAt(0) || 'B'}
+            </Text>
+          )}
+        </TouchableOpacity>
 
         <View style={styles.businessNameContainer}>
           <Text style={styles.businessName}>
@@ -421,7 +502,7 @@ const BusinessDetailsTab = ({handleEditBusiness}) => {
   );
 };
 
-const BusinessCard = () => {
+const BusinessCard = ({handleImagePress}) => {
   const BusinessData = useSelector(
     state => state.getBusinessData?.data?.result?.data ?? null,
   );
@@ -469,7 +550,16 @@ const BusinessCard = () => {
       showsVerticalScrollIndicator={false}>
       <View style={styles.cardSection}>
         <Text style={styles.sectionTitle}>Business Logo</Text>
-        <View style={styles.businessCardAvatar}>
+        <TouchableOpacity
+          style={styles.businessCardAvatar}
+          onPress={() => 
+            BusinessData?.logo && 
+            handleImagePress(
+              `data:image/jpeg;base64,${BusinessData.logo}`, 
+              'Business Logo'
+            )
+          }
+          activeOpacity={0.8}>
           <Image
             source={{
               uri: `data:image/jpeg;base64,${BusinessData?.logo}`,
@@ -477,12 +567,21 @@ const BusinessCard = () => {
             style={styles.image}
             resizeMode="cover"
           />
-        </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.cardSection}>
         <Text style={styles.sectionTitle}>Business Cards</Text>
-        <View style={styles.businessCardImage}>
+        <TouchableOpacity
+          style={styles.businessCardImage}
+          onPress={() => 
+            BusinessData?.business_card_front && 
+            handleImagePress(
+              `data:image/jpeg;base64,${BusinessData.business_card_front}`, 
+              'Business Card - Front'
+            )
+          }
+          activeOpacity={0.8}>
           <Image
             source={{
               uri: `data:image/jpeg;base64,${BusinessData?.business_card_front}`,
@@ -491,8 +590,17 @@ const BusinessCard = () => {
             resizeMode="cover"
           />
           {/* <Text style={styles.cardPlaceholderText}>Front Card Design</Text> */}
-        </View>
-        <View style={styles.businessCardImage}>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.businessCardImage}
+          onPress={() => 
+            BusinessData?.business_card_back && 
+            handleImagePress(
+              `data:image/jpeg;base64,${BusinessData.business_card_back}`, 
+              'Business Card - Back'
+            )
+          }
+          activeOpacity={0.8}>
           <Image
             source={{
               uri: `data:image/jpeg;base64,${BusinessData?.business_card_back}`,
@@ -500,7 +608,7 @@ const BusinessCard = () => {
             style={styles.image}
             resizeMode="cover"
           />
-        </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.cardSection}>
@@ -594,6 +702,12 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 8,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 40,
   },
   logoText: {
     fontSize: 32,
@@ -849,23 +963,27 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 8,
-  },
-  avatarText: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    overflow: 'hidden',
   },
   businessCardImage: {
     width: '100%',
-    height: 180,
-    backgroundColor: '#f3f4f6',
+    height: 200,
     borderRadius: 12,
+    backgroundColor: '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderStyle: 'dashed',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
   },
   cardPlaceholderText: {
     fontSize: 16,
@@ -887,14 +1005,15 @@ const styles = StyleSheet.create({
   videoLink: {
     fontSize: 12,
     color: '#6b7280',
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
+    paddingHorizontal: 16,
   },
   playButton: {
     backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 24,
+    borderRadius: 25,
     elevation: 2,
     shadowColor: colors.primary,
     shadowOffset: {width: 0, height: 2},
@@ -903,17 +1022,69 @@ const styles = StyleSheet.create({
   },
   playButtonText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
-  image: {
-    // marginTop: 15,
-    width: '100%',
-    height: '100%',
-    borderRadius: 10,
-    alignSelf: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1000,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  imageTitleContainer: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 80,
+    zIndex: 999,
+  },
+  imageTitle: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  fullScreenImageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  fullScreenImage: {
+    width: width - 40,
+    height: height - 200,
+    maxWidth: width - 40,
+    maxHeight: height - 200,
+  },
+  tapToCloseArea: {
+    position: 'absolute',
+    bottom: 50,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  tapToCloseText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 

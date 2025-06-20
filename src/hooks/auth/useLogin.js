@@ -30,7 +30,7 @@ const useLogin = () => {
       alert(`Sign up failed: ${error}`);
       // dispatch(clearRegisterError()); // Optional: clear error
     }
-  }, [data, error, navigation, email]);
+  }, [data, error, email]);
 
   /**
    * Validates email and handles login process

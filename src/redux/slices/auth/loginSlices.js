@@ -13,7 +13,7 @@ export const loginUser = createAsyncThunk(
 
       const response = await apiClient.post('api/login', {
         params: {
-          email: email,
+          email: email.toLowerCase(),
           otp: otp,
           token: token,
         },

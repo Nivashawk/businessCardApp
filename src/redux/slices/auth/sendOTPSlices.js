@@ -12,7 +12,7 @@ export const sentOTP = createAsyncThunk(
       const url = 'api/send_otp';
       const payload = {
         params: {
-          email: email,
+          email: email.toLowerCase(),
         },
       };
 

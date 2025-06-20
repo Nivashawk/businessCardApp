@@ -12,7 +12,7 @@ export const registerUser = createAsyncThunk(
       const response = await apiClient.post('api/register', {
         params: {
           name,
-          email,
+          email: email.toLowerCase(),
           mobile: phone,
           country_code,
           otp,

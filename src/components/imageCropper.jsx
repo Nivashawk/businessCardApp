@@ -12,6 +12,7 @@ const ImageCropper = ({navigation, type, onImageSelected}) => {
       height: 300,
       cropping: true,
       mediaType: 'photo',
+      freeStyleCropEnabled: true
     })
       .then(img => {
         onImageSelected?.(type, img);
@@ -32,6 +33,7 @@ const ImageCropper = ({navigation, type, onImageSelected}) => {
             width: 300,
             height: 300,
             cropping: true,
+            freeStyleCropEnabled: true
           });
           console.log("cropped_images",cropped);
           

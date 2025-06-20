@@ -12,7 +12,7 @@ export const Delete = createAsyncThunk(
       const url = 'api/account/delete';
       const payload = {
          params: {
-          email: email,
+          email: email.toLowerCase(),
           otp: otp,
           token: token,
         },
