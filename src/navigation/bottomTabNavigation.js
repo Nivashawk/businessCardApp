@@ -215,7 +215,7 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
 
   // Fixed bottom margin to prevent scroll interference
   const bottomMargin = Platform.OS === 'ios' 
-    ? (dimensions.isLandscape ? 8 : 20)
+    ? (dimensions.isLandscape ? 8 : 8)
     : (dimensions.isLandscape ? 12 : 8);
 
   useEffect(() => {
@@ -245,7 +245,7 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
   return (
     <>
       {/* Spacer to prevent scroll content from going under tab bar */}
-      <View style={{height: tabBarHeight + bottomMargin + 10}} />
+      <View style={{height: tabBarHeight + bottomMargin + 10, backgroundColor:colors.background}} />
       
       <View
         style={[
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     zIndex: 1000, // Ensure it stays on top
-    // backgroundColor: colors.background
+    backgroundColor: colors.background
   },
   tabBarBackground: {
     ...StyleSheet.absoluteFillObject,
