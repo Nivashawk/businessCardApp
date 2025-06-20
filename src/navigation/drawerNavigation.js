@@ -741,6 +741,20 @@ function CustomDrawerContent(props) {
     }
   };
 
+  const handleLogout = async () => {
+    console.log('User logged out');
+    dispatch(isOTPVerified(false));
+    await AsyncStorage.setItem('isLoggedIn', 'false');
+    console.log('User logged out phase 2');
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      })
+    );
+  };
+  
+
   return (
     <SafeAreaView style={styles.drawerContainer}>
       {/* Enhanced Header Section with Dynamic Data */}
@@ -805,30 +819,7 @@ function CustomDrawerContent(props) {
           <DrawerItem
             label="Logout"
             onPress={() => {
-              Alert.alert('Logout', 'Are you sure you want to logout?', [
-                {text: 'Cancel', style: 'cancel'},
-                {
-                  text: 'Logout',
-                  style: 'destructive',
-                  onPress: async () => {
-                    // Handle logout logic here
-                    console.log('User logged out');
-                    dispatch(isOTPVerified(false));
-                    await AsyncStorage.setItem('isLoggedIn', 'false');
-                    navigation.dispatch(
-                      CommonActions.reset({
-                        index: 0,
-                        routes: [{name: 'Login'}],
-                      }),
-                    );
-                    // You might want to navigate to login screen or reset navigation stack
-                    // navigation.reset({
-                    //   index: 0,
-                    //   routes: [{ name: 'Login' }],
-                    // });
-                  },
-                },
-              ]);
+              handleLogout();
             }}
             labelStyle={[styles.drawerLabel, styles.logoutLabel]}
             style={styles.drawerItem}
