@@ -267,11 +267,11 @@ const GenerateQR = () => {
       <View style={styles.buttonContainer}>
         {hasQRCode && (
           <>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.secondaryButton}
               onPress={handleDownloadQR}>
               <Text style={styles.secondaryButtonText}>Download QR</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <SmallButton
               title="Share QR"
               onPress={handleShare}
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 30,
     gap: 15,

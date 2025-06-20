@@ -161,7 +161,7 @@ const UpdateEvent = () => {
   // Handle update response
   useEffect(() => {
     if (updateEventData) {
-      if (updateEventData?.status === 'Success') {
+      if (updateEventData?.status === 'success') {
         Toast.show({
           type: 'success',
           text1: updateEventData?.message,

@@ -291,7 +291,7 @@ const Home = () => {
 
 const styles = StyleSheet.create({
   container: {
-    height: Platform.OS == 'ios' ? height * 0.34 : height * 0.38,
+    height: Platform.OS == 'ios' ? height * 0.38 : height * 0.38,
   },
   serviceContainer: {
     height: height * 0.17,
