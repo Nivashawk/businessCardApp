@@ -8,16 +8,36 @@ const EmptyState = ({activeTab, searchQuery, activeFilterCount}) => {
     if (searchQuery || activeFilterCount > 0) {
       return 'Try adjusting your search or filters';
     } else {
-      return activeTab === 'Shared Contacts'
-        ? "You haven't shared any business contacts yet."
-        : "You haven't received any business contacts yet.";
+      switch (activeTab) {
+        case 'Shared Contacts':
+          return "You haven't shared any business contacts yet.";
+        case 'Received Contacts':
+          return "You haven't received any business contacts yet.";
+        case 'Manual Contacts':
+          return "You haven't added any manual contacts yet. Data stored here is temporary and saved only in your device's local storage.";
+        default:
+          return "No contacts found.";
+      }
+    }
+  };
+
+  const getEmptyIcon = () => {
+    switch (activeTab) {
+      case 'Shared Contacts':
+        return '📤';
+      case 'Received Contacts':
+        return '📥';
+      case 'Manual Contacts':
+        return '📝';
+      default:
+        return '📋';
     }
   };
 
   return (
     <View style={mainStyles.emptyContainer}>
       <Text style={mainStyles.emptyText}>
-        {activeTab === 'Shared Contacts' ? '📤' : '📥'}
+        {getEmptyIcon()}
       </Text>
       <Text style={mainStyles.emptyTitle}>
         No {activeTab.toLowerCase()} found

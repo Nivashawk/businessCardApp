@@ -4,6 +4,36 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+<<<<<<< Updated upstream
+=======
+	<!-- added for deeplink -->
+	<key>CFBundleURLTypes</key>
+	<array>
+	<dict>
+		<key>CFBundleURLSchemes</key>
+		<array>
+		<string>thumps</string>
+		</array>
+	</dict>
+	</array>
+
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+	<string>thumps</string>
+	</array>
+
+	<key>AssociatedDomains</key>
+	<array>
+	<string>applinks:thumps.app</string>
+	</array>
+
+	<!-- added for deeplink -->
+
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to scan QR codes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to select and upload media.</string>
+>>>>>>> Stashed changes
 	<key>CFBundleDisplayName</key>
 	<string>Thumps App</string>
 	<key>CFBundleExecutable</key>

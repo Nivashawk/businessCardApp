@@ -22,9 +22,10 @@ import {sentOTP} from '../redux/slices/auth/sendOTPSlices';
 import {Deactivate} from '../redux/slices/auth/accountDeactivateSlices';
 import {Delete} from '../redux/slices/auth/accountDeleteSlices';
 import {isOTPVerified} from '../redux/slices/auth/sendOTPSlices';
-import { resetOTPData } from '../redux/slices/auth/sendOTPSlices';
+import {resetOTPData} from '../redux/slices/auth/sendOTPSlices';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const {width, height} = Dimensions.get('window');
+import {CommonActions} from '@react-navigation/native';
 const Drawer = createDrawerNavigator();
 
 // Enhanced Profile Screen with Edit Functionality
@@ -357,7 +358,7 @@ const SettingsScreen = ({navigation}) => {
     }
   }, [deleteResponse, deleteError, navigation]);
 
-  const confirmDeactivation = async() => {
+  const confirmDeactivation = async () => {
     if (!enteredOTP.trim()) {
       Alert.alert('Error', 'Please enter the OTP.');
       return;
@@ -742,18 +743,35 @@ function CustomDrawerContent(props) {
   };
 
   const handleLogout = async () => {
-    console.log('User logged out');
-    dispatch(isOTPVerified(false));
-    await AsyncStorage.setItem('isLoggedIn', 'false');
-    console.log('User logged out phase 2');
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      })
-    );
+    try {
+      console.log('User logout initiated');
+
+      // Clear Redux state
+      dispatch(isOTPVerified(false));
+      dispatch(resetOTPData());
+
+      // Clear AsyncStorage
+      await AsyncStorage.setItem('isLoggedIn', 'false');
+      // You might also want to clear other stored data
+      await AsyncStorage.removeItem('userToken'); // if you store token
+      await AsyncStorage.removeItem('userData'); // if you store user data
+
+      console.log('Logout data cleared, navigating to login');
+
+      // Navigate to login screen
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{name: 'Login'}], // Make sure 'Login' is the exact route name
+        }),
+      );
+
+      console.log('Navigation dispatch completed');
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Failed to logout properly. Please try again.');
+    }
   };
-  
 
   return (
     <SafeAreaView style={styles.drawerContainer}>

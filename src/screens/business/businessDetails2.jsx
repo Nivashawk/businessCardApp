@@ -27,28 +27,56 @@ import Instagram from '../../../assets/socialIcons/instagram.svg';
 import LinkedIn from '../../../assets/socialIcons/linkedIn.svg';
 import Telegram from '../../../assets/socialIcons/telegram.svg';
 import Whatsapp from '../../../assets/whatsapp2.svg';
+import { useNavigation } from '@react-navigation/native';
 
 const {width} = Dimensions.get('window');
 
 // Save Contact Modal Component
 const SaveContactModal = ({visible, onClose, businessData, paramData, dispatch}) => {
+  const [isSaving, setIsSaving] = useState(false);
+  const navigation = useNavigation();
+
   const handleSaveContact = async () => {
     try {
-      console.log("paramData", paramData);
+      setIsSaving(true);
+      console.log("Saving contact with params:", paramData);
+
+      // Ensure all required parameters are present
+      if (!paramData.businessId) {
+        Alert.alert('Error', 'Business ID is missing. Cannot save contact.');
+        return;
+      }
+
+      // Dispatch the save business action with proper parameters
+      const saveParams = {
+        sharedBy: paramData.sharedBy || null,
+        businessId: paramData.businessId,
+        eventId: paramData.eventId || null
+      };
+
+      console.log("Dispatching saveBusiness with params:", saveParams);
       
+      const result = await dispatch(saveBusiness(saveParams));
       
-      dispatch(saveBusiness({sharedBy:paramData.sharedBy, businessId:paramData.businessId, eventId:paramData.eventId}))
-      // Add your contact saving logic here
-      // For example, using react-native-contacts library
-      Alert.alert('Success', 'Business contact saved successfully!');
-      onClose();
+      // Check if the action was successful
+      if (result.type.endsWith('/fulfilled')) {
+        Alert.alert('Success', 'Business contact saved successfully!');
+        onClose();
+      } else {
+        throw new Error('Save business action failed');
+      }
+
     } catch (error) {
+      console.error('Error saving contact:', error);
       Alert.alert('Error', 'Failed to save contact. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleSkip = () => {
     onClose();
+    navigation.goBack();
   };
 
   return (
@@ -83,15 +111,23 @@ const SaveContactModal = ({visible, onClose, businessData, paramData, dispatch})
             <TouchableOpacity
               style={[modalStyles.button, modalStyles.skipButton]}
               onPress={handleSkip}
-              activeOpacity={0.7}>
+              activeOpacity={0.7}
+              disabled={isSaving}>
               <Text style={modalStyles.skipButtonText}>No, Skip</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[modalStyles.button, modalStyles.saveButton]}
+              style={[
+                modalStyles.button, 
+                modalStyles.saveButton,
+                isSaving && modalStyles.disabledButton
+              ]}
               onPress={handleSaveContact}
-              activeOpacity={0.7}>
-              <Text style={modalStyles.saveButtonText}>Yes, Save</Text>
+              activeOpacity={0.7}
+              disabled={isSaving}>
+              <Text style={modalStyles.saveButtonText}>
+                {isSaving ? 'Saving...' : 'Yes, Save'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -105,21 +141,25 @@ const BusinessDetails2 = ({}) => {
   const [activeTab, setActiveTab] = useState('Business Details');
   const [showSaveContactModal, setShowSaveContactModal] = useState(false);
   const route = useRoute();
-  const {data} = route.params;
 
   const [businessId, setBusinessId] = useState(null);
   const [sharedBy, setSharedBy] = useState(null);
   const [eventId, setEventId] = useState(null);
-  const [shouldShowModal, setShouldShowModal] = useState(true); // New state to control modal visibility
+  const [shouldShowModal, setShouldShowModal] = useState(true);
 
   // Get business data from Redux store
   const BusinessData = useSelector(
     state => state.getBusinessData?.data?.result?.data ?? null,
   );
-  
+
   // Get loading state to know when data is fetched
   const isLoading = useSelector(
     state => state.getBusinessData?.loading ?? false,
+  );
+
+  // Get save business state for debugging
+  const saveBusinessState = useSelector(
+    state => state.saveBusinessData ?? {},
   );
 
   const parseParams = (url) => {
@@ -135,41 +175,80 @@ const BusinessDetails2 = ({}) => {
   };
 
   useEffect(() => {
-    if (data) {
-      const params = parseParams(data);
+    console.log("Route params received:", route.params);
+    
+    // Check if params are directly available (deep linking)
+    if (route.params?.business_id) {
+      console.log("Using direct params from deep link");
+      setBusinessId(route.params.business_id);
+      setSharedBy(route.params.shared_by || null);
+      setEventId(route.params.event_id || null);
+      setShouldShowModal(route.params.type !== '1');
+    }
+    // Check if params are inside a 'data' property (internal navigation)
+    else if (route.params?.data) {
+      console.log("Parsing params from data property");
+      const params = parseParams(route.params.data);
+      console.log("Parsed params:", params);
       setBusinessId(params.business_id);
-      setSharedBy(params.shared_by);
-      setEventId(params.event_id || "");
-      
-      // Check if type=1 exists in the URL
-      // If type=1 exists, don't show modal; otherwise, show modal
+      setSharedBy(params.shared_by || null);
+      setEventId(params.event_id || null);
       setShouldShowModal(params.type !== '1');
     }
-  }, [data]);
+    // Handle other possible parameter structures
+    else if (route.params) {
+      console.log("Checking alternative parameter structures");
+      // Sometimes deep link params might come in different formats
+      const params = route.params;
+      if (params.businessId || params.id) {
+        setBusinessId(params.businessId || params.id);
+        setSharedBy(params.sharedBy || params.shared_by || null);
+        setEventId(params.eventId || params.event_id || null);
+        setShouldShowModal(params.type !== '1');
+      }
+    }
+  }, [route.params]);
 
   // Dispatch only when businessId is available
   useEffect(() => {
-    console.log("businessId", businessId);
-    
+    console.log("Business ID changed:", businessId);
+    console.log("Shared By:", sharedBy);
+
     if (businessId) {
+      console.log("Fetching business data...");
       dispatch(getBusiness({id: businessId, sharedBy: sharedBy}));
     }
-  }, [businessId]);
+  }, [businessId, sharedBy, dispatch]);
 
   // Show modal when business data is successfully loaded AND shouldShowModal is true
   useEffect(() => {
     if (BusinessData && !isLoading && businessId && shouldShowModal) {
+      console.log("Business data loaded, showing modal");
       // Add a small delay to ensure smooth transition
       const timer = setTimeout(() => {
         setShowSaveContactModal(true);
       }, 500);
-      
+
       return () => clearTimeout(timer);
     }
   }, [BusinessData, isLoading, businessId, shouldShowModal]);
 
+  // Debug effect to log save business state changes
+  useEffect(() => {
+    console.log("Save business state:", saveBusinessState);
+  }, [saveBusinessState]);
+
   const handleModalClose = () => {
     setShowSaveContactModal(false);
+  };
+
+  // Create param data object with proper validation
+  const createParamData = () => {
+    return {
+      businessId: businessId,
+      sharedBy: sharedBy,
+      eventId: eventId
+    };
   };
 
   return (
@@ -208,14 +287,14 @@ const BusinessDetails2 = ({}) => {
       ) : (
         <BusinessCard />
       )}
-      
+
       {/* Save Contact Modal - Only render if shouldShowModal is true */}
       {shouldShowModal && (
         <SaveContactModal
           visible={showSaveContactModal}
           onClose={handleModalClose}
           businessData={BusinessData}
-          paramData={{businessId:businessId, sharedBy:sharedBy, eventId:eventId}}
+          paramData={createParamData()}
           dispatch={dispatch}
         />
       )}
@@ -281,9 +360,9 @@ const BusinessDetailsTab = () => {
           value.includes('c/') ||
           value.includes('user/')
         ) {
-          url = `https://youtube.com/${value}`;
+          url = `https://www.youtube.com/${value}`;
         } else {
-          url = `https://youtube.com/c/${value}`;
+          url = `https://www.youtube.com/results?search_query=${value}`;
         }
         break;
       case 'google_business':
@@ -576,7 +655,7 @@ const BusinessCard = () => {
         <View style={styles.videoContainer}>
           <Text style={styles.videoLabel}>Company Introduction</Text>
           <Text style={styles.videoLink}>
-            https://youtube.com/company-intro
+            https://www.youtube.com/watch?v=YOUR_VIDEO_ID
           </Text>
           <TouchableOpacity style={styles.playButton}>
             <Text style={styles.playButtonText}>▶ Play Video</Text>
@@ -678,6 +757,10 @@ const modalStyles = StyleSheet.create({
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 4,
+  },
+  disabledButton: {
+    backgroundColor: '#9ca3af',
+    elevation: 0,
   },
   skipButtonText: {
     fontSize: 16,
@@ -899,9 +982,11 @@ const styles = StyleSheet.create({
   founderCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: 16,
     backgroundColor: '#f9fafb',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   founderAvatar: {
     width: 48,
@@ -913,7 +998,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   founderInitial: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#ffffff',
   },
@@ -932,114 +1017,101 @@ const styles = StyleSheet.create({
   },
   socialMediaContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
+    flexWrap: 'wrap',
+    gap: 12,
   },
   socialButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  // Business Card Tab Styles
+  cardSection: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    padding: 20,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
     shadowRadius: 3,
   },
-  // Business Card Styles
-    cardSection: {
-      backgroundColor: '#ffffff',
-      marginHorizontal: 16,
-      marginBottom: 16,
-      borderRadius: 12,
-      padding: 20,
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 1},
-      shadowOpacity: 0.1,
-      shadowRadius: 3,
-    },
-    businessCardAvatar: {
-      width: 120,
-      height: 120,
-      borderRadius: 60,
-      backgroundColor: colors.primary,
-      justifyContent: 'center',
-      alignItems: 'center',
-      alignSelf: 'center',
-      elevation: 4,
-      shadowColor: colors.primary,
-      shadowOffset: {width: 0, height: 2},
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-    },
-    avatarText: {
-      fontSize: 36,
-      fontWeight: 'bold',
-      color: '#ffffff',
-    },
-    businessCardImage: {
-      width: '100%',
-      height: 180,
-      backgroundColor: '#f3f4f6',
-      borderRadius: 12,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 16,
-      borderWidth: 1,
-      borderColor: '#e5e7eb',
-      borderStyle: 'dashed',
-    },
-    cardPlaceholderText: {
-      fontSize: 16,
-      fontWeight: '500',
-      color: '#6b7280',
-    },
-    videoContainer: {
-      padding: 16,
-      backgroundColor: '#f9fafb',
-      borderRadius: 8,
-      alignItems: 'center',
-    },
-    videoLabel: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: '#1f2937',
-      marginBottom: 8,
-    },
-    videoLink: {
-      fontSize: 12,
-      color: '#6b7280',
-      marginBottom: 12,
-      textAlign: 'center',
-    },
-    playButton: {
-      backgroundColor: colors.primary,
-      paddingHorizontal: 24,
-      paddingVertical: 12,
-      borderRadius: 24,
-      elevation: 2,
-      shadowColor: colors.primary,
-      shadowOffset: {width: 0, height: 2},
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-    },
-    playButtonText: {
-      color: '#ffffff',
-      fontSize: 14,
-      fontWeight: '600',
-    },
-      image: {
-      // marginTop: 15,
-      width:'100%',
-      height: '100%',
-      borderRadius: 10,
-      alignSelf: 'center',
-      borderWidth: 1,
-      borderColor: '#ddd',
-    },
-  });
-  
-  export default BusinessDetails2;
+  businessCardAvatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    overflow: 'hidden',
+  },
+  businessCardImage: {
+    height: 200,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  cardPlaceholderText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#6b7280',
+  },
+  videoContainer: {
+    padding: 16,
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  videoLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 8,
+  },
+  videoLink: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 12,
+    fontFamily: 'monospace',
+  },
+  playButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: colors.primary,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  playButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+});
+
+export default BusinessDetails2;

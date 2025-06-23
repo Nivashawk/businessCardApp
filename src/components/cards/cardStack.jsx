@@ -1,5 +1,5 @@
 // CardStack.js
-import React, {useState, useCallback, useEffect, useMemo} from 'react';
+import React, {useState, useCallback, useEffect, useMemo, useRef} from 'react';
 import {
   View,
   StyleSheet,
@@ -11,8 +11,9 @@ import {
   Linking,
   useWindowDimensions, // Import useWindowDimensions
   PixelRatio, // Import PixelRatio for font scaling
+  Animated, // Legacy Animated for EmptyCard
 } from 'react-native';
-import Animated, {
+import ReanimatedAnimated, {
   useSharedValue,
   useAnimatedStyle,
   useDerivedValue,
@@ -83,7 +84,7 @@ const Card = React.memo(({card, style}) => {
   const responsiveLogoSize = getResponsiveFontSize(50); // Base 50px
 
   return (
-    <Animated.View style={[
+    <ReanimatedAnimated.View style={[
       styles.card,
       style,
       {
@@ -101,12 +102,12 @@ const Card = React.memo(({card, style}) => {
           ) : (
             <EmptyLogo width={responsiveLogoSize} height={responsiveLogoSize} />
           )}
-          <Animated.Text
+          <ReanimatedAnimated.Text
             style={[typography.heading, styles.title, {fontSize: getResponsiveFontSize(18), lineHeight: getResponsiveFontSize(25)}]}
             numberOfLines={2}
             ellipsizeMode="tail">
             {formatCompanyName(card.name || '')}
-          </Animated.Text>
+          </ReanimatedAnimated.Text>
         </View>
         {card.active !== undefined && (
           <View
@@ -126,9 +127,9 @@ const Card = React.memo(({card, style}) => {
         )}
       </View>
       <View style={styles.descriptionContainer}>
-        <Animated.Text style={[typography.description, styles.tagline, {fontSize: getResponsiveFontSize(14)}]}>
+        <ReanimatedAnimated.Text style={[typography.description, styles.tagline, {fontSize: getResponsiveFontSize(14)}]}>
           {truncateText(card.public_summary || '', 70)}
-        </Animated.Text>
+        </ReanimatedAnimated.Text>
       </View>
       <View style={styles.contactContainer}>
         {card.business_mobile ? (
@@ -171,22 +172,29 @@ const Card = React.memo(({card, style}) => {
             </Text>
           )}
         </View>
-        <Animated.View style={styles.socialrightContainer}>
+        <ReanimatedAnimated.View style={styles.socialrightContainer}>
           {card.is_primary && (
-            <Animated.Text style={[typography.description, {fontWeight:'bold', fontSize: getResponsiveFontSize(14)}]}>
+            <ReanimatedAnimated.Text style={[typography.description, {fontWeight:'bold', fontSize: getResponsiveFontSize(14)}]}>
               Primary
-            </Animated.Text>
+            </ReanimatedAnimated.Text>
           )}
-        </Animated.View>
+        </ReanimatedAnimated.View>
       </View>
-    </Animated.View>
+    </ReanimatedAnimated.View>
   );
 });
 
 const EmptyCard = () => {
   const navigation = useNavigation();
-  const {width: windowWidth} = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
   const scale = windowWidth / BASE_WIDTH;
+  
+  // Animation values using legacy Animated
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(0.8)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
   const getResponsiveFontSize = (baseFontSize) => {
     const newSize = baseFontSize * scale;
     return Math.round(PixelRatio.roundToNearestPixel(newSize));
@@ -195,21 +203,135 @@ const EmptyCard = () => {
   const responsiveCardWidth = windowWidth * BASE_CARD_WIDTH_RATIO;
   const responsiveCardHeight = responsiveCardWidth * CARD_ASPECT_RATIO;
 
+  // Subtle pulse animation
+  useEffect(() => {
+    const pulseAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.02,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulseAnimation.start();
+
+    return () => pulseAnimation.stop();
+  }, []);
+
+  const handlePressIn = () => {
+    Animated.parallel([
+      Animated.timing(scaleAnim, {
+        toValue: 0.96,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.parallel([
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 0.8,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(rotateAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const rotateInterpolate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '45deg'],
+  });
+
   return (
     <TouchableOpacity
       style={[
-        styles.emptyCard,
+        // styles.emptyCard,
         {
           width: responsiveCardWidth,
           height: responsiveCardHeight,
           minHeight: 180,
           maxHeight: 280,
+          marginTop: 10
         }
       ]}
-      onPress={() => navigation.navigate('CreateBusiness')}>
-      <Animated.Text style={[styles.plusIcon, {fontSize: getResponsiveFontSize(50)}]}>
-        +
-      </Animated.Text>
+      onPress={() => navigation.navigate('CreateBusiness')}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={1}>
+      
+      <Animated.View
+        style={[
+          styles.cardContainer,
+          {
+            transform: [
+              { scale: scaleAnim },
+              { scale: pulseAnim },
+            ],
+            opacity: opacityAnim,
+          },
+        ]}>
+        
+        {/* Background gradient overlay */}
+        <View style={styles.gradientOverlay} />
+        
+        {/* Decorative circles */}
+        <View style={styles.decorativeCircle1} />
+        <View style={styles.decorativeCircle2} />
+        <View style={styles.decorativeCircle3} />
+        
+        {/* Main content */}
+        <View style={styles.contentContainer}>
+          <Animated.View
+            style={[
+              styles.iconContainer,
+              {
+                transform: [{ rotate: rotateInterpolate }],
+              },
+            ]}>
+            <Text style={[styles.plusIcon, { fontSize: getResponsiveFontSize(36) }]}>
+              +
+            </Text>
+          </Animated.View>
+          
+          <Text style={[styles.titleText, { fontSize: getResponsiveFontSize(16) }]}>
+            Create New Business
+          </Text>
+          
+          <Text style={[styles.subtitleText, { fontSize: getResponsiveFontSize(12) }]}>
+            Tap to get started
+          </Text>
+        </View>
+        
+        {/* Bottom accent line */}
+        <View style={styles.accentLine} />
+      </Animated.View>
     </TouchableOpacity>
   );
 };
@@ -502,25 +624,111 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     // lineHeight and font size set dynamically
   },
+  // Enhanced EmptyCard styles
   emptyCard: {
-    backgroundColor: colors.secondary,
-    borderRadius: 10,
-    padding: 10,
-    position: 'absolute',
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 5},
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
     marginTop: 10,
-    // Width and Height are set dynamically in the component
-    // Margin top is set dynamically in CardStack
+  },
+  cardContainer: {
+    flex: 1,
+    backgroundColor: colors.secondary || '#ffffff',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.border || '#f0f4f8',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
+    backgroundColor: colors.primary ? `${colors.primary}08` : 'rgba(99, 102, 241, 0.03)',
+    borderRadius: 16,
+  },
+  decorativeCircle1: {
+    position: 'absolute',
+    top: -20,
+    right: -20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.primary ? `${colors.primary}15` : 'rgba(99, 102, 241, 0.08)',
+  },
+  decorativeCircle2: {
+    position: 'absolute',
+    bottom: -15,
+    left: -15,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.accent ? `${colors.accent}10` : 'rgba(168, 85, 247, 0.06)',
+  },
+  decorativeCircle3: {
+    position: 'absolute',
+    top: '50%',
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary ? `${colors.primary}35` : 'rgba(99, 102, 241, 0.2)',
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    zIndex: 2,
+  },
+  iconContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: colors.primary ? `${colors.primary}20` : 'rgba(99, 102, 241, 0.1)',
+    borderWidth: 2,
+    borderColor: colors.primary ? `${colors.primary}40` : 'rgba(99, 102, 241, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   plusIcon: {
-    color: colors.primary,
-    // Font size is set dynamically
+    color: colors.primary || '#6366f1',
+    fontWeight: '300',
+    textAlign: 'center',
+    lineHeight: 36,
+  },
+  titleText: {
+    color: colors.text || '#1f2937',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  subtitleText: {
+    color: colors.textSecondary || '#6b7280',
+    fontWeight: '400',
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+  accentLine: {
+    position: 'absolute',
+    bottom: 0,
+    left: '20%',
+    right: '20%',
+    height: 3,
+    backgroundColor: colors.primary || '#6366f1',
+    borderRadius: 2,
+    opacity: 0.6,
   },
 });
 
