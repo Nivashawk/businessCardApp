@@ -41,28 +41,28 @@ import TextAreaBox from '../../../components/inputs/textArea';
 const {width, height} = Dimensions.get('window');
 
 // Enhanced URL validation function
-const isValidURL = (string) => {
+const isValidURL = string => {
   if (!string || typeof string !== 'string') return false;
-  
+
   try {
     // First, check if it's a valid URL format
     const url = new URL(string);
-    
+
     // Must be http or https
     if (!['http:', 'https:'].includes(url.protocol)) {
       return false;
     }
-    
+
     // Must have a valid hostname
     if (!url.hostname || url.hostname.length === 0) {
       return false;
     }
-    
+
     // Must contain at least one dot in hostname (basic domain validation)
     if (!url.hostname.includes('.')) {
       return false;
     }
-    
+
     return true;
   } catch (error) {
     // If URL constructor fails, try adding protocol and test again
@@ -70,46 +70,44 @@ const isValidURL = (string) => {
       if (!string.startsWith('http://') && !string.startsWith('https://')) {
         const urlWithProtocol = 'https://' + string;
         const url = new URL(urlWithProtocol);
-        
+
         // Same validations as above
-        if (!url.hostname || url.hostname.length === 0 || !url.hostname.includes('.')) {
+        if (
+          !url.hostname ||
+          url.hostname.length === 0 ||
+          !url.hostname.includes('.')
+        ) {
           return false;
         }
-        
+
         return true;
       }
     } catch (secondError) {
       return false;
     }
-    
+
     return false;
   }
 };
 
 // Helper function to normalize URL (add https:// if missing)
-const normalizeURL = (url) => {
+const normalizeURL = url => {
   if (!url || typeof url !== 'string') return '';
-  
+
   const trimmedUrl = url.trim();
   if (!trimmedUrl) return '';
-  
+
   // If already has protocol, return as is
   if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
     return trimmedUrl;
   }
-  
+
   // Add https:// prefix
   return 'https://' + trimmedUrl;
 };
 
 // Helper component for image upload sections
-const ImageUploadSection = ({
-  title,
-  image,
-  onPress,
-  onRemove,
-  isLoading,
-}) => {
+const ImageUploadSection = ({title, image, onPress, onRemove, isLoading}) => {
   // Simplified and more robust image URI determination
   const imageSourceUri = useMemo(() => {
     if (!image) {
@@ -120,35 +118,61 @@ const ImageUploadSection = ({
     // Check if image is a string (direct URI or base64)
     if (typeof image === 'string') {
       if (image.startsWith('data:image/') || image.startsWith('file://')) {
-        console.log(`ImageUploadSection (${title}): Using string URI: ${image.substring(0, 50)}...`);
+        console.log(
+          `ImageUploadSection (${title}): Using string URI: ${image.substring(
+            0,
+            50,
+          )}...`,
+        );
         return image;
       }
     }
 
     // Check if image is an object with uri property
     if (image.uri && typeof image.uri === 'string') {
-      if (image.uri.startsWith('file://') || image.uri.startsWith('data:image/')) {
-        console.log(`ImageUploadSection (${title}): Using object URI: ${image.uri.substring(0, 50)}...`);
+      if (
+        image.uri.startsWith('file://') ||
+        image.uri.startsWith('data:image/')
+      ) {
+        console.log(
+          `ImageUploadSection (${title}): Using object URI: ${image.uri.substring(
+            0,
+            50,
+          )}...`,
+        );
         return image.uri;
       }
     }
 
     // Check if image has base64 property
     if (image.base64 && typeof image.base64 === 'string') {
-      const uri = image.base64.startsWith('data:image/') 
-        ? image.base64 
+      const uri = image.base64.startsWith('data:image/')
+        ? image.base64
         : `data:image/jpeg;base64,${image.base64}`;
-      console.log(`ImageUploadSection (${title}): Using base64 URI: ${uri.substring(0, 50)}...`);
+      console.log(
+        `ImageUploadSection (${title}): Using base64 URI: ${uri.substring(
+          0,
+          50,
+        )}...`,
+      );
       return uri;
     }
 
     // Check if image has path property (common with image pickers/croppers)
     if (image.path && typeof image.path === 'string') {
-      console.log(`ImageUploadSection (${title}): Using path: ${image.path.substring(0, 50)}...`);
+      console.log(
+        `ImageUploadSection (${title}): Using path: ${image.path.substring(
+          0,
+          50,
+        )}...`,
+      );
       return image.path;
     }
 
-    console.log(`ImageUploadSection (${title}): Could not determine image URI. Image object:`, image);
+    console.log(
+      `ImageUploadSection (${title}): Could not determine image URI. Image object:`,
+      image,
+    );
     return null;
   }, [image, title]);
 
@@ -167,13 +191,21 @@ const ImageUploadSection = ({
               onError={({nativeEvent: {error}}) => {
                 console.error(`ERROR loading ${title} image:`, error);
                 console.error(`Failed URI: ${imageSourceUri}`);
-                Alert.alert("Image Load Error", `Failed to load ${title} image. URI: ${imageSourceUri?.substring(0, 100)}`);
+                Alert.alert(
+                  'Image Load Error',
+                  `Failed to load ${title} image. URI: ${imageSourceUri?.substring(
+                    0,
+                    100,
+                  )}`,
+                );
               }}
               onLoad={() => {
                 console.log(`SUCCESS: ${title} image loaded successfully`);
               }}
             />
-            <TouchableOpacity onPress={onRemove} style={styles.removeImageButton}>
+            <TouchableOpacity
+              onPress={onRemove}
+              style={styles.removeImageButton}>
               <Text style={styles.removeImageButtonText}>Remove</Text>
             </TouchableOpacity>
           </>
@@ -207,7 +239,9 @@ const Upload = forwardRef((props, ref) => {
   const [isImageProcessing, setIsImageProcessing] = useState(false);
 
   const bottomSheetModalRef = useRef(null);
-  const snapPoints = useMemo(() => ['50%', '80%'], []);
+
+  // Fixed snap points with better sizing
+  const snapPoints = useMemo(() => ['30%', '65%', '95%'], []);
 
   // Helper function to reconstruct image object from base64
   const reconstructImageFromBase64 = useCallback((base64String, imageType) => {
@@ -232,7 +266,9 @@ const Upload = forwardRef((props, ref) => {
 
     // Validate base64
     if (!/^[a-zA-Z0-9+/=]*$/.test(actualBase64)) {
-      console.warn(`reconstructImageFromBase64: Invalid base64 string for ${imageType}`);
+      console.warn(
+        `reconstructImageFromBase64: Invalid base64 string for ${imageType}`,
+      );
       return null;
     }
 
@@ -245,7 +281,9 @@ const Upload = forwardRef((props, ref) => {
       height: 1000,
     };
 
-    console.log(`Reconstructed ${imageType} image - URI length: ${reconstructedImage.uri.length}`);
+    console.log(
+      `Reconstructed ${imageType} image - URI length: ${reconstructedImage.uri.length}`,
+    );
     return reconstructedImage;
   }, []);
 
@@ -253,7 +291,10 @@ const Upload = forwardRef((props, ref) => {
   useEffect(() => {
     if (!initialized) {
       const dataSource = props.initialData || businessData;
-      console.log('Upload component: Initializing with data source:', dataSource);
+      console.log(
+        'Upload component: Initializing with data source:',
+        dataSource,
+      );
 
       if (dataSource) {
         setWebsite(dataSource.website || '');
@@ -292,7 +333,10 @@ const Upload = forwardRef((props, ref) => {
 
         if (dataSource.logo) {
           try {
-            const logoImage = reconstructImageFromBase64(dataSource.logo, 'logo');
+            const logoImage = reconstructImageFromBase64(
+              dataSource.logo,
+              'logo',
+            );
             if (logoImage) {
               setSelectedLogoImage(logoImage);
               console.log('Initialized Logo Image successfully');
@@ -304,17 +348,29 @@ const Upload = forwardRef((props, ref) => {
       }
       setInitialized(true);
     }
-  }, [props.initialData, businessData, initialized, reconstructImageFromBase64]);
+  }, [
+    props.initialData,
+    businessData,
+    initialized,
+    reconstructImageFromBase64,
+  ]);
 
+  // Fixed openBottomSheet function
   const openBottomSheet = useCallback(type => {
     console.log(`Opening bottom sheet for: ${type}`);
     setCurrentImageType(type);
+
+    // Present the bottom sheet
     bottomSheetModalRef.current?.present();
+
+    // Force it to expand to the desired index after a short delay
+    setTimeout(() => {
+      bottomSheetModalRef.current?.snapToIndex(1); // This will work now
+    }, 150); // Increased delay slightly for better reliability
   }, []);
 
   const closeBottomSheet = useCallback(() => {
     console.log('Closing bottom sheet');
-    setCurrentImageType(null);
     bottomSheetModalRef.current?.dismiss();
   }, []);
 
@@ -322,7 +378,7 @@ const Upload = forwardRef((props, ref) => {
     async (imageOrType, imageData) => {
       // Handle different callback patterns from ImageCropper
       let type, image;
-      
+
       if (typeof imageOrType === 'string' && imageData) {
         // ImageCropper called with (type, imageData)
         type = imageOrType;
@@ -332,7 +388,10 @@ const Upload = forwardRef((props, ref) => {
         type = currentImageType;
         image = imageOrType;
       } else {
-        console.error('Unexpected handleImageSelected parameters:', { imageOrType, imageData });
+        console.error('Unexpected handleImageSelected parameters:', {
+          imageOrType,
+          imageData,
+        });
         setIsImageProcessing(false);
         return;
       }
@@ -359,43 +418,54 @@ const Upload = forwardRef((props, ref) => {
         if (image.path) {
           // Image cropper returned a file path (most common case)
           console.log(`Processing image from path: ${image.path}`);
-          console.log('Full image object from cropper:', JSON.stringify(image, null, 2));
-          
+          console.log(
+            'Full image object from cropper:',
+            JSON.stringify(image, null, 2),
+          );
+
           try {
             // For react-native-image-crop-picker, the path is usually the correct file path
             const filePath = image.path;
-            
+
             // Check if path starts with file:// protocol
-            const normalizedPath = filePath.startsWith('file://') ? filePath : `file://${filePath}`;
-            
+            const normalizedPath = filePath.startsWith('file://')
+              ? filePath
+              : `file://${filePath}`;
+
             console.log(`Reading file from normalized path: ${normalizedPath}`);
             base64Data = await RNFS.readFile(normalizedPath, 'base64');
-            
+
             processedImage = {
               ...image,
               base64: base64Data,
               uri: `data:image/jpeg;base64,${base64Data}`,
               normalizedPath: normalizedPath, // Keep for debugging
             };
-            
-            console.log(`Successfully converted to base64. Length: ${base64Data.length}`);
+
+            console.log(
+              `Successfully converted to base64. Length: ${base64Data.length}`,
+            );
           } catch (fileError) {
             console.error('Error reading file with RNFS:', fileError);
             console.log('Attempting to use path directly as URI...');
-            
+
             // Fallback: try to use the path directly
-            const directUri = image.path.startsWith('file://') ? image.path : `file://${image.path}`;
+            const directUri = image.path.startsWith('file://')
+              ? image.path
+              : `file://${image.path}`;
             processedImage = {
               ...image,
               uri: directUri,
             };
-            
+
             console.log(`Using direct URI fallback: ${directUri}`);
           }
         } else if (image.uri) {
           // Image has URI (could be file:// or data:)
-          console.log(`Processing image from URI: ${image.uri.substring(0, 50)}...`);
-          
+          console.log(
+            `Processing image from URI: ${image.uri.substring(0, 50)}...`,
+          );
+
           if (image.uri.startsWith('data:image/')) {
             // It's already a data URI
             const parts = image.uri.split(',');
@@ -429,18 +499,25 @@ const Upload = forwardRef((props, ref) => {
           console.log('Processing image from base64 data');
           processedImage = {
             ...image,
-            uri: image.base64.startsWith('data:image/') 
-              ? image.base64 
+            uri: image.base64.startsWith('data:image/')
+              ? image.base64
               : `data:image/jpeg;base64,${image.base64}`,
           };
-          base64Data = image.base64.startsWith('data:image/') 
-            ? image.base64.split(',')[1] 
+          base64Data = image.base64.startsWith('data:image/')
+            ? image.base64.split(',')[1]
             : image.base64;
         } else {
-          console.error('Unsupported image format. Expected properties not found.');
+          console.error(
+            'Unsupported image format. Expected properties not found.',
+          );
           console.log('Available image properties:', Object.keys(image));
           console.log('Full image object:', JSON.stringify(image, null, 2));
-          Alert.alert("Error", `Unsupported image format. Available properties: ${Object.keys(image).join(', ')}`);
+          Alert.alert(
+            'Error',
+            `Unsupported image format. Available properties: ${Object.keys(
+              image,
+            ).join(', ')}`,
+          );
           return;
         }
 
@@ -460,7 +537,8 @@ const Upload = forwardRef((props, ref) => {
         switch (type) {
           case 'front':
             setSelectedFrontImage(processedImage);
-            updateData.business_card_front = base64Data || processedImage.base64;
+            updateData.business_card_front =
+              base64Data || processedImage.base64;
             break;
           case 'back':
             setSelectedBackImage(processedImage);
@@ -482,10 +560,12 @@ const Upload = forwardRef((props, ref) => {
         }
 
         console.log(`Image ${type} processed successfully`);
-
       } catch (error) {
         console.error(`Error processing image for ${type}:`, error);
-        Alert.alert("Image Processing Error", `Failed to process image: ${error.message}`);
+        Alert.alert(
+          'Image Processing Error',
+          `Failed to process image: ${error.message}`,
+        );
       } finally {
         setIsImageProcessing(false);
       }
@@ -518,24 +598,38 @@ const Upload = forwardRef((props, ref) => {
     [dispatch],
   );
 
-  const handleSheetChanges = useCallback(index => {
-    console.log('Bottom Sheet state changed to index:', index);
-    if (index === -1) {
-      setCurrentImageType(null);
-      setIsImageProcessing(false);
-    }
-  }, []);
+  // Updated handleSheetChanges with better debugging
+  const handleSheetChanges = useCallback(
+    index => {
+      console.log('Bottom Sheet state changed to index:', index);
+      console.log('Available snap points:', snapPoints);
+      console.log('Current snap point value:', snapPoints[index]);
+
+      if (index === -1) {
+        // Sheet is dismissed
+        setCurrentImageType(null);
+        setIsImageProcessing(false);
+      }
+    },
+    [snapPoints],
+  );
 
   // Clear errors when typing
-  const handleWebsiteChange = useCallback(text => {
-    setWebsite(text);
-    if (websiteError) setWebsiteError('');
-  }, [websiteError]);
+  const handleWebsiteChange = useCallback(
+    text => {
+      setWebsite(text);
+      if (websiteError) setWebsiteError('');
+    },
+    [websiteError],
+  );
 
-  const handlePromoChange = useCallback(text => {
-    setPromo(text);
-    if (promoError) setPromoError('');
-  }, [promoError]);
+  const handlePromoChange = useCallback(
+    text => {
+      setPromo(text);
+      if (promoError) setPromoError('');
+    },
+    [promoError],
+  );
 
   useImperativeHandle(
     ref,
@@ -580,7 +674,7 @@ const Upload = forwardRef((props, ref) => {
               front: !!formData.business_card_front,
               back: !!formData.business_card_back,
               logo: !!formData.logo,
-            }
+            },
           });
         }
         return isValid;
@@ -594,7 +688,14 @@ const Upload = forwardRef((props, ref) => {
         logo: selectedLogoImage,
       }),
     }),
-    [website, promo, selectedFrontImage, selectedBackImage, selectedLogoImage, dispatch],
+    [
+      website,
+      promo,
+      selectedFrontImage,
+      selectedBackImage,
+      selectedLogoImage,
+      dispatch,
+    ],
   );
 
   return (
@@ -609,12 +710,14 @@ const Upload = forwardRef((props, ref) => {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}>
               <View style={styles.inner}>
-                
                 {/* Website Input */}
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>Website</Text>
                   <TextInput
-                    style={[styles.textInput, websiteError ? styles.textInputError : null]}
+                    style={[
+                      styles.textInput,
+                      websiteError ? styles.textInputError : null,
+                    ]}
                     value={website}
                     onChangeText={handleWebsiteChange}
                     placeholder="e.g., example.com or https://example.com"
@@ -623,14 +726,19 @@ const Upload = forwardRef((props, ref) => {
                     autoCapitalize="none"
                     autoCorrect={false}
                   />
-                  {websiteError ? <Text style={styles.errorText}>{websiteError}</Text> : null}
+                  {websiteError ? (
+                    <Text style={styles.errorText}>{websiteError}</Text>
+                  ) : null}
                 </View>
 
                 {/* Promo Video Input */}
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>Business Promo Video</Text>
                   <TextAreaBox
-                    style={[styles.textInput, promoError ? styles.textInputError : null]}
+                    style={[
+                      styles.textInput,
+                      promoError ? styles.textInputError : null,
+                    ]}
                     value={promo}
                     onChangeText={handlePromoChange}
                     placeholder="e.g., youtube.com/watch?v=... (Optional)"
@@ -639,7 +747,9 @@ const Upload = forwardRef((props, ref) => {
                     autoCapitalize="none"
                     autoCorrect={false}
                   />
-                  {promoError ? <Text style={styles.errorText}>{promoError}</Text> : null}
+                  {promoError ? (
+                    <Text style={styles.errorText}>{promoError}</Text>
+                  ) : null}
                 </View>
 
                 {/* Business Card Front */}
@@ -672,19 +782,34 @@ const Upload = forwardRef((props, ref) => {
             </ScrollView>
           </TouchableWithoutFeedback>
 
-          {/* Bottom Sheet Modal */}
+          {/* Fixed Bottom Sheet Modal */}
           <BottomSheetModal
             ref={bottomSheetModalRef}
-            index={0}
+            index={-1} // Changed from 1 to -1 (closed initially)
             snapPoints={snapPoints}
             onChange={handleSheetChanges}
             enablePanDownToClose={true}
             enableOverDrag={false}
             keyboardBehavior="extend"
             keyboardBlurBehavior="restore"
+            animateOnMount={true}
+            enableDismissOnClose={true}
+            enableContentPanningGesture={true}
+            enableHandlePanningGesture={true}
             backgroundStyle={{
               borderRadius: 16,
               backgroundColor: colors.secondary,
+            }}
+            handleStyle={{
+              backgroundColor: colors.secondary,
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16,
+              paddingVertical: 8,
+            }}
+            handleIndicatorStyle={{
+              backgroundColor: colors.gray || '#CCCCCC',
+              width: 40,
+              height: 4,
             }}
             onDismiss={() => {
               console.log('BottomSheetModal dismissed');
@@ -694,16 +819,20 @@ const Upload = forwardRef((props, ref) => {
             <BottomSheetView style={styles.contentContainer}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Upload Image</Text>
-                <TouchableOpacity onPress={closeBottomSheet} style={styles.closeButton}>
+                <TouchableOpacity
+                  onPress={closeBottomSheet}
+                  style={styles.closeButton}>
                   <Text style={styles.closeButtonText}>×</Text>
                 </TouchableOpacity>
               </View>
-              <ImageCropper
-                navigation={navigation}
-                type={currentImageType}
-                onImageSelected={handleImageSelected}
-                onClose={closeBottomSheet}
-              />
+              <View style={styles.imageCropperContainer}>
+                <ImageCropper
+                  navigation={navigation}
+                  type={currentImageType}
+                  onImageSelected={handleImageSelected}
+                  onClose={closeBottomSheet}
+                />
+              </View>
             </BottomSheetView>
           </BottomSheetModal>
         </KeyboardAvoidingView>
@@ -731,7 +860,7 @@ const styles = StyleSheet.create({
     gap: 15,
     paddingBottom: height * 0.1,
   },
-  // New Input Styles
+  // Input Styles
   inputContainer: {
     marginVertical: 10,
   },
@@ -819,34 +948,41 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
-  // Modal Styles
+  // Updated Modal Styles
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
     paddingHorizontal: 16,
+    paddingTop: 8,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '600',
     color: colors.text || '#333333',
   },
   closeButton: {
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
-    backgroundColor: colors.lightGray || '#E0E0E0',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.lightGray || '#F0F0F0',
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeButtonText: {
     fontSize: 24,
-    fontWeight: 'bold',
     color: colors.gray || '#666666',
+    fontWeight: '300',
+    lineHeight: 24,
   },
   contentContainer: {
     flex: 1,
-    paddingBottom: height * 0.02,
+    backgroundColor: colors.secondary || '#FFFFFF',
+  },
+  imageCropperContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
 });

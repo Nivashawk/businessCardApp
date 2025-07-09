@@ -9,8 +9,9 @@ import {
   Image,
   StyleSheet,
   Dimensions,
-  SafeAreaView // Use SafeAreaView for better iOS handling
+  StatusBar
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {colors} from '../theme/colors';
 import {typography} from '../theme/typography';
@@ -18,114 +19,148 @@ import logo from '../../assets/logo.png';
 
 const {width, height} = Dimensions.get('window');
 
+// Calculate dynamic dimensions based on screen size
+const getHeaderDimensions = () => {
+  const isTablet = width >= 768; // Tablet threshold
+  const isSmallDevice = height < 600; // Small device threshold
+  
+  return {
+    // Reduced header heights to compensate for status bar
+    headerHeight: isTablet ? height * 0.06 : isSmallDevice ? height * 0.055 : height * 0.058,
+    logoHeight: isTablet ? 40 : isSmallDevice ? 25 : 70,
+    logoWidth: isTablet ? 90 : isSmallDevice ? 60 : 80,
+    fontSize: {
+      title: isTablet ? 20 : isSmallDevice ? 15 : 17,
+      arrow: isTablet ? 28 : isSmallDevice ? 22 : 25,
+      menu: isTablet ? 32 : isSmallDevice ? 26 : 29,
+    },
+    padding: isTablet ? 18 : isSmallDevice ? 10 : 12,
+  };
+};
+
 export default function CustomHeader() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
+  
+  const dimensions = getHeaderDimensions();
 
   const isHome = route.name === 'mainPage';
-  // Use route.params.title if available, otherwise fallback to route.name for dynamic title
   const headerTitle = route.params?.title || (isHome ? '' : route.name);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Left Section - Back button or Logo/App Name */}
-        <View style={styles.leftSection}>
-          {!isHome && navigation.canGoBack() ? (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-              {/* Unicode for a Left Arrow */}
-              <Text style={styles.arrowIcon}>&#x2190;</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.logoContainer}>
-              <Image style={styles.logo} resizeMode="contain" source={logo} />
-              {/* Uncomment and style if you want an app name next to the logo on home screen */}
-              {/* <Text style={styles.appName}>YourApp</Text> */}
-            </View>
+    <>
+      {/* Configure StatusBar */}
+      <StatusBar 
+        barStyle="dark-content"
+        backgroundColor={colors.background}
+        translucent={false} // Changed to false to reduce space
+      />
+      
+      {/* Use regular View instead of SafeAreaView to reduce height */}
+      <View style={[
+        styles.container, 
+        { 
+          paddingTop: Platform.OS === 'ios' ? insets.top + 5 : 8, // Minimal padding
+          minHeight: dimensions.headerHeight,
+          paddingHorizontal: dimensions.padding,
+        }
+      ]}>
+          {/* Left Section - Back button or Logo/App Name */}
+          <View style={styles.leftSection}>
+            {!isHome && navigation.canGoBack() ? (
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+                <Text style={[styles.arrowIcon, { fontSize: dimensions.fontSize.arrow }]}>&#x2190;</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.logoContainer}>
+                <Image 
+                  style={[
+                    styles.logo, 
+                    { 
+                      height: dimensions.logoHeight, 
+                      width: dimensions.logoWidth 
+                    }
+                  ]} 
+                  resizeMode="contain" 
+                  source={logo} 
+                />
+              </View>
+            )}
+          </View>
+
+          {/* Center Section - Dynamic Title */}
+          {!isHome && (
+            <Text style={[styles.headerTitle, { fontSize: dimensions.fontSize.title }]}>
+              {headerTitle}
+            </Text>
           )}
+
+          {/* Right Section - Hamburger Menu */}
+          <View style={styles.rightSection}>
+            <TouchableOpacity onPress={() => navigation.openDrawer()} style={styles.iconButton}>
+              <Text style={[styles.menuIcon, { fontSize: dimensions.fontSize.menu }]}>&#x2261;</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        {/* Center Section - Dynamic Title (only shown if not home, or if home and you want a title) */}
-        {/* {!isHome && <Text style={styles.headerTitle}>{headerTitle}</Text>} */}
-
-
-        {/* Right Section - Hamburger Menu */}
-        <View style={styles.rightSection}>
-          <TouchableOpacity onPress={() => navigation.openDrawer()} style={styles.iconButton}>
-            {/* Unicode for a Hamburger Menu (Trigram) */}
-            <Text style={styles.menuIcon}>&#x2261;</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </SafeAreaView>
+      {/* Removed SafeAreaView closing tag */}
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    backgroundColor: colors.background,
-    // Add additional padding for iPhone X/Xs/Xr/11/12/13/14/15 family devices if needed
-    // paddingTop: Platform.OS === 'ios' ? (height > 800 ? 40 : 20) : 0,
-  },
   container: {
-    height: Platform.OS === 'ios' ? 50 : 60, // Adjusted height for better spacing
-    paddingHorizontal: 15,
+    paddingBottom: 4, // Reduced padding
     backgroundColor: colors.background,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderBottomWidth: StyleSheet.hairlineWidth, // Subtle line at the bottom
-    borderBottomColor: colors.border || '#ccc', // Fallback color
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border || '#ccc',
   },
   leftSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    minWidth: 60, // Ensure enough space for back button or logo
+    minWidth: 60,
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   logo: {
-    height: height * 0.1, // Adjusted logo size for better fit in header
-    width: width * 0.2,
     marginRight: 5,
   },
   appName: {
-    ...typography.heading, // Assuming typography.heading has font size and weight
-    fontSize: 20,
-    fontWeight: 'bold', // Added bold for prominence
+    ...typography.heading,
+    fontWeight: 'bold',
     color: colors.primary,
   },
   iconButton: {
-    padding: 8, // Make touch target larger and provide visual padding
-    justifyContent: 'center', // Center content
-    alignItems: 'center', // Center content
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   arrowIcon: {
-    fontSize: 28, // Large enough for visibility
-    fontWeight: 'bold', // Make it stand out
-    color: colors.text, // Use theme text color
-    lineHeight: Platform.OS === 'ios' ? 30 : 35, // Adjust lineHeight for vertical centering
+    fontWeight: 'bold',
+    color: colors.text,
+    lineHeight: Platform.OS === 'ios' ? 30 : 35,
   },
   menuIcon: {
-    fontSize: 32, // Slightly larger for hamburger
     fontWeight: 'bold',
     color: colors.text,
-    lineHeight: Platform.OS === 'ios' ? 34 : 38, // Adjust lineHeight for vertical centering
+    lineHeight: Platform.OS === 'ios' ? 34 : 38,
   },
   headerTitle: {
-    ...typography.heading, // Assuming typography.heading has font size and weight
-    fontSize: 18,
+    ...typography.heading,
     fontWeight: 'bold',
     color: colors.text,
-    flex: 1, // Allows title to take available space
-    textAlign: 'center', // Center the title
+    flex: 1,
+    textAlign: 'center',
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    minWidth: 60, // Ensure enough space for icons
+    minWidth: 60,
     justifyContent: 'flex-end',
   },
 });
