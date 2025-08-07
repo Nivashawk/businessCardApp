@@ -41,11 +41,11 @@ export const typography = {
   inputLabel:{
     fontSize: fontSize.paragraph_2,
     fontWeight: '600',
-    color: colors.text_color_2
+    color: colors.gold
   },
   inputText:{
     fontSize: fontSize.paragraph_2,
-    color: colors.text_color_2
+    color: colors.gold
   },
   inputError:{
     fontSize: fontSize.paragraph_3,

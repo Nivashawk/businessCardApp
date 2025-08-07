@@ -37,7 +37,7 @@ const BusinessDetails = ({}) => {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedImageTitle, setSelectedImageTitle] = useState('');
-  
+
   const route = useRoute();
   const {data} = route.params;
   const id = data.id;
@@ -100,8 +100,8 @@ const BusinessDetails = ({}) => {
       </View>
 
       {activeTab === 'Business Details' ? (
-        <BusinessDetailsTab 
-          handleEditBusiness={handleEditBusiness} 
+        <BusinessDetailsTab
+          handleEditBusiness={handleEditBusiness}
           handleImagePress={handleImagePress}
         />
       ) : (
@@ -115,10 +115,13 @@ const BusinessDetails = ({}) => {
         animationType="fade"
         onRequestClose={closeImageModal}>
         <View style={styles.modalContainer}>
-          <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" />
-          
+          <StatusBar
+            backgroundColor="rgba(0,0,0,0.9)"
+            barStyle="light-content"
+          />
+
           {/* Close Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.closeButton}
             onPress={closeImageModal}
             activeOpacity={0.7}>
@@ -142,7 +145,7 @@ const BusinessDetails = ({}) => {
           </View>
 
           {/* Tap to close hint */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.tapToCloseArea}
             onPress={closeImageModal}
             activeOpacity={1}>
@@ -321,11 +324,11 @@ const BusinessDetailsTab = ({handleEditBusiness, handleImagePress}) => {
       <View style={styles.headerSection}>
         <TouchableOpacity
           style={styles.businessLogo}
-          onPress={() => 
-            BusinessData?.logo && 
+          onPress={() =>
+            BusinessData?.logo &&
             handleImagePress(
-              `data:image/jpeg;base64,${BusinessData.logo}`, 
-              'Business Logo'
+              `data:image/jpeg;base64,${BusinessData.logo}`,
+              'Business Logo',
             )
           }
           activeOpacity={0.8}>
@@ -552,11 +555,11 @@ const BusinessCard = ({handleImagePress}) => {
         <Text style={styles.sectionTitle}>Business Logo</Text>
         <TouchableOpacity
           style={styles.businessCardAvatar}
-          onPress={() => 
-            BusinessData?.logo && 
+          onPress={() =>
+            BusinessData?.logo &&
             handleImagePress(
-              `data:image/jpeg;base64,${BusinessData.logo}`, 
-              'Business Logo'
+              `data:image/jpeg;base64,${BusinessData.logo}`,
+              'Business Logo',
             )
           }
           activeOpacity={0.8}>
@@ -574,11 +577,11 @@ const BusinessCard = ({handleImagePress}) => {
         <Text style={styles.sectionTitle}>Business Cards</Text>
         <TouchableOpacity
           style={styles.businessCardImage}
-          onPress={() => 
-            BusinessData?.business_card_front && 
+          onPress={() =>
+            BusinessData?.business_card_front &&
             handleImagePress(
-              `data:image/jpeg;base64,${BusinessData.business_card_front}`, 
-              'Business Card - Front'
+              `data:image/jpeg;base64,${BusinessData.business_card_front}`,
+              'Business Card - Front',
             )
           }
           activeOpacity={0.8}>
@@ -593,11 +596,11 @@ const BusinessCard = ({handleImagePress}) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.businessCardImage}
-          onPress={() => 
-            BusinessData?.business_card_back && 
+          onPress={() =>
+            BusinessData?.business_card_back &&
             handleImagePress(
-              `data:image/jpeg;base64,${BusinessData.business_card_back}`, 
-              'Business Card - Back'
+              `data:image/jpeg;base64,${BusinessData.business_card_back}`,
+              'Business Card - Back',
             )
           }
           activeOpacity={0.8}>
@@ -628,18 +631,19 @@ const BusinessCard = ({handleImagePress}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
-  // Updated header container without edit button
   headerContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     paddingHorizontal: 16,
     paddingTop: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -653,20 +657,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   activeSimpleTab: {
-    backgroundColor: colors.primary,
-    elevation: 2,
-    shadowColor: colors.primary,
+    backgroundColor: colors.gold,
+    shadowColor: colors.gold,
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
+    elevation: 3,
   },
   simpleTabText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6b7280',
+    color: colors.textSecondary,
   },
   activeSimpleTabText: {
-    color: '#ffffff',
+    color: colors.background,
     fontWeight: '600',
   },
   scrollContent: {
@@ -677,28 +681,31 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
   loadingText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.textSecondary,
   },
   headerSection: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     paddingHorizontal: 20,
     paddingVertical: 24,
     alignItems: 'center',
     marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   businessLogo: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
     elevation: 4,
-    shadowColor: colors.primary,
+    shadowColor: colors.gold,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -712,17 +719,12 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  // Option 1: Header section edit button styles
-  businessNameContainer: {
-    alignItems: 'center',
-    marginBottom: 8,
+    color: colors.background,
   },
   businessName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: colors.text_color_1,
     textAlign: 'center',
     marginBottom: 8,
   },
@@ -744,7 +746,7 @@ const styles = StyleSheet.create({
   },
   businessDescription: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 20,
@@ -759,42 +761,16 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  // Option 2: Floating Action Button styles
-  fabButton: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  fabButtonText: {
-    fontSize: 20,
-    color: '#ffffff',
-  },
-  // Option 3: Quick action edit button styles
-  editQuickButton: {
-    backgroundColor: '#f59e0b', // Different color to distinguish from other actions
-  },
-  editIcon: {
-    fontSize: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   infoCardsContainer: {
     flexDirection: 'row',
@@ -804,20 +780,22 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.secondary,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   infoCardLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#6b7280',
+    color: colors.textSecondary,
     marginBottom: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -825,46 +803,48 @@ const styles = StyleSheet.create({
   infoCardValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text_color_1,
     textAlign: 'center',
   },
   sectionContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 12,
     padding: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: colors.text_color_1,
     marginBottom: 16,
   },
   mapContainer: {
     height: 120,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.secondary,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
     borderStyle: 'dashed',
   },
   mapPlaceholderText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#6b7280',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   addressText: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.accent,
     textAlign: 'center',
   },
   detailRow: {
@@ -873,38 +853,60 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    borderBottomColor: colors.border,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
   },
   detailLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6b7280',
+    color: colors.textSecondary,
   },
   detailValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text_color_1,
   },
   founderCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
+    backgroundColor: colors.secondary,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   founderAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primary,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   founderInitial: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: colors.background,
   },
   founderInfo: {
     flex: 1,
@@ -912,179 +914,92 @@ const styles = StyleSheet.create({
   founderName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 2,
+    color: colors.text_color_1,
   },
   founderDesignation: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   socialMediaContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    flexWrap: 'wrap',
     gap: 16,
+    justifyContent: 'flex-start',
   },
   socialButton: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  // Business Card Styles
   cardSection: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 12,
     padding: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   businessCardAvatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
-    elevation: 4,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: colors.secondary,
+    marginBottom: 16,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
   },
   businessCardImage: {
     width: '100%',
     height: 200,
     borderRadius: 12,
-    backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
     overflow: 'hidden',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 12,
-  },
-  cardPlaceholderText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#6b7280',
+    backgroundColor: colors.secondary,
+    marginBottom: 16,
   },
   videoContainer: {
+    backgroundColor: colors.secondary,
     padding: 16,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   videoLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text_color_1,
     marginBottom: 8,
   },
   videoLink: {
     fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 16,
-    textAlign: 'center',
-    paddingHorizontal: 16,
+    color: colors.accent,
+    marginBottom: 12,
   },
   playButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 25,
-    elevation: 2,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    backgroundColor: colors.gold,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
   },
   playButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  // Modal Styles
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 1000,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#ffffff',
-    fontSize: 24,
+    color: colors.background,
     fontWeight: 'bold',
-  },
-  imageTitleContainer: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    right: 80,
-    zIndex: 999,
-  },
-  imageTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  fullScreenImageContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  fullScreenImage: {
-    width: width - 40,
-    height: height - 200,
-    maxWidth: width - 40,
-    maxHeight: height - 200,
-  },
-  tapToCloseArea: {
-    position: 'absolute',
-    bottom: 50,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  tapToCloseText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 14,
   },
 });
 

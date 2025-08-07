@@ -18,12 +18,32 @@ import CustomCheckbox from '../../components/inputs/checkBox';
 import InputBox from '../../components/inputs/textInput';
 import PhoneNumberInput from '../../components/inputs/phoneNumberInput';
 import LargeButton from '../../components/buttons/largeButton';
-import { colors } from '../../theme/colors';
 import { useSignUp } from '../../hooks/auth/useSignUp';
 import { useNavigation } from '@react-navigation/native';
 import logo from '../../../assets/logo.png';
 
 const { width, height } = Dimensions.get('window');
+
+// Dark color scheme
+const colors = {
+  surface: '#2a2a2a',
+  border: '#404040',
+  textSecondary: '#C4C4C4',
+  background: '#1a1a1a',
+  primary: '#1f1c2c',
+  secondary: '#2d2d2d',
+  text_color_1: '#FFFFFF',
+  text_color_2: '#C4C4C4',
+  status_green: '#80D97E',
+  status_red: '#DA4035',
+  accent: '#928dab',
+  gold: '#FFD700',
+  goldDark: '#B8860B',
+  goldLight: '#FFFF99',
+  shadow: 'rgba(0, 0, 0, 0.3)',
+  cardGradient: ['#2d2d2d', '#2a2a2a'],
+  shimmer: 'rgba(255, 215, 0, 0.3)',
+};
 
 const SignUp = () => {
   const navigation = useNavigation();
@@ -49,7 +69,7 @@ const SignUp = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
@@ -65,6 +85,7 @@ const SignUp = () => {
               {/* Decorative Elements */}
               <View style={styles.decorativeCircle1} />
               <View style={styles.decorativeCircle2} />
+              <View style={styles.decorativeCircle3} />
               
               {/* Logo */}
               <View style={styles.logoContainer}>
@@ -78,7 +99,7 @@ const SignUp = () => {
               {/* Welcome Text */}
               <View style={styles.welcomeSection}>
                 <Text style={styles.welcomeTitle}>
-                  Join Us Today! 🚀
+                  Join Us Today! ✨
                 </Text>
                 <Text style={styles.welcomeSubtitle}>
                   Create your account and start your journey
@@ -208,7 +229,7 @@ const SignUp = () => {
                 <View style={styles.buttonSection}>
                   {loading ? (
                     <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="large" color={colors.primary} />
+                      <ActivityIndicator size="large" color={colors.gold} />
                       <Text style={styles.loadingText}>Creating your account...</Text>
                     </View>
                   ) : (
@@ -244,7 +265,7 @@ const SignUp = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background || '#f8f9fa',
+    backgroundColor: colors.background,
   },
   keyboardAvoid: {
     flex: 1,
@@ -271,7 +292,12 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primary ? `${colors.primary}12` : '#007AFF12',
+    backgroundColor: colors.shimmer,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 5,
   },
   decorativeCircle2: {
     position: 'absolute',
@@ -280,11 +306,30 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: colors.accent ? `${colors.accent}15` : '#FF6B3515',
+    backgroundColor: `${colors.accent}40`,
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  decorativeCircle3: {
+    position: 'absolute',
+    top: 60,
+    left: -10,
+    width: 25,
+    height: 25,
+    borderRadius: 12.5,
+    backgroundColor: `${colors.gold}30`,
   },
   logoContainer: {
     marginBottom: 32,
     alignItems: 'center',
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   logoImage: {
     height: height * 0.18,
@@ -292,6 +337,7 @@ const styles = StyleSheet.create({
     maxHeight: 140,
     maxWidth: 280,
     opacity: 0.95,
+    tintColor: colors.gold, // Apply white tint for dark mode
   },
   welcomeSection: {
     alignItems: 'center',
@@ -300,31 +346,37 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: colors.text || '#1a1a1a',
+    color: colors.text_color_1,
     textAlign: 'center',
     marginBottom: 6,
     letterSpacing: -0.5,
+    textShadowColor: colors.shadow,
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   welcomeSubtitle: {
     fontSize: 15,
-    color: colors.textSecondary || '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },
 
   // Form Card
   formCard: {
-    backgroundColor: 'white',
+    backgroundColor: colors.secondary,
     borderRadius: 24,
     padding: 24,
     marginHorizontal: 4,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 6,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.6,
+    shadowRadius: 25,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
+  
   // Step Indicator
   stepSection: {
     marginBottom: 24,
@@ -338,13 +390,18 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.primary || '#007AFF',
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
   },
   stepNumberText: {
-    color: 'white',
+    color: colors.background,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -354,25 +411,30 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.text || '#1a1a1a',
+    color: colors.text_color_1,
     marginBottom: 2,
   },
   stepSubtitle: {
     fontSize: 14,
-    color: colors.textSecondary || '#666',
+    color: colors.textSecondary,
   },
   nextStepPreview: {
-    backgroundColor: '#f0f8ff',
+    backgroundColor: colors.surface,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 16,
     alignSelf: 'flex-start',
     borderLeftWidth: 3,
-    borderLeftColor: colors.primary || '#007AFF',
+    borderLeftColor: colors.gold,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   nextStepText: {
     fontSize: 12,
-    color: colors.primary || '#007AFF',
+    color: colors.gold,
     fontWeight: '500',
   },
 
@@ -386,12 +448,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.text || '#1a1a1a',
+    color: colors.text_color_1,
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: colors.textSecondary || '#666',
+    color: colors.textSecondary,
   },
 
   // Optional Section
@@ -400,7 +462,7 @@ const styles = StyleSheet.create({
   },
   optionalHeader: {
     fontSize: 14,
-    color: colors.textSecondary || '#666',
+    color: colors.accent,
     fontWeight: '500',
     marginBottom: 12,
     textTransform: 'uppercase',
@@ -409,12 +471,14 @@ const styles = StyleSheet.create({
   benefitNote: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff3cd',
+    backgroundColor: `${colors.gold}15`,
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
     borderLeftWidth: 3,
-    borderLeftColor: '#ffc107',
+    borderLeftColor: colors.gold,
+    borderWidth: 1,
+    borderColor: `${colors.gold}30`,
   },
   benefitIcon: {
     fontSize: 16,
@@ -423,7 +487,7 @@ const styles = StyleSheet.create({
   benefitText: {
     flex: 1,
     fontSize: 13,
-    color: '#856404',
+    color: colors.gold,
     lineHeight: 18,
   },
 
@@ -442,23 +506,25 @@ const styles = StyleSheet.create({
   },
   termsText: {
     fontSize: 14,
-    color: colors.textSecondary || '#666',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   linkButton: {
     display: 'inline',
   },
   link: {
-    color: colors.primary || '#007AFF',
+    color: colors.gold,
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
   trustIndicators: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.surface,
     padding: 16,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   trustItem: {
     alignItems: 'center',
@@ -470,7 +536,7 @@ const styles = StyleSheet.create({
   },
   trustText: {
     fontSize: 11,
-    color: colors.textSecondary || '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -486,14 +552,14 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: colors.textSecondary || '#666',
+    color: colors.textSecondary,
   },
   createButton: {
-    shadowColor: colors.primary || '#007AFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
   },
 
   // Bottom Section
@@ -506,11 +572,11 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontSize: 16,
-    color: colors.textSecondary || '#666',
+    color: colors.gold,
     textAlign: 'center',
   },
   loginLink: {
-    color: colors.primary || '#007AFF',
+    color: colors.gold,
     fontWeight: '600',
     textDecorationLine: 'underline',
   },

@@ -9,7 +9,8 @@ import {
   FlatList,
   SafeAreaView,
   Animated,
-  Dimensions
+  Dimensions,
+  ActivityIndicator
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
@@ -43,6 +44,7 @@ const DropdownWSearch = React.memo(({
   
   const dropdownButtonRef = useRef(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const windowHeight = Dimensions.get('window').height;
 
   // Memoize the comparison value to prevent unnecessary re-renders
@@ -111,27 +113,42 @@ const DropdownWSearch = React.memo(({
       
       // Use requestAnimationFrame to avoid scheduling updates during render
       requestAnimationFrame(() => {
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }).start();
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+          Animated.spring(scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 100,
+            friction: 8,
+          }),
+        ]).start();
       });
     });
-  }, [windowHeight, data.length, fadeAnim]);
+  }, [windowHeight, data.length, fadeAnim, scaleAnim]);
 
   const close = useCallback(() => {
     requestAnimationFrame(() => {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start(() => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.95,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
         setVisible(false);
         setSearchText('');
       });
     });
-  }, [fadeAnim]);
+  }, [fadeAnim, scaleAnim]);
 
   const onItemPress = useCallback((item) => {
     setSelected(item);
@@ -139,8 +156,9 @@ const DropdownWSearch = React.memo(({
     close();
   }, [onSelect, close]);
 
-  const renderItem = useCallback(({ item }) => {
+  const renderItem = useCallback(({ item, index }) => {
     const isSelected = selected && item[valueField] === selected[valueField];
+    const isLastItem = index === filteredData.length - 1;
     
     return (
       <TouchableOpacity
@@ -148,13 +166,23 @@ const DropdownWSearch = React.memo(({
           styles.item,
           itemStyle,
           isSelected ? [styles.selectedItem, selectedItemStyle] : {},
+          isLastItem && styles.lastItem,
         ]}
         onPress={() => onItemPress(item)}
+        activeOpacity={0.7}
       >
-        <Text style={styles.itemText}>{item[labelField]}</Text>
+        <Text style={[
+          styles.itemText,
+          isSelected && styles.selectedItemText
+        ]}>
+          {item[labelField]}
+        </Text>
+        {isSelected && (
+          <Text style={styles.checkIcon}>✓</Text>
+        )}
       </TouchableOpacity>
     );
-  }, [selected, valueField, itemStyle, selectedItemStyle, onItemPress, labelField]);
+  }, [selected, valueField, itemStyle, selectedItemStyle, onItemPress, labelField, filteredData.length]);
 
   const renderDropdown = useCallback(() => {
     const modalStyles = [
@@ -196,21 +224,33 @@ const DropdownWSearch = React.memo(({
                       outputRange: [dropdownPosition.above ? -10 : 10, 0],
                     }),
                   },
+                  { scale: scaleAnim },
                 ],
               },
             ]}
           >
             <SafeAreaView style={listContainerStyle}>
               <View style={styles.searchContainer}>
-                <TextInput
-                  placeholder={searchPlaceholder}
-                  placeholderTextColor="#999"
-                  value={searchText}
-                  onChangeText={setSearchText}
-                  style={styles.searchInput}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
+                <View style={styles.searchInputWrapper}>
+                  <Text style={styles.searchIcon}>🔍</Text>
+                  <TextInput
+                    placeholder={searchPlaceholder}
+                    placeholderTextColor={colors.text_color_2}
+                    value={searchText}
+                    onChangeText={setSearchText}
+                    style={styles.searchInput}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  {searchText.length > 0 && (
+                    <TouchableOpacity
+                      onPress={() => setSearchText('')}
+                      style={styles.clearButton}
+                    >
+                      <Text style={styles.clearIcon}>×</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
               {filteredData.length > 0 ? (
                 <FlatList
@@ -223,12 +263,18 @@ const DropdownWSearch = React.memo(({
                   removeClippedSubviews={true}
                   maxToRenderPerBatch={10}
                   windowSize={10}
+                  ItemSeparatorComponent={() => <View style={styles.separator} />}
                 />
               ) : (
                 <View style={styles.noDataContainer}>
-                  <Text style={styles.noDataText}>
-                    {loading ? 'Loading...' : noDataText}
-                  </Text>
+                  {loading ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator size="small" color={colors.gold} />
+                      <Text style={styles.loadingText}>Loading...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.noDataText}>{noDataText}</Text>
+                  )}
                 </View>
               )}
             </SafeAreaView>
@@ -241,7 +287,8 @@ const DropdownWSearch = React.memo(({
     dropdownPosition, 
     windowHeight, 
     dropdownStyle, 
-    fadeAnim, 
+    fadeAnim,
+    scaleAnim, 
     searchPlaceholder, 
     searchText, 
     filteredData, 
@@ -263,7 +310,7 @@ const DropdownWSearch = React.memo(({
   return (
     <View style={[styles.container, containerStyle]}>
       {label ? (
-        <Text style={[styles.label, labelStyle, typography.inputLabel]}>
+        <Text style={[styles.label, labelStyle, typography?.inputLabel]}>
           {label} {required && <Text style={styles.required}>*</Text>}
         </Text>
       ) : null}
@@ -274,22 +321,35 @@ const DropdownWSearch = React.memo(({
           dropdownStyle,
           (disabled || loading) && styles.disabled,
           (showError || error) && styles.errorBorder,
+          visible && styles.activeButton,
         ]}
         onPress={toggleDropdown}
         disabled={disabled || loading}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
       >
         <Text style={[
           styles.buttonText,
-          (!selected && !loading) && styles.placeholderText
+          (!selected && !loading) && styles.placeholderText,
+          (disabled || loading) && styles.disabledText,
         ]}>
           {displayText}
         </Text>
-        <Text style={styles.dropdownIcon}>
-          {loading ? '⟳' : (visible ? '▲' : '▼')}
-        </Text>
+        <View style={styles.iconContainer}>
+          {loading ? (
+            <ActivityIndicator size="small" color={colors.gold} />
+          ) : (
+            <Text style={[
+              styles.dropdownIcon,
+              visible && styles.activeIcon,
+            ]}>
+              ▼
+            </Text>
+          )}
+        </View>
       </TouchableOpacity>
-      {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+      {errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
       {visible && renderDropdown()}
     </View>
   );
@@ -297,107 +357,195 @@ const DropdownWSearch = React.memo(({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
+    marginVertical: 12,
   },
   label: {
-    fontSize: 14,
-    marginBottom: 5,
-    color: '#333',
+    fontSize: 16,
+    marginBottom: 8,
+    color: colors.text_color_1,
+    fontWeight: '600',
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.secondary,
-    height: 50,
-    paddingHorizontal: 15,
-    borderRadius: 8,
+    minHeight: 52,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
+    elevation: 2,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  activeButton: {
+    borderColor: colors.gold,
+    elevation: 4,
+    shadowColor: colors.gold,
+    shadowOpacity: 0.2,
   },
   buttonText: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: colors.gold,
+    fontWeight: '500',
   },
   placeholderText: {
-    color: '#999',
+    color: colors.text_color_2,
+    fontWeight: '400',
+  },
+  disabledText: {
+    color: colors.text_color_2,
+  },
+  iconContainer: {
+    marginLeft: 12,
+    minWidth: 20,
+    alignItems: 'center',
   },
   dropdownIcon: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 10,
+    fontSize: 14,
+    color: colors.text_color_2,
+    fontWeight: '600',
+    transform: [{ rotate: '0deg' }],
+  },
+  activeIcon: {
+    color: colors.gold,
+    transform: [{ rotate: '180deg' }],
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.6,
+    backgroundColor: colors.surface,
   },
   errorBorder: {
-    borderColor: 'red',
+    borderColor: colors.status_red,
+    borderWidth: 1.5,
   },
   errorText: {
-    color: 'red',
-    marginTop: 5,
-    fontSize: 12,
+    color: colors.status_red,
+    marginTop: 6,
+    fontSize: 14,
+    fontWeight: '500',
   },
   overlay: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   dropdownModal: {
     position: 'absolute',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 12,
   },
   dropdown: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    backgroundColor: colors.secondary,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
-    maxHeight: 300,
+    borderColor: colors.border,
+    maxHeight: 320,
+    overflow: 'hidden',
   },
   flatList: {
     flexGrow: 0,
   },
-  item: {
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
-  },
-  itemText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  selectedItem: {
-    backgroundColor: '#e6f7ff',
-  },
   searchContainer: {
-    paddingHorizontal: 10,
-    paddingTop: 10,
-    paddingBottom: 5,
+    padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    minHeight: 42,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchIcon: {
+    fontSize: 16,
+    marginRight: 8,
+    color: colors.text_color_2,
   },
   searchInput: {
-    height: 40,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: colors.text_color_1,
+    paddingVertical: 0,
+  },
+  clearButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  clearIcon: {
+    fontSize: 18,
+    color: colors.text_color_2,
+    fontWeight: '300',
+  },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: colors.secondary,
+  },
+  lastItem: {
+    borderBottomWidth: 0,
+  },
+  itemText: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text_color_1,
+    fontWeight: '500',
+  },
+  selectedItem: {
+    backgroundColor: colors.gold + '15', // 15% opacity
+  },
+  selectedItemText: {
+    color: colors.gold,
+    fontWeight: '600',
+  },
+  checkIcon: {
+    fontSize: 16,
+    color: colors.gold,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: 16,
   },
   required: {
     color: colors.status_red,
+    fontWeight: 'bold',
   },
   noDataContainer: {
-    paddingVertical: 20,
+    paddingVertical: 32,
+    paddingHorizontal: 20,
     alignItems: 'center',
   },
   noDataText: {
-    color: '#666',
-    fontSize: 14,
+    color: colors.text_color_2,
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    color: colors.gold,
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 

@@ -15,9 +15,9 @@ const Stack = createNativeStackNavigator();
 
 export default function BusinessStack() {
   return (
-    <Stack.Navigator initialRouteName="ListBusiness">
+    <Stack.Navigator initialRouteName="MyBusiness">
       <Stack.Screen
-        name="ListBusiness"
+        name="MyBusiness"
         component={ListBusiness}
         options={{header: () => <CustomHeader title="My Business" />}}
       />

@@ -462,16 +462,18 @@ const Address = forwardRef(({initialData}, ref) => {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContainer: {
     flexGrow: 1,
+    backgroundColor: colors.background,
   },
   inner: {
-    // backgroundColor:colors.secondary,
-    // padding: 16,
     flexGrow: 1,
+    backgroundColor: colors.background,
     paddingTop: height * 0.025,
     paddingBottom: height * 0.1,
+    paddingHorizontal: 16,
   },
 });
 

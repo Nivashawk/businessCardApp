@@ -56,26 +56,32 @@ const useResponsiveDimensions = () => {
   return dimensions;
 };
 
-// Fixed animated tab icon with better visibility
+// Enhanced animated tab icon with dark theme
 const AnimatedTabIcon = ({focused, children, dimensions}) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const translateY = useRef(new Animated.Value(0)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
 
-  const iconScale = dimensions.isTablet ? 1.12 : 1.08;
+  const iconScale = dimensions.isTablet ? 1.15 : 1.12;
 
   useEffect(() => {
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: focused ? iconScale : 1,
         useNativeDriver: true,
-        tension: 100,
+        tension: 120,
         friction: 6,
       }),
       Animated.spring(translateY, {
-        toValue: focused ? -1 : 0,
+        toValue: focused ? -2 : 0,
         useNativeDriver: true,
-        tension: 100,
+        tension: 120,
         friction: 8,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: focused ? 1 : 0,
+        duration: 200,
+        useNativeDriver: true,
       }),
     ]).start();
   }, [focused, iconScale]);
@@ -85,13 +91,25 @@ const AnimatedTabIcon = ({focused, children, dimensions}) => {
       style={[
         styles.tabIconContainer,
         {
-          padding: dimensions.isTablet ? 6 : 4,
+          padding: dimensions.isTablet ? 8 : 6,
         },
       ]}>
+      {/* Animated background glow for focused state */}
+      <Animated.View
+        style={[
+          styles.tabIconGlow,
+          {
+            opacity: opacityAnim,
+            width: dimensions.isTablet ? 40 : 36,
+            height: dimensions.isTablet ? 40 : 36,
+            borderRadius: dimensions.isTablet ? 20 : 18,
+          },
+        ]}
+      />
       <Animated.View
         style={{
           transform: [{scale: scaleAnim}, {translateY}],
-          zIndex: 1,
+          zIndex: 2,
         }}>
         {children}
       </Animated.View>
@@ -99,44 +117,70 @@ const AnimatedTabIcon = ({focused, children, dimensions}) => {
   );
 };
 
-// Enhanced floating scan button - properly centered
+// Premium floating scan button with gold accents
 const FloatingScanButton = ({focused, onPress, dimensions, tabBarHeight}) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
 
   const buttonSize = dimensions.isTablet
     ? 56
     : dimensions.isLandscape
     ? 48
     : 52;
-  const iconSize = dimensions.isTablet ? 26 : dimensions.isLandscape ? 20 : 22;
+  const iconSize = dimensions.isTablet ? 28 : dimensions.isLandscape ? 24 : 26;
 
   useEffect(() => {
-    const pulseAnimation = Animated.loop(
+    const shimmerAnimation = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05,
-          duration: 1500,
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 2000,
           useNativeDriver: true,
         }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1500,
+        Animated.timing(shimmerAnim, {
+          toValue: 0,
+          duration: 2000,
           useNativeDriver: true,
         }),
       ]),
     );
 
+    const rotateAnimation = Animated.loop(
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 8000,
+        useNativeDriver: true,
+      }),
+    );
+
     if (focused) {
-      pulseAnimation.start();
+      shimmerAnimation.start();
+      rotateAnimation.start();
       Animated.spring(scaleAnim, {
-        toValue: 1.08,
+        toValue: 1.1,
         useNativeDriver: true,
         tension: 100,
         friction: 6,
       }).start();
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.08,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+        ]),
+      ).start();
     } else {
-      pulseAnimation.stop();
+      shimmerAnimation.stop();
+      rotateAnimation.stop();
       Animated.spring(scaleAnim, {
         toValue: 1,
         useNativeDriver: true,
@@ -145,54 +189,96 @@ const FloatingScanButton = ({focused, onPress, dimensions, tabBarHeight}) => {
       }).start();
       Animated.timing(pulseAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 300,
         useNativeDriver: true,
       }).start();
     }
 
     return () => {
-      pulseAnimation.stop();
+      shimmerAnimation.stop();
+      rotateAnimation.stop();
     };
   }, [focused]);
+
+  const shimmerTranslateX = shimmerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-buttonSize, buttonSize],
+  });
+
+  const rotateInterpolate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   return (
     <View style={styles.floatingButtonWrapper}>
       <TouchableOpacity
         onPress={onPress}
         style={styles.floatingButtonTouchable}
-        activeOpacity={0.8}>
+        activeOpacity={0.85}>
+        
+        {/* Outer glow ring */}
         <Animated.View
           style={[
-            styles.floatingButton,
+            styles.floatingButtonGlow,
             {
-              width: buttonSize,
-              height: buttonSize,
-              borderRadius: buttonSize / 2,
-              transform: [{scale: scaleAnim}],
+              width: buttonSize + 8,
+              height: buttonSize + 8,
+              borderRadius: (buttonSize + 8) / 2,
+              transform: [{scale: pulseAnim}],
+              opacity: focused ? 0.3 : 0.15,
+            },
+          ]}
+        />
+
+        {/* Rotating border gradient effect */}
+        <Animated.View
+          style={[
+            styles.floatingButtonBorder,
+            {
+              width: buttonSize + 3,
+              height: buttonSize + 3,
+              borderRadius: (buttonSize + 3) / 2,
+              transform: [{rotate: rotateInterpolate}, {scale: scaleAnim}],
             },
           ]}>
-          <Animated.View
-            style={[
-              styles.floatingButtonPulse,
-              {
-                width: buttonSize + 6,
-                height: buttonSize + 6,
-                borderRadius: (buttonSize + 6) / 2,
-                transform: [{scale: pulseAnim}],
-                opacity: focused ? 0.25 : 0,
-              },
-            ]}
-          />
+          
+          {/* Main button */}
           <View
             style={[
-              styles.scanButtonInner,
+              styles.floatingButton,
               {
-                width: buttonSize * 0.7,
-                height: buttonSize * 0.7,
-                borderRadius: (buttonSize * 0.7) / 2,
+                width: buttonSize,
+                height: buttonSize,
+                borderRadius: buttonSize / 2,
               },
             ]}>
-            <ScanIcon width={iconSize} height={iconSize} fill="#FFFFFF" />
+            
+            {/* Shimmer effect overlay */}
+            <Animated.View
+              style={[
+                styles.shimmerOverlay,
+                {
+                  width: buttonSize * 0.3,
+                  height: buttonSize,
+                  transform: [{translateX: shimmerTranslateX}],
+                  borderRadius: buttonSize / 2,
+                },
+              ]}
+            />
+            
+            {/* Inner icon container */}
+            <View
+              style={[
+                styles.scanButtonInner,
+                {
+                  width: buttonSize * 0.65,
+                  height: buttonSize * 0.65,
+                  borderRadius: (buttonSize * 0.65) / 2,
+                },
+              ]}>
+              <ScanIcon width={iconSize} height={iconSize} fill={colors.text_color_1} />
+            </View>
           </View>
         </Animated.View>
       </TouchableOpacity>
@@ -200,31 +286,38 @@ const FloatingScanButton = ({focused, onPress, dimensions, tabBarHeight}) => {
   );
 };
 
-// Fixed custom tab bar component
+// Modern glass-morphism tab bar
 const CustomTabBar = ({state, descriptors, navigation}) => {
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const backgroundAnim = useRef(new Animated.Value(0)).current;
   const dimensions = useResponsiveDimensions();
 
-  const containerPadding = dimensions.isTablet ? 20 : 12;
+  const containerPadding = dimensions.isTablet ? 24 : 16;
   const tabBarHeight = dimensions.isTablet
-    ? 70
+    ? 72
     : dimensions.isLandscape
-    ? 52
-    : 62;
-  const tabBarRadius = dimensions.isTablet ? 22 : 18;
+    ? 56
+    : 65;
+  const tabBarRadius = dimensions.isTablet ? 28 : 24;
 
-  // Fixed bottom margin to prevent scroll interference
   const bottomMargin = Platform.OS === 'ios' 
-    ? (dimensions.isLandscape ? 8 : 8)
-    : (dimensions.isLandscape ? 12 : 8);
+    ? (dimensions.isLandscape ? 12 : 16)
+    : (dimensions.isLandscape ? 16 : 12);
 
   useEffect(() => {
-    Animated.spring(slideAnim, {
-      toValue: state.index,
-      useNativeDriver: true,
-      tension: 120,
-      friction: 8,
-    }).start();
+    Animated.parallel([
+      Animated.spring(slideAnim, {
+        toValue: state.index,
+        useNativeDriver: true,
+        tension: 150,
+        friction: 8,
+      }),
+      Animated.timing(backgroundAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+    ]).start();
   }, [state.index]);
 
   const focusedRoute = state.routes[state.index];
@@ -239,13 +332,18 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
 
   const indicatorTranslateX = slideAnim.interpolate({
     inputRange: state.routes.map((_, i) => i),
-    outputRange: state.routes.map((_, i) => i * tabWidth + (tabWidth - (tabWidth - 32)) / 2), // Properly center the indicator
+    outputRange: state.routes.map((_, i) => i * tabWidth + (tabWidth - 48) / 2),
   });
 
   return (
     <>
-      {/* Spacer to prevent scroll content from going under tab bar */}
-      <View style={{height: tabBarHeight + bottomMargin + 10, backgroundColor:colors.background}} />
+      {/* Enhanced spacer with gradient */}
+      <View 
+        style={{
+          height: tabBarHeight + bottomMargin + 8,
+          backgroundColor: colors.background,
+        }}
+      />
       
       <View
         style={[
@@ -258,6 +356,8 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
             borderRadius: tabBarRadius,
           },
         ]}>
+        
+        {/* Glass morphism background */}
         <View
           style={[
             styles.tabBarBackground,
@@ -267,16 +367,16 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
           ]}
         />
 
-        {/* Fixed animated indicator - properly centered */}
+        {/* Animated indicator with gradient */}
         <Animated.View
           style={[
             styles.activeIndicator,
             {
               transform: [{translateX: indicatorTranslateX}],
-              width: 40, // Fixed width for consistent appearance
-              height: 40,
-              top: (tabBarHeight - 40) / 2, // Center vertically
-              borderRadius: 20,
+              width: 48,
+              height: 48,
+              top: (tabBarHeight - 48) / 2,
+              borderRadius: 24,
             },
           ]}
         />
@@ -334,29 +434,29 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
                   styles.tabItem,
                   {
                     height: tabBarHeight,
-                    paddingVertical: dimensions.isTablet ? 6 : 4,
+                    paddingVertical: dimensions.isTablet ? 8 : 6,
                   },
                 ]}
-                activeOpacity={0.7}>
+                activeOpacity={0.75}>
                 <AnimatedTabIcon focused={isFocused} dimensions={dimensions}>
                   {getTabIcon(route.name, isFocused, dimensions)}
                 </AnimatedTabIcon>
-                {/* <Text
+                <Text
                   style={[
                     styles.tabLabel,
                     {
-                      color: isFocused ? colors.primary : '#888888', // Better contrast for inactive
-                      fontWeight: isFocused ? '600' : '500',
+                      color: isFocused ? colors.gold : colors.textSecondary,
+                      fontWeight: isFocused ? '700' : '500',
                       fontSize: dimensions.isTablet
-                        ? 11
+                        ? 12
                         : dimensions.isLandscape
-                        ? 8
-                        : 9,
-                      marginTop: dimensions.isTablet ? 3 : 2,
+                        ? 9
+                        : 10,
+                      marginTop: dimensions.isTablet ? 4 : 3,
                     },
                   ]}>
                   {getTabLabel(route.name)}
-                </Text> */}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -366,18 +466,18 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
   );
 };
 
-// Helper functions with better color contrast
+// Helper functions with enhanced dark theme colors
 const getTabIcon = (routeName, focused, dimensions) => {
-  const iconSize = dimensions.isTablet ? 22 : dimensions.isLandscape ? 16 : 26;
-  const color = focused ? colors.primary : '#666666'; // Strong contrast for inactive icons
+  const iconSize = dimensions.isTablet ? 24 : dimensions.isLandscape ? 18 : 22;
+  const color = focused ? colors.gold : colors.textSecondary;
 
   switch (routeName) {
     case 'Home':
       return <HomeIcon width={iconSize} height={iconSize} fill={color} />;
     case 'Business':
-      return <BusinessIcon width={iconSize} height={iconSize} fill={color} />; // Replace with BusinessIcon
+      return <BusinessIcon width={iconSize} height={iconSize} fill={color} />;
     case 'Events':
-      return <EventIcon width={iconSize} height={iconSize} fill={color} />; // Replace with EventsIcon
+      return <EventIcon width={iconSize} height={iconSize} fill={color} />;
     case 'Contacts':
       return <ContactsIcon width={iconSize} height={iconSize} fill={color} />;
     default:
@@ -422,24 +522,33 @@ const styles = StyleSheet.create({
   tabBarContainer: {
     position: 'absolute',
     overflow: 'hidden',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    zIndex: 1000, // Ensure it stays on top
-    backgroundColor: colors.background
+    elevation: 20,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    zIndex: 1000,
   },
   tabBarBackground: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.background,
-    borderWidth: 0.5,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: colors.secondary + 'F5', // Semi-transparent for glass effect
+    borderWidth: 1,
+    borderColor: colors.border + '80',
+    // Glass morphism blur effect (you might need a library like react-native-blur for full effect)
+    backdropFilter: 'blur(20px)',
   },
   activeIndicator: {
     position: 'absolute',
-    backgroundColor: colors.primary + '20',
-    borderRadius: 20,
+    backgroundColor: colors.gold + '25',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.gold + '40',
+    // Inner glow effect
+    shadowColor: colors.gold,
+    shadowOffset: {width: 0, height: 0},
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
   },
   tabBarContent: {
     flex: 1,
@@ -456,53 +565,74 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 30, // Ensure consistent height
-    minWidth: 30, // Ensure consistent width
+    minHeight: 36,
+    minWidth: 36,
   },
-  tabIconBackground: {
+  tabIconGlow: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.primary + '25',
+    backgroundColor: colors.gold + '20',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.gold + '30',
   },
   tabLabel: {
     textAlign: 'center',
-    includeFontPadding: false, // Better text alignment on Android
+    includeFontPadding: false,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    letterSpacing: 0.3,
   },
   floatingButtonWrapper: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    marginTop: -12, // Elevate button above container
+    zIndex: 10, // Ensure it's above the container
   },
   floatingButtonTouchable: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  floatingButton: {
-    backgroundColor: colors.primary,
+  floatingButtonGlow: {
+    position: 'absolute',
+    backgroundColor: colors.gold + '25',
+    shadowColor: colors.gold,
+    shadowOffset: {width: 0, height: 0},
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
     elevation: 12,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+  },
+  floatingButtonBorder: {
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: colors.goldDark,
+    backgroundColor: colors.gold + '15',
+  },
+  floatingButton: {
+    backgroundColor: colors.gold,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 12,
+    shadowColor: colors.gold,
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    overflow: 'hidden',
     position: 'relative',
   },
-  floatingButtonPulse: {
+  shimmerOverlay: {
     position: 'absolute',
-    backgroundColor: colors.primary,
-    zIndex: 0,
+    backgroundColor: colors.goldLight + '40',
+    opacity: 0.6,
+    zIndex: 1,
   },
   scanButtonInner: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: colors.goldDark + '30',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1,
+    zIndex: 2,
+    borderWidth: 1,
+    borderColor: colors.goldLight + '50',
   },
 });

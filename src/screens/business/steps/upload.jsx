@@ -22,17 +22,11 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Modal,
 } from 'react-native';
 import ImageCropper from '../../../components/imageCropper';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {
-  BottomSheetModal,
-  BottomSheetView,
-  BottomSheetModalProvider,
-} from '@gorhom/bottom-sheet';
 import {useNavigation} from '@react-navigation/native';
 import {colors} from '../../../theme/colors';
-import LargeButton from '../../../components/buttons/largeButton';
 import {useSelector, useDispatch} from 'react-redux';
 import {updateBusinessUploadData} from '../../../redux/slices/business/businessBasic';
 import RNFS from 'react-native-fs';
@@ -181,7 +175,7 @@ const ImageUploadSection = ({title, image, onPress, onRemove, isLoading}) => {
       <Text style={styles.imageSectionTitle}>{title}</Text>
       <TouchableOpacity onPress={onPress} style={styles.imageUploadArea}>
         {isLoading ? (
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.gold} />
         ) : imageSourceUri ? (
           <>
             <Image
@@ -238,10 +232,8 @@ const Upload = forwardRef((props, ref) => {
   const [currentImageType, setCurrentImageType] = useState(null);
   const [isImageProcessing, setIsImageProcessing] = useState(false);
 
-  const bottomSheetModalRef = useRef(null);
-
-  // Fixed snap points with better sizing
-  const snapPoints = useMemo(() => ['30%', '65%', '95%'], []);
+  // Modal state instead of BottomSheet
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   // Helper function to reconstruct image object from base64
   const reconstructImageFromBase64 = useCallback((base64String, imageType) => {
@@ -355,23 +347,17 @@ const Upload = forwardRef((props, ref) => {
     reconstructImageFromBase64,
   ]);
 
-  // Fixed openBottomSheet function
-  const openBottomSheet = useCallback(type => {
-    console.log(`Opening bottom sheet for: ${type}`);
+  // Fixed openModal function
+  const openModal = useCallback(type => {
+    console.log(`Opening modal for: ${type}`);
     setCurrentImageType(type);
-
-    // Present the bottom sheet
-    bottomSheetModalRef.current?.present();
-
-    // Force it to expand to the desired index after a short delay
-    setTimeout(() => {
-      bottomSheetModalRef.current?.snapToIndex(1); // This will work now
-    }, 150); // Increased delay slightly for better reliability
+    setIsModalVisible(true);
   }, []);
 
-  const closeBottomSheet = useCallback(() => {
-    console.log('Closing bottom sheet');
-    bottomSheetModalRef.current?.dismiss();
+  const closeModal = useCallback(() => {
+    console.log('Closing modal');
+    setIsModalVisible(false);
+    setCurrentImageType(null);
   }, []);
 
   const handleImageSelected = useCallback(
@@ -399,8 +385,8 @@ const Upload = forwardRef((props, ref) => {
       console.log(`handleImageSelected called for type: ${type}`);
       console.log('Raw image object from cropper:', image);
 
-      // Close bottom sheet first
-      closeBottomSheet();
+      // Close modal first
+      closeModal();
 
       if (!image || typeof image === 'string') {
         console.log('No valid image provided or image is a string:', image);
@@ -570,7 +556,7 @@ const Upload = forwardRef((props, ref) => {
         setIsImageProcessing(false);
       }
     },
-    [dispatch, closeBottomSheet, currentImageType],
+    [dispatch, closeModal, currentImageType],
   );
 
   const handleRemoveImage = useCallback(
@@ -598,21 +584,7 @@ const Upload = forwardRef((props, ref) => {
     [dispatch],
   );
 
-  // Updated handleSheetChanges with better debugging
-  const handleSheetChanges = useCallback(
-    index => {
-      console.log('Bottom Sheet state changed to index:', index);
-      console.log('Available snap points:', snapPoints);
-      console.log('Current snap point value:', snapPoints[index]);
-
-      if (index === -1) {
-        // Sheet is dismissed
-        setCurrentImageType(null);
-        setIsImageProcessing(false);
-      }
-    },
-    [snapPoints],
-  );
+  // Remove the handleSheetChanges function as we don't need it for Modal
 
   // Clear errors when typing
   const handleWebsiteChange = useCallback(
@@ -699,145 +671,118 @@ const Upload = forwardRef((props, ref) => {
   );
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <BottomSheetModalProvider>
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <ScrollView
-              contentContainerStyle={styles.scrollContainer}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}>
-              <View style={styles.inner}>
-                {/* Website Input */}
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Website</Text>
-                  <TextInput
-                    style={[
-                      styles.textInput,
-                      websiteError ? styles.textInputError : null,
-                    ]}
-                    value={website}
-                    onChangeText={handleWebsiteChange}
-                    placeholder="e.g., example.com or https://example.com"
-                    placeholderTextColor="#999999"
-                    keyboardType="url"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                  {websiteError ? (
-                    <Text style={styles.errorText}>{websiteError}</Text>
-                  ) : null}
-                </View>
-
-                {/* Promo Video Input */}
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Business Promo Video</Text>
-                  <TextAreaBox
-                    style={[
-                      styles.textInput,
-                      promoError ? styles.textInputError : null,
-                    ]}
-                    value={promo}
-                    onChangeText={handlePromoChange}
-                    placeholder="e.g., youtube.com/watch?v=... (Optional)"
-                    placeholderTextColor="#999999"
-                    keyboardType="url"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                  {promoError ? (
-                    <Text style={styles.errorText}>{promoError}</Text>
-                  ) : null}
-                </View>
-
-                {/* Business Card Front */}
-                <ImageUploadSection
-                  title="Business Card Front"
-                  image={selectedFrontImage}
-                  onPress={() => openBottomSheet('front')}
-                  onRemove={() => handleRemoveImage('front')}
-                  isLoading={isImageProcessing && currentImageType === 'front'}
+    <View style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            <View style={styles.inner}>
+              {/* Website Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Website</Text>
+                <TextInput
+                  style={[
+                    styles.textInput,
+                    websiteError ? styles.textInputError : null,
+                  ]}
+                  value={website}
+                  onChangeText={handleWebsiteChange}
+                  placeholder="e.g., example.com or https://example.com"
+                  placeholderTextColor={colors.text_color_2}
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
-
-                {/* Business Card Back */}
-                <ImageUploadSection
-                  title="Business Card Back"
-                  image={selectedBackImage}
-                  onPress={() => openBottomSheet('back')}
-                  onRemove={() => handleRemoveImage('back')}
-                  isLoading={isImageProcessing && currentImageType === 'back'}
-                />
-
-                {/* Business Logo */}
-                <ImageUploadSection
-                  title="Business Logo"
-                  image={selectedLogoImage}
-                  onPress={() => openBottomSheet('logo')}
-                  onRemove={() => handleRemoveImage('logo')}
-                  isLoading={isImageProcessing && currentImageType === 'logo'}
-                />
+                {websiteError ? (
+                  <Text style={styles.errorText}>{websiteError}</Text>
+                ) : null}
               </View>
-            </ScrollView>
-          </TouchableWithoutFeedback>
 
-          {/* Fixed Bottom Sheet Modal */}
-          <BottomSheetModal
-            ref={bottomSheetModalRef}
-            index={-1} // Changed from 1 to -1 (closed initially)
-            snapPoints={snapPoints}
-            onChange={handleSheetChanges}
-            enablePanDownToClose={true}
-            enableOverDrag={false}
-            keyboardBehavior="extend"
-            keyboardBlurBehavior="restore"
-            animateOnMount={true}
-            enableDismissOnClose={true}
-            enableContentPanningGesture={true}
-            enableHandlePanningGesture={true}
-            backgroundStyle={{
-              borderRadius: 16,
-              backgroundColor: colors.secondary,
-            }}
-            handleStyle={{
-              backgroundColor: colors.secondary,
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
-              paddingVertical: 8,
-            }}
-            handleIndicatorStyle={{
-              backgroundColor: colors.gray || '#CCCCCC',
-              width: 40,
-              height: 4,
-            }}
-            onDismiss={() => {
-              console.log('BottomSheetModal dismissed');
-              setCurrentImageType(null);
-              setIsImageProcessing(false);
-            }}>
-            <BottomSheetView style={styles.contentContainer}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Upload Image</Text>
-                <TouchableOpacity
-                  onPress={closeBottomSheet}
-                  style={styles.closeButton}>
-                  <Text style={styles.closeButtonText}>×</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.imageCropperContainer}>
-                <ImageCropper
-                  navigation={navigation}
-                  type={currentImageType}
-                  onImageSelected={handleImageSelected}
-                  onClose={closeBottomSheet}
+              {/* Promo Video Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Business Promo Video</Text>
+                <TextAreaBox
+                  style={[
+                    styles.textInput,
+                    promoError ? styles.textInputError : null,
+                  ]}
+                  value={promo}
+                  onChangeText={handlePromoChange}
+                  placeholder="e.g., youtube.com/watch?v=... (Optional)"
+                  placeholderTextColor={colors.text_color_2}
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
+                {promoError ? (
+                  <Text style={styles.errorText}>{promoError}</Text>
+                ) : null}
               </View>
-            </BottomSheetView>
-          </BottomSheetModal>
-        </KeyboardAvoidingView>
-      </BottomSheetModalProvider>
-    </GestureHandlerRootView>
+
+              {/* Business Card Front */}
+              <ImageUploadSection
+                title="Business Card Front"
+                image={selectedFrontImage}
+                onPress={() => openModal('front')}
+                onRemove={() => handleRemoveImage('front')}
+                isLoading={isImageProcessing && currentImageType === 'front'}
+              />
+
+              {/* Business Card Back */}
+              <ImageUploadSection
+                title="Business Card Back"
+                image={selectedBackImage}
+                onPress={() => openModal('back')}
+                onRemove={() => handleRemoveImage('back')}
+                isLoading={isImageProcessing && currentImageType === 'back'}
+              />
+
+              {/* Business Logo */}
+              <ImageUploadSection
+                title="Business Logo"
+                image={selectedLogoImage}
+                onPress={() => openModal('logo')}
+                onRemove={() => handleRemoveImage('logo')}
+                isLoading={isImageProcessing && currentImageType === 'logo'}
+              />
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+
+      {/* Centered Modal Popup instead of full-screen */}
+      <Modal
+        visible={isModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={closeModal}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalPopup}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Upload Image</Text>
+              <TouchableOpacity
+                onPress={closeModal}
+                style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>×</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.imageCropperContainer}>
+              <ImageCropper
+                navigation={navigation}
+                type={currentImageType}
+                onImageSelected={handleImageSelected}
+                onClose={closeModal}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 });
 
@@ -846,19 +791,77 @@ export default Upload;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background || '#F7F8FA',
+    backgroundColor: colors.background,
   },
   flex: {
     flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
+    backgroundColor: colors.background,
   },
   inner: {
     padding: 16,
     flexGrow: 1,
-    gap: 15,
+    gap: 20, // Increased gap between all elements
     paddingBottom: height * 0.1,
+    backgroundColor: colors.background,
+  },
+  // Modal Overlay and Popup Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalPopup: {
+    backgroundColor: colors.secondary,
+    borderRadius: 16,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    elevation: 12,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text_color_1,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 20,
+    color: colors.text_color_2,
+    fontWeight: '300',
+    lineHeight: 20,
+  },
+  imageCropperContainer: {
+    height: 400, // Fixed height instead of flex
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: colors.secondary,
   },
   // Input Styles
   inputContainer: {
@@ -867,52 +870,53 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text || '#333333',
+    color: colors.gold,
     marginBottom: 8,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: colors.border || '#DDDDDD',
+    borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 15,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#000000', // Force black text color
-    backgroundColor: '#FFFFFF', // Force white background
+    color: colors.gold,
+    backgroundColor: colors.secondary,
     minHeight: 48,
   },
   textInputError: {
-    borderColor: '#FF3B30',
+    borderColor: colors.status_red,
   },
   errorText: {
-    color: '#FF3B30',
+    color: colors.status_red,
     fontSize: 14,
     marginTop: 5,
   },
   // Image Section Styles
   imageSection: {
-    marginVertical: 10,
-    backgroundColor: colors.cardBackground || '#FFFFFF',
+    marginVertical: 12, // Increased gap between sections
+    backgroundColor: colors.secondary,
     borderRadius: 12,
     padding: 15,
     borderWidth: 1,
-    borderColor: colors.borderColor || '#E0E0E0',
+    borderColor: colors.border,
   },
   imageSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text || '#333333',
+    color: colors.gold,
     marginBottom: 10,
   },
   imageUploadArea: {
     width: '100%',
-    height: width * 0.45,
+    height: 160, // Static height instead of responsive
     borderRadius: 10,
-    backgroundColor: colors.lightGray || '#F0F0F0',
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
+    gap:2,
     borderWidth: 1,
-    borderColor: colors.border || '#DDDDDD',
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   placeholderContainer: {
@@ -922,12 +926,12 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: 16,
-    color: colors.gray || '#888888',
+    color: colors.text_color_2,
     fontWeight: '500',
   },
   placeholderSubText: {
     fontSize: 12,
-    color: colors.gray || '#AAAAAA',
+    color: colors.text_color_2,
   },
   imagePreview: {
     width: '100%',
@@ -938,51 +942,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: 'rgba(255, 0, 0, 0.7)',
+    backgroundColor: colors.status_red + 'CC',
     borderRadius: 5,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   removeImageButtonText: {
-    color: colors.white || '#FFFFFF',
+    color: colors.text_color_1,
     fontSize: 12,
     fontWeight: 'bold',
-  },
-  // Updated Modal Styles
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text || '#333333',
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.lightGray || '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    fontSize: 24,
-    color: colors.gray || '#666666',
-    fontWeight: '300',
-    lineHeight: 24,
-  },
-  contentContainer: {
-    flex: 1,
-    backgroundColor: colors.secondary || '#FFFFFF',
-  },
-  imageCropperContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
   },
 });

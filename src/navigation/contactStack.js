@@ -10,9 +10,9 @@ const Stack = createNativeStackNavigator();
 
 export default function ContactStack() {
   return (
-    <Stack.Navigator initialRouteName="contactPage">
+    <Stack.Navigator initialRouteName="Contact">
       <Stack.Screen
-        name="contactPage"
+        name="Contact"
         component={Contacts}
         options={{ header: () => <CustomHeader titles="Contacts"/> }}
       />

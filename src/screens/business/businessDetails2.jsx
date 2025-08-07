@@ -18,7 +18,7 @@ import {colors} from '../../theme/colors';
 import {typography} from '../../theme/typography';
 import {useDispatch, useSelector} from 'react-redux';
 import {getBusiness} from '../../redux/slices/business/getBusinessSlices';
-import { saveBusiness } from '../../redux/slices/business/saveBusinessSlices';
+import {saveBusiness} from '../../redux/slices/business/saveBusinessSlices';
 import PhoneIcon from '../../../assets/phone2.svg';
 import MailIcon from '../../../assets/mail2.svg';
 import WebsiteIcon from '../../../assets/website2.svg';
@@ -27,45 +27,47 @@ import Instagram from '../../../assets/socialIcons/instagram.svg';
 import LinkedIn from '../../../assets/socialIcons/linkedIn.svg';
 import Telegram from '../../../assets/socialIcons/telegram.svg';
 import Whatsapp from '../../../assets/whatsapp2.svg';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 
 const {width} = Dimensions.get('window');
 
 // Save Contact Modal Component
-const SaveContactModal = ({visible, onClose, businessData, paramData, dispatch}) => {
+const SaveContactModal = ({
+  visible,
+  onClose,
+  businessData,
+  paramData,
+  dispatch,
+}) => {
   const [isSaving, setIsSaving] = useState(false);
   const navigation = useNavigation();
 
   const handleSaveContact = async () => {
     try {
       setIsSaving(true);
-      console.log("Saving contact with params:", paramData);
+      console.log('Saving contact with params:', paramData);
 
-      // Ensure all required parameters are present
       if (!paramData.businessId) {
         Alert.alert('Error', 'Business ID is missing. Cannot save contact.');
         return;
       }
 
-      // Dispatch the save business action with proper parameters
       const saveParams = {
         sharedBy: paramData.sharedBy || null,
         businessId: paramData.businessId,
-        eventId: paramData.eventId || null
+        eventId: paramData.eventId || null,
       };
 
-      console.log("Dispatching saveBusiness with params:", saveParams);
-      
+      console.log('Dispatching saveBusiness with params:', saveParams);
+
       const result = await dispatch(saveBusiness(saveParams));
-      
-      // Check if the action was successful
+
       if (result.type.endsWith('/fulfilled')) {
         Alert.alert('Success', 'Business contact saved successfully!');
         onClose();
       } else {
         throw new Error('Save business action failed');
       }
-
     } catch (error) {
       console.error('Error saving contact:', error);
       Alert.alert('Error', 'Failed to save contact. Please try again.');
@@ -103,7 +105,8 @@ const SaveContactModal = ({visible, onClose, businessData, paramData, dispatch})
               Do you want to save this business to your contacts?
             </Text>
             <Text style={modalStyles.subText}>
-              This will add the business contact information to your thumb's contact list.
+              This will add the business contact information to your thumb's
+              contact list.
             </Text>
           </View>
 
@@ -118,9 +121,9 @@ const SaveContactModal = ({visible, onClose, businessData, paramData, dispatch})
 
             <TouchableOpacity
               style={[
-                modalStyles.button, 
+                modalStyles.button,
                 modalStyles.saveButton,
-                isSaving && modalStyles.disabledButton
+                isSaving && modalStyles.disabledButton,
               ]}
               onPress={handleSaveContact}
               activeOpacity={0.7}
@@ -147,22 +150,17 @@ const BusinessDetails2 = ({}) => {
   const [eventId, setEventId] = useState(null);
   const [shouldShowModal, setShouldShowModal] = useState(true);
 
-  // Get business data from Redux store
   const BusinessData = useSelector(
     state => state.getBusinessData?.data?.result?.data ?? null,
   );
 
-  // Get loading state to know when data is fetched
   const isLoading = useSelector(
     state => state.getBusinessData?.loading ?? false,
   );
 
-  // Get save business state for debugging
-  const saveBusinessState = useSelector(
-    state => state.saveBusinessData ?? {},
-  );
+  const saveBusinessState = useSelector(state => state.saveBusinessData ?? {});
 
-  const parseParams = (url) => {
+  const parseParams = url => {
     const queryString = url.split('?')[1];
     const params = {};
     if (queryString) {
@@ -175,30 +173,24 @@ const BusinessDetails2 = ({}) => {
   };
 
   useEffect(() => {
-    console.log("Route params received:", route.params);
-    
-    // Check if params are directly available (deep linking)
+    console.log('Route params received:', route.params);
+
     if (route.params?.business_id) {
-      console.log("Using direct params from deep link");
+      console.log('Using direct params from deep link');
       setBusinessId(route.params.business_id);
       setSharedBy(route.params.shared_by || null);
       setEventId(route.params.event_id || null);
       setShouldShowModal(route.params.type !== '1');
-    }
-    // Check if params are inside a 'data' property (internal navigation)
-    else if (route.params?.data) {
-      console.log("Parsing params from data property");
+    } else if (route.params?.data) {
+      console.log('Parsing params from data property');
       const params = parseParams(route.params.data);
-      console.log("Parsed params:", params);
+      console.log('Parsed params:', params);
       setBusinessId(params.business_id);
       setSharedBy(params.shared_by || null);
       setEventId(params.event_id || null);
       setShouldShowModal(params.type !== '1');
-    }
-    // Handle other possible parameter structures
-    else if (route.params) {
-      console.log("Checking alternative parameter structures");
-      // Sometimes deep link params might come in different formats
+    } else if (route.params) {
+      console.log('Checking alternative parameter structures');
       const params = route.params;
       if (params.businessId || params.id) {
         setBusinessId(params.businessId || params.id);
@@ -209,22 +201,19 @@ const BusinessDetails2 = ({}) => {
     }
   }, [route.params]);
 
-  // Dispatch only when businessId is available
   useEffect(() => {
-    console.log("Business ID changed:", businessId);
-    console.log("Shared By:", sharedBy);
+    console.log('Business ID changed:', businessId);
+    console.log('Shared By:', sharedBy);
 
     if (businessId) {
-      console.log("Fetching business data...");
+      console.log('Fetching business data...');
       dispatch(getBusiness({id: businessId, sharedBy: sharedBy}));
     }
   }, [businessId, sharedBy, dispatch]);
 
-  // Show modal when business data is successfully loaded AND shouldShowModal is true
   useEffect(() => {
     if (BusinessData && !isLoading && businessId && shouldShowModal) {
-      console.log("Business data loaded, showing modal");
-      // Add a small delay to ensure smooth transition
+      console.log('Business data loaded, showing modal');
       const timer = setTimeout(() => {
         setShowSaveContactModal(true);
       }, 500);
@@ -233,29 +222,27 @@ const BusinessDetails2 = ({}) => {
     }
   }, [BusinessData, isLoading, businessId, shouldShowModal]);
 
-  // Debug effect to log save business state changes
   useEffect(() => {
-    console.log("Save business state:", saveBusinessState);
+    console.log('Save business state:', saveBusinessState);
   }, [saveBusinessState]);
 
   const handleModalClose = () => {
     setShowSaveContactModal(false);
   };
 
-  // Create param data object with proper validation
   const createParamData = () => {
     return {
       businessId: businessId,
       sharedBy: sharedBy,
-      eventId: eventId
+      eventId: eventId,
     };
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor={colors.background} barStyle="dark-content" />
+      <StatusBar backgroundColor={colors.background} barStyle="light-content" />
 
-      {/* Header without Edit Button */}
+      {/* Header */}
       <View style={styles.headerContainer}>
         <View style={styles.tabContainer}>
           {['Business Details', 'Business Card'].map(tab => (
@@ -288,7 +275,6 @@ const BusinessDetails2 = ({}) => {
         <BusinessCard />
       )}
 
-      {/* Save Contact Modal - Only render if shouldShowModal is true */}
       {shouldShowModal && (
         <SaveContactModal
           visible={showSaveContactModal}
@@ -322,21 +308,17 @@ const BusinessDetailsTab = () => {
   };
 
   const handleSocialPress = (platform, value) => {
-    // Check if the value is already a full URL
     const isFullUrl =
       value.startsWith('http://') || value.startsWith('https://');
 
     if (isFullUrl) {
-      // If it's already a full URL, use it directly
       Linking.openURL(value);
       return;
     }
 
-    // If it's not a full URL, construct the URL based on platform
     let url = '';
     switch (platform) {
       case 'instagram':
-        // Handle both @username and username formats
         const instaHandle = value.startsWith('@') ? value.substring(1) : value;
         url = `https://instagram.com/${instaHandle}`;
         break;
@@ -347,14 +329,12 @@ const BusinessDetailsTab = () => {
         url = `https://linkedin.com/in/${value}`;
         break;
       case 'twitter':
-        // Handle both @username and username formats
         const twitterHandle = value.startsWith('@')
           ? value.substring(1)
           : value;
         url = `https://twitter.com/${twitterHandle}`;
         break;
       case 'youtube':
-        // Handle different YouTube URL formats
         if (
           value.includes('channel/') ||
           value.includes('c/') ||
@@ -374,7 +354,6 @@ const BusinessDetailsTab = () => {
     Linking.openURL(url);
   };
 
-  // Function to get available social media platforms
   const getAvailableSocialMedia = () => {
     const socialMedia = [];
 
@@ -412,7 +391,7 @@ const BusinessDetailsTab = () => {
       socialMedia.push({
         platform: 'twitter',
         value: BusinessData.social_twitter,
-        icon: Telegram, // Using Telegram icon for Twitter as per your imports
+        icon: Telegram,
       });
     }
 
@@ -423,7 +402,7 @@ const BusinessDetailsTab = () => {
       socialMedia.push({
         platform: 'youtube',
         value: BusinessData.social_youtube,
-        icon: Telegram, // You might want to add a YouTube icon
+        icon: Telegram,
       });
     }
 
@@ -434,7 +413,7 @@ const BusinessDetailsTab = () => {
       socialMedia.push({
         platform: 'google_business',
         value: BusinessData.social_google_business,
-        icon: Telegram, // You might want to add a Google Business icon
+        icon: Telegram,
       });
     }
 
@@ -479,7 +458,7 @@ const BusinessDetailsTab = () => {
               onPress={() =>
                 handleContactPress('phone', BusinessData?.business_mobile)
               }>
-              <PhoneIcon width={18} height={18} fill={'#ffffff'} />
+              <PhoneIcon width={20} height={20} fill={colors.text_color_1} />
             </TouchableOpacity>
           )}
           {BusinessData?.business_email && (
@@ -488,7 +467,7 @@ const BusinessDetailsTab = () => {
               onPress={() =>
                 handleContactPress('email', BusinessData?.business_email)
               }>
-              <MailIcon width={18} height={18} />
+              <MailIcon width={20} height={20} fill={colors.text_color_1} />
             </TouchableOpacity>
           )}
           {BusinessData?.website && BusinessData.website.trim() !== '' && (
@@ -497,11 +476,11 @@ const BusinessDetailsTab = () => {
               onPress={() =>
                 handleContactPress('website', BusinessData?.website)
               }>
-              <WebsiteIcon width={18} height={18} />
+              <WebsiteIcon width={20} height={20} fill={colors.text_color_1} />
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.quickContactButton}>
-            <Whatsapp width={18} height={18} />
+            <Whatsapp width={20} height={20} fill={colors.text_color_1} />
           </TouchableOpacity>
         </View>
       </View>
@@ -532,9 +511,9 @@ const BusinessDetailsTab = () => {
 
       {/* Location Section */}
       <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Location</Text>
+        <Text style={styles.sectionTitle}>📍 Location</Text>
         <View style={styles.mapContainer}>
-          <Text style={styles.mapPlaceholderText}>Interactive Map</Text>
+          <Text style={styles.mapPlaceholderText}>🗺️ Interactive Map</Text>
           <Text style={styles.addressText}>
             {BusinessData?.street ||
               BusinessData?.city ||
@@ -545,24 +524,44 @@ const BusinessDetailsTab = () => {
 
       {/* Business Registration */}
       <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Registration Details</Text>
+        <Text style={styles.sectionTitle}>📋 Registration Details</Text>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Business ID</Text>
           <Text style={styles.detailValue}>
             {BusinessData?.id || 'Not available'}
           </Text>
         </View>
-        <View style={styles.detailRow}>
+        <View style={[styles.detailRow, {borderBottomWidth: 0}]}>
           <Text style={styles.detailLabel}>Status</Text>
-          <Text style={styles.detailValue}>
-            {BusinessData?.active ? 'Active' : 'Inactive'}
-          </Text>
+          <View style={styles.statusContainer}>
+            <View
+              style={[
+                styles.statusDot,
+                {
+                  backgroundColor: BusinessData?.active
+                    ? colors.status_green
+                    : colors.status_red,
+                },
+              ]}
+            />
+            <Text
+              style={[
+                styles.detailValue,
+                {
+                  color: BusinessData?.active
+                    ? colors.status_green
+                    : colors.status_red,
+                },
+              ]}>
+              {BusinessData?.active ? 'Active' : 'Inactive'}
+            </Text>
+          </View>
         </View>
       </View>
 
       {/* Leadership Section */}
       <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Leadership</Text>
+        <Text style={styles.sectionTitle}>👥 Leadership</Text>
         <View style={styles.founderCard}>
           <View style={styles.founderAvatar}>
             <Text style={styles.founderInitial}>
@@ -580,10 +579,10 @@ const BusinessDetailsTab = () => {
         </View>
       </View>
 
-      {/* Social Media Section - Only show if there are social media accounts */}
+      {/* Social Media Section */}
       {availableSocialMedia.length > 0 && (
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Connect With Us</Text>
+          <Text style={styles.sectionTitle}>🔗 Connect With Us</Text>
           <View style={styles.socialMediaContainer}>
             {availableSocialMedia.map((social, index) => {
               const IconComponent = social.icon;
@@ -594,7 +593,7 @@ const BusinessDetailsTab = () => {
                   onPress={() =>
                     handleSocialPress(social.platform, social.value)
                   }>
-                  <IconComponent width={20} height={20} />
+                  <IconComponent width={20} height={20} fill={colors.gold} />
                 </TouchableOpacity>
               );
             })}
@@ -615,9 +614,9 @@ const BusinessCard = () => {
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}>
       <View style={styles.cardSection}>
-        <Text style={styles.sectionTitle}>Business Logo</Text>
+        <Text style={styles.sectionTitle}>🏢 Business Logo</Text>
         <View style={styles.businessCardAvatar}>
-         <Image
+          <Image
             source={{
               uri: `data:image/jpeg;base64,${BusinessData?.logo}`,
             }}
@@ -628,7 +627,7 @@ const BusinessCard = () => {
       </View>
 
       <View style={styles.cardSection}>
-        <Text style={styles.sectionTitle}>Business Cards</Text>
+        <Text style={styles.sectionTitle}>💳 Business Cards</Text>
         <View style={styles.businessCardImage}>
           <Image
             source={{
@@ -637,7 +636,6 @@ const BusinessCard = () => {
             style={styles.image}
             resizeMode="cover"
           />
-          {/* <Text style={styles.cardPlaceholderText}>Front Card Design</Text> */}
         </View>
         <View style={styles.businessCardImage}>
           <Image
@@ -651,7 +649,7 @@ const BusinessCard = () => {
       </View>
 
       <View style={styles.cardSection}>
-        <Text style={styles.sectionTitle}>Promotional Video</Text>
+        <Text style={styles.sectionTitle}>🎬 Promotional Video</Text>
         <View style={styles.videoContainer}>
           <Text style={styles.videoLabel}>Company Introduction</Text>
           <Text style={styles.videoLink}>
@@ -666,27 +664,29 @@ const BusinessCard = () => {
   );
 };
 
-// Modal Styles
+// Modal Styles - Updated for Dark Theme
 const modalStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
   },
   modalContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     width: '100%',
     maxWidth: 340,
     paddingVertical: 24,
     paddingHorizontal: 20,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
   },
   header: {
     alignItems: 'center',
@@ -696,25 +696,25 @@ const modalStyles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
-    elevation: 3,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
+    shadowColor: colors.gold,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
   },
   logoText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: colors.background,
   },
   businessName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text_color_1,
     textAlign: 'center',
   },
   content: {
@@ -723,14 +723,14 @@ const modalStyles = StyleSheet.create({
   questionText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text_color_1,
     textAlign: 'center',
     marginBottom: 8,
     lineHeight: 24,
   },
   subText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -746,49 +746,51 @@ const modalStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   skipButton: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.secondary,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
   },
   saveButton: {
-    backgroundColor: colors.primary,
-    elevation: 2,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    backgroundColor: colors.gold,
+    shadowColor: colors.gold,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   disabledButton: {
-    backgroundColor: '#9ca3af',
+    backgroundColor: colors.accent,
+    shadowOpacity: 0,
     elevation: 0,
   },
   skipButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6b7280',
+    color: colors.textSecondary,
   },
   saveButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#ffffff',
+    color: colors.background,
   },
 });
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
-  // Updated header container without edit button
   headerContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     paddingHorizontal: 16,
     paddingTop: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -802,20 +804,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   activeSimpleTab: {
-    backgroundColor: colors.primary,
-    elevation: 2,
-    shadowColor: colors.primary,
+    backgroundColor: colors.gold,
+    shadowColor: colors.gold,
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
+    elevation: 3,
   },
   simpleTabText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6b7280',
+    color: colors.textSecondary,
   },
   activeSimpleTabText: {
-    color: '#ffffff',
+    color: colors.background,
     fontWeight: '600',
   },
   scrollContent: {
@@ -826,47 +828,50 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
   loadingText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.textSecondary,
   },
   headerSection: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     paddingHorizontal: 20,
     paddingVertical: 24,
     alignItems: 'center',
     marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   businessLogo: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    elevation: 4,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
+    shadowColor: colors.gold,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.4,
     shadowRadius: 8,
+    elevation: 6,
   },
   logoText: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: colors.background,
   },
   businessName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: colors.text_color_1,
     textAlign: 'center',
     marginBottom: 8,
   },
   businessDescription: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 20,
@@ -881,14 +886,16 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   infoCardsContainer: {
     flexDirection: 'row',
@@ -898,20 +905,22 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.secondary,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   infoCardLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#6b7280',
+    color: colors.textSecondary,
     marginBottom: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -919,46 +928,48 @@ const styles = StyleSheet.create({
   infoCardValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text_color_1,
     textAlign: 'center',
   },
   sectionContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 12,
     padding: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: colors.text_color_1,
     marginBottom: 16,
   },
   mapContainer: {
     height: 120,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.secondary,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
     borderStyle: 'dashed',
   },
   mapPlaceholderText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#6b7280',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   addressText: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.accent,
     textAlign: 'center',
   },
   detailRow: {
@@ -967,32 +978,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    borderBottomColor: colors.border,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
   },
   detailLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6b7280',
+    color: colors.textSecondary,
   },
   detailValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text_color_1,
   },
   founderCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.secondary,
     padding: 16,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
   },
   founderAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primary,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1000,7 +1031,7 @@ const styles = StyleSheet.create({
   founderInitial: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: colors.background,
   },
   founderInfo: {
     flex: 1,
@@ -1008,109 +1039,92 @@ const styles = StyleSheet.create({
   founderName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 2,
+    color: colors.text_color_1,
   },
   founderDesignation: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   socialMediaContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 16,
+    justifyContent: 'flex-start',
   },
   socialButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#f3f4f6',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
   },
-  // Business Card Tab Styles
   cardSection: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 12,
     padding: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   businessCardAvatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
-    overflow: 'hidden',
-  },
-  businessCardImage: {
+    width: '100%',
     height: 200,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: colors.secondary,
+    marginBottom: 16,
   },
   image: {
     width: '100%',
     height: '100%',
   },
-  cardPlaceholderText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#6b7280',
+  businessCardImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: colors.secondary,
+    marginBottom: 16,
   },
   videoContainer: {
+    backgroundColor: colors.secondary,
     padding: 16,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
   },
   videoLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text_color_1,
     marginBottom: 8,
   },
   videoLink: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.accent,
     marginBottom: 12,
-    fontFamily: 'monospace',
   },
   playButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    backgroundColor: colors.gold,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 8,
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    alignSelf: 'flex-start',
   },
   playButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
+    color: colors.background,
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
 

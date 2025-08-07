@@ -57,11 +57,11 @@ const SocialInputBox = ({
             value={isEnabled}
             onValueChange={onToggle}
             trackColor={{
-              false: '#E0E0E0',
-              true: colors.primary + '80' // 50% opacity
+              false: colors.border,
+              true: colors.gold + '80' // 50% opacity
             }}
-            thumbColor={isEnabled ? colors.primary : '#F4F3F4'}
-            ios_backgroundColor="#E0E0E0"
+            thumbColor={isEnabled ? colors.gold : colors.surface}
+            ios_backgroundColor={colors.border}
           />
         </View>
       </View>
@@ -73,7 +73,7 @@ const SocialInputBox = ({
           !isEnabled && styles.disabledInput
         ]}
         placeholder={placeholder}
-        placeholderTextColor={isEnabled ? '#999' : '#CCC'}
+        placeholderTextColor={isEnabled ? colors.text_color_2 : colors.border}
         value={value}
         onChangeText={isEnabled ? onChangeText : undefined}
         editable={isEnabled}
@@ -119,8 +119,6 @@ const Social = forwardRef((props, ref) => {
       prevBusinessData.current = businessData;
     }
   }, [businessData]);
-
- 
 
   // Initialize from props.initialData if available
   useEffect(() => {
@@ -222,18 +220,6 @@ const Social = forwardRef((props, ref) => {
       
       return newEnabled;
     });
-    
-    // TEMPORARILY DISABLED FOR TESTING:
-    /*
-    // Prepare Redux update with enabled state
-    const reduxUpdate = {
-      [`social_${platform === 'business' ? 'google_business' : platform}_enabled`]: !enabled[platform]
-    };
-    
-    // Update Redux with both enabled state and cleared values
-    console.log('Updating Redux with:', reduxUpdate);
-    dispatch(updateBusinessSocialData(reduxUpdate));
-    */
   }, []);
 
   // Add effect to log enabled state changes
@@ -302,79 +288,9 @@ const Social = forwardRef((props, ref) => {
       <View style={styles.headerContainer}>
         <Text style={styles.sectionTitle}>Social Media Links</Text>
         <Text style={styles.sectionSubtitle}>
-          Enable and add links to your social media profiles (Redux DISABLED for testing)
+          Enable and add links to your social media profiles
         </Text>
       </View>
-
-      {/* Test Controls
-      <View style={styles.testContainer}>
-        <Text style={styles.testTitle}>🧪 Test Controls</Text>
-        <TouchableOpacity 
-          style={styles.testButton}
-          onPress={() => {
-            console.log('🧪 TEST: Enabling Instagram and LinkedIn');
-            setEnabled(prev => ({
-              ...prev,
-              instagram: true,
-              linkedin: true
-            }));
-          }}
-        >
-          <Text style={styles.testButtonText}>Enable Instagram + LinkedIn</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.testButton}
-          onPress={() => {
-            console.log('🧪 TEST: Enabling ALL platforms');
-            setEnabled({
-              instagram: true,
-              linkedin: true,
-              twitter: true,
-              facebook: true,
-              youtube: true,
-              business: true,
-            });
-          }}
-        >
-          <Text style={styles.testButtonText}>Enable ALL</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.testButton, styles.testButtonDanger]}
-          onPress={() => {
-            console.log('🧪 TEST: Disabling ALL platforms');
-            setEnabled({
-              instagram: false,
-              linkedin: false,
-              twitter: false,
-              facebook: false,
-              youtube: false,
-              business: false,
-            });
-          }}
-        >
-          <Text style={styles.testButtonText}>Disable ALL</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Enhanced Debug Info */}
-      {/* <View style={styles.debugContainer}>
-        <Text style={styles.debugTitle}>🐛 Debug Info</Text>
-        <Text style={styles.debugText}>
-          Render Count: {renderCount.current}
-        </Text>
-        <Text style={styles.debugText}>
-          Enabled Count: {Object.values(enabled).filter(Boolean).length}/6
-        </Text>
-        <Text style={styles.debugText}>
-          Enabled Details: {JSON.stringify(enabled, null, 2)}
-        </Text>
-        <Text style={styles.debugText}>
-          Values: IG: "{instagram}", LI: "{linkedin}", TW: "{twitter}", 
-          FB: "{facebook}", YT: "{youtube}", GB: "{business}"
-        </Text>
-      </View> */} 
 
       <SocialInputBox
         IconComponent={InstagramIcon}
@@ -443,6 +359,8 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: 16,
     paddingBottom: 32,
+    paddingHorizontal: 16,
+    backgroundColor: colors.background,
   },
   headerContainer: {
     marginBottom: 24,
@@ -451,49 +369,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.primary || '#333',
+    color: colors.text_color_1,
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: colors.text_color_2,
     lineHeight: 20,
-  },
-  testContainer: {
-    backgroundColor: '#e3f2fd',
-    padding: 16,
-    marginBottom: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#2196f3',
-  },
-  testTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1976d2',
-    marginBottom: 12,
-  },
-  testButton: {
-    backgroundColor: '#2196f3',
-    padding: 12,
-    borderRadius: 6,
-    marginBottom: 8,
-    alignItems: 'center',
-  },
-  testButtonDanger: {
-    backgroundColor: '#f44336',
-  },
-  testButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
   },
   inputContainer: {
     marginBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: colors.secondary,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -501,6 +390,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   inputHeader: {
     flexDirection: 'row',
@@ -516,7 +407,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text_color_1,
     marginLeft: 8,
     textTransform: 'capitalize',
   },
@@ -527,44 +418,23 @@ const styles = StyleSheet.create({
   },
   toggleLabel: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text_color_2,
     fontWeight: '500',
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 14,
-    backgroundColor: '#FAFAFA',
-    color: '#333',
+    backgroundColor: colors.surface,
+    color: colors.text_color_1,
   },
   disabledInput: {
-    backgroundColor: '#F5F5F5',
-    borderColor: '#E8E8E8',
-    color: '#999',
-  },
-  // Enhanced debug styles
-  debugContainer: {
-    backgroundColor: '#fff3cd',
-    padding: 12,
-    marginBottom: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ffeaa7',
-  },
-  debugTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#856404',
-    marginBottom: 8,
-  },
-  debugText: {
-    fontSize: 11,
-    color: '#856404',
-    marginBottom: 4,
-    fontFamily: 'monospace',
+    backgroundColor: colors.background,
+    borderColor: colors.border,
+    color: colors.text_color_2,
   },
 });
 

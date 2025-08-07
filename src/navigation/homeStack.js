@@ -13,6 +13,7 @@ import EventList from '../screens/event/eventList';
 import GenerateQR from '../screens/scan/generateQR';
 import ReferAndEarn from '../screens/referral';
 import CustomCamera from '../screens/business/steps/customCamera';
+import NFCCardPage from '../screens/nfcCardSection';
 
 import CustomHeader from '../components/customHeader';
 
@@ -74,6 +75,11 @@ export default function HomeStack() {
       <Stack.Screen
         name="CustomCamera"
         component={CustomCamera}
+        options={{ headerShown: false}}
+      />
+       <Stack.Screen
+        name="NFCCardPage"
+        component={NFCCardPage}
         options={{ headerShown: false}}
       />
     </Stack.Navigator>

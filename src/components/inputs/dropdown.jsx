@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f5f5f5',
   },
   selectedItem: {
-    backgroundColor: '#e6f7ff',
+    backgroundColor: colors.gold,
   },
 });
 

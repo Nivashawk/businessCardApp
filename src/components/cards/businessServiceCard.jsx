@@ -6,47 +6,58 @@ import {
   StyleSheet,
   Image,
   Dimensions,
-  Platform, // Import Platform
+  Platform,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient'; // Keep for Android only
+import LinearGradient from 'react-native-linear-gradient';
 import {colors} from '../../theme/colors';
-import Add from '../../../assets/add.png'; // Assuming this path is correct for your asset
-
-// If you have 'react-native-vector-icons' installed, uncomment the line below
-// import Icon from 'react-native-vector-icons/MaterialIcons';
+import Add from '../../../assets/add.png';
 
 const {width} = Dimensions.get('window');
 
 const BusinessServiceCard = ({item, image, onPress, isAddCard = false}) => {
-  // A simple placeholder for the icon if react-native-vector-icons is not used
+  // Simple placeholder for the icon
   const DefaultIconPlaceholder = ({ size, color }) => (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#FFFFFF20', justifyContent: 'center', alignItems: 'center' }}>
-      {/* You could add an SVG or another Image here if needed */}
+    <View style={{ 
+      width: size, 
+      height: size, 
+      borderRadius: size / 2, 
+      backgroundColor: colors.surface, 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border
+    }}>
+      <View style={{
+        width: size * 0.6,
+        height: size * 0.6,
+        backgroundColor: color,
+        borderRadius: 2
+      }} />
     </View>
   );
 
-  // --- Conditional Rendering for Add Card ---
+  // --- Add Card Rendering ---
   if (isAddCard) {
     if (Platform.OS === 'ios') {
       return (
         <TouchableOpacity style={iosStyles.addCard} onPress={onPress}>
           <View style={iosStyles.addCardContent}>
-            <Image source={Add} style={iosStyles.addCardIcon} />
+            <View style={iosStyles.addIconContainer}>
+              <Image source={Add} style={iosStyles.addCardIcon} />
+            </View>
             <Text style={iosStyles.addCardText}>Add New Business</Text>
           </View>
         </TouchableOpacity>
       );
-    } else { // Android Add Card
+    } else {
       return (
         <TouchableOpacity style={androidStyles.addCard} onPress={onPress}>
           <View style={androidStyles.addCardContent}>
             <View style={androidStyles.addIconContainer}>
               {Add ? (
-                <Image source={Add} style={androidStyles.businessImage} />
+                <Image source={Add} style={androidStyles.addCardIcon} />
               ) : (
-                // Fallback if Add image is not loaded
-                <DefaultIconPlaceholder size={28} color="#FFFFFF" />
-                // <Icon name="business" size={28} color="#FFFFFF" /> // Uncomment if using Icon
+                <DefaultIconPlaceholder size={28} color={colors.primary} />
               )}
             </View>
             <Text style={androidStyles.addCardText}>Add New{'\n'}Business</Text>
@@ -56,7 +67,7 @@ const BusinessServiceCard = ({item, image, onPress, isAddCard = false}) => {
     }
   }
 
-  // --- Conditional Rendering for Regular Business Card ---
+  // --- Regular Business Card Rendering ---
   if (Platform.OS === 'ios') {
     return (
       <TouchableOpacity style={iosStyles.card} onPress={onPress}>
@@ -68,8 +79,7 @@ const BusinessServiceCard = ({item, image, onPress, isAddCard = false}) => {
                 <Image source={image} style={iosStyles.businessImage} />
               ) : (
                 <View style={iosStyles.defaultIconContainer}>
-                   {/* <Icon name="business" size={24} color={iosStyles.defaultIconColor.color} /> */}
-                   {/* Or a different placeholder if not using Icon */}
+                  <DefaultIconPlaceholder size={38} color={colors.accent} />
                 </View>
               )}
             </View>
@@ -85,7 +95,7 @@ const BusinessServiceCard = ({item, image, onPress, isAddCard = false}) => {
                 <View
                   style={[
                     iosStyles.statusDot,
-                    {backgroundColor: item?.active ? '#34C759' : '#FF3B30'}, // iOS-specific green/red
+                    {backgroundColor: item?.active ? colors.status_green : colors.status_red},
                   ]}
                 />
                 <Text style={iosStyles.statusText}>
@@ -97,26 +107,26 @@ const BusinessServiceCard = ({item, image, onPress, isAddCard = false}) => {
 
           {/* Arrow Icon */}
           <View style={iosStyles.arrowContainer}>
-            {/* <Icon name="arrow-forward-ios" size={16} color="#C7C7CC" /> */}
+            <View style={iosStyles.arrowIcon} />
           </View>
         </View>
       </TouchableOpacity>
     );
-  } else { // Android Regular Card (original logic)
+  } else {
     return (
       <TouchableOpacity style={androidStyles.card} onPress={onPress}>
         <LinearGradient
-          colors={['#1e7d95', '#204E5A']}
-          start={{x: 1, y: 0}}
+          colors={colors.cardGradient}
+          start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
           style={androidStyles.gradientBackground}>
+          
           {/* Business Image/Icon */}
           <View style={androidStyles.imageContainer}>
             {image ? (
               <Image source={image} style={androidStyles.businessImage} />
             ) : (
-              <DefaultIconPlaceholder size={28} color="#FFFFFF" />
-              // <Icon name="business" size={28} color="#FFFFFF" /> // Uncomment if using Icon
+              <DefaultIconPlaceholder size={45} color={colors.accent} />
             )}
           </View>
 
@@ -132,7 +142,7 @@ const BusinessServiceCard = ({item, image, onPress, isAddCard = false}) => {
             <View
               style={[
                 androidStyles.statusDot,
-                {backgroundColor: item?.active ? '#4ADE80' : 'red'},
+                {backgroundColor: item?.active ? colors.status_green : colors.status_red},
               ]}
             />
             <Text style={androidStyles.statusText}>
@@ -142,7 +152,7 @@ const BusinessServiceCard = ({item, image, onPress, isAddCard = false}) => {
 
           {/* Arrow Icon */}
           <View style={androidStyles.arrowContainer}>
-            {/* <Icon name="arrow-forward-ios" size={14} color="#FFFFFF80" /> */}
+            <View style={androidStyles.arrowIcon} />
           </View>
         </LinearGradient>
       </TouchableOpacity>
@@ -156,14 +166,16 @@ const androidStyles = StyleSheet.create({
     height: 140,
     borderRadius: 16,
     margin: 4,
-    elevation: 8, // Android shadow
-    shadowColor: '#000',
+    elevation: 8,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 4,
     },
     shadowOpacity: 0.3,
     shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   gradientBackground: {
     flex: 1,
@@ -178,14 +190,7 @@ const androidStyles = StyleSheet.create({
   businessImage: {
     width: 45,
     height: 45,
-  },
-  defaultIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF20',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 8,
   },
   titleContainer: {
     flex: 1,
@@ -195,7 +200,7 @@ const androidStyles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text_color_1,
     textAlign: 'center',
     lineHeight: 18,
   },
@@ -209,18 +214,29 @@ const androidStyles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#4ADE80',
     marginRight: 4,
   },
   statusText: {
     fontSize: 10,
-    color: '#FFFFFF80',
+    color: colors.text_color_2,
     fontWeight: '500',
   },
   arrowContainer: {
     position: 'absolute',
     top: 12,
     right: 12,
+  },
+  arrowIcon: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderTopWidth: 6,
+    borderBottomWidth: 6,
+    borderLeftWidth: 8,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderLeftColor: colors.text_color_2,
   },
 
   // Add Card Styles (Android)
@@ -229,17 +245,17 @@ const androidStyles = StyleSheet.create({
     height: 140,
     borderRadius: 16,
     margin: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.secondary,
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: colors.accent,
     borderStyle: 'dashed',
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
   },
   addCardContent: {
@@ -252,15 +268,22 @@ const androidStyles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  addCardIcon: {
+    width: 28,
+    height: 28,
+    tintColor: colors.accent,
   },
   addCardText: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.text_color_1,
     textAlign: 'center',
     lineHeight: 16,
   },
@@ -269,97 +292,107 @@ const androidStyles = StyleSheet.create({
 const iosStyles = StyleSheet.create({
   card: {
     flex: 1,
-    height: 100, // Shorter card for iOS
-    borderRadius: 10, // Slightly less rounded corners
-    marginVertical: 6, // Adjusted vertical margin
-    marginHorizontal: 12, // Adjusted horizontal margin
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    height: 100,
+    borderRadius: 10,
+    marginVertical: 6,
+    marginHorizontal: 12,
+    backgroundColor: colors.secondary,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
-      height: 2, // Subtle shadow for depth
+      height: 2,
     },
-    shadowOpacity: 0.1, // Light shadow
+    shadowOpacity: 0.2,
     shadowRadius: 4,
   },
   contentContainer: {
-    flexDirection: 'row', // Horizontal layout for iOS
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    // padding: 12, // Reduced padding
     flex: 1,
+    paddingHorizontal: 12,
   },
   imageAndDetailsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    marginRight: 10, // Space between text details and arrow
+    marginRight: 10,
   },
   imageContainer: {
-    // marginRight: 12, // Space between image and text
+    marginRight: 12,
   },
   businessImage: {
-    width: 38, // Smaller image/icon size
+    width: 38,
     height: 38,
-    borderRadius: 8, // Slightly rounded image corners
+    borderRadius: 8,
   },
   defaultIconContainer: {
     width: 38,
     height: 38,
     borderRadius: 8,
-    backgroundColor: '#E0E0E0', // Lighter background for default icon
     justifyContent: 'center',
     alignItems: 'center',
   },
-  defaultIconColor: {
-    color: '#8E8E93', // iOS gray color for icon
-  },
   textDetailsContainer: {
-    flex: 1, // Allows text to take available space
+    flex: 1,
   },
   title: {
-    fontSize: 15, // Slightly larger font size
-    fontWeight: '600', // Semibold weight common in iOS
-    color: '#1C1C1E', // Darker text for better contrast
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text_color_1,
     lineHeight: 20,
   },
   statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4, // Closer to title
+    marginTop: 4,
   },
   statusDot: {
-    width: 7, // Slightly larger status dot
+    width: 7,
     height: 7,
     borderRadius: 3.5,
     marginRight: 6,
   },
   statusText: {
     fontSize: 12,
-    color: '#8E8E93', // iOS-specific gray for secondary text
+    color: colors.text_color_2,
     fontWeight: '400',
   },
   arrowContainer: {
-    paddingLeft: 8, // Padding for arrow to ensure it's clickable
+    paddingLeft: 8,
+  },
+  arrowIcon: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderTopWidth: 5,
+    borderBottomWidth: 5,
+    borderLeftWidth: 7,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderLeftColor: colors.text_color_2,
   },
 
-  // iOS Specific Add Card Styles
+  // iOS Add Card Styles
   addCard: {
     flex: 1,
     height: 100,
     borderRadius: 10,
     marginVertical: 6,
     marginHorizontal: 12,
-    backgroundColor: '#F9F9F9', // Lighter background for add card
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#D1D1D6', // Subtle, solid border
-    borderStyle: 'solid',
-    shadowColor: '#000',
+    borderColor: colors.accent,
+    borderStyle: 'dashed',
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.05, // Very subtle shadow
+    shadowOpacity: 0.1,
     shadowRadius: 2,
   },
   addCardContent: {
@@ -368,16 +401,26 @@ const iosStyles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
   },
-  addCardIcon: {
+  addIconContainer: {
     width: 40,
     height: 40,
-    tintColor: colors.primary, // Apply primary theme color to the Add icon
+    borderRadius: 20,
+    backgroundColor: colors.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  addCardIcon: {
+    width: 24,
+    height: 24,
+    tintColor: colors.accent,
   },
   addCardText: {
-    fontSize: 14, // Slightly larger font for readability
-    fontWeight: '500', // Medium font weight
-    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text_color_1,
     textAlign: 'center',
     lineHeight: 18,
   },

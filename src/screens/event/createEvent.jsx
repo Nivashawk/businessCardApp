@@ -9,19 +9,22 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   StyleSheet,
+  StatusBar,
+  SafeAreaView,
 } from 'react-native';
 import {format} from 'date-fns';
 import InputBox from '../../components/inputs/textInput';
 import TextAreaBox from '../../components/inputs/textArea';
 import DatePickerBox from '../../components/inputs/datePicker';
 import {typography} from '../../theme/typography';
+import {colors} from '../../theme/colors';
 import SmallButton from '../../components/buttons/smallButton';
 import Dropdown from '../../components/inputs/dropdown';
 import {useDispatch, useSelector} from 'react-redux';
 import {createEvents} from '../../redux/slices/events/createEvents';
 import {useNavigation} from '@react-navigation/native';
 
-const {width} = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
 const data = [
   {label: 'Conference and Seminars', value: 'conference'},
@@ -66,24 +69,7 @@ const CreateEvent = () => {
   const [eventType, setEventType] = useState('');
 
   const loginState = useSelector(state => state.login);
-  console.log('loginState', loginState);
   const createEvent = useSelector(state => state?.eventData);
-  console.log('creatEventdate =>', createEvent);
-
-  // useEffect(() => {
-  //     console.log('createEvent state:', createEvent);
-  //     // if (
-  //     //   createEvent?.status === 'Success'
-  //     // ) {
-  //     //   Toast.show({
-  //     //     type: 'success',
-  //     //     text1: createEvent.message,
-  //     //   });
-  //     //   setTimeout(() => {
-  //     //     navigation.goBack();
-  //     //   }, 500);
-  //     // }
-  //   }, [createEvent]);
 
   const handleSelect = item => {
     setEventType(item?.value);
@@ -118,185 +104,322 @@ const CreateEvent = () => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        {/* Header Section */}
-        {/* <View style={styles.headerContainer}>
-          <Text style={[typography.heading, styles.headerTitle]}>
-            Create Event
-          </Text>
-        </View> */}
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      
+      <View style={styles.container}>
+        {/* Fixed Header */}
+        <View style={styles.headerContainer}>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Create New Event</Text>
+            <Text style={styles.headerSubtitle}>
+              Fill in the details to create your event
+            </Text>
+          </View>
+          <View style={styles.headerDecoration} />
+        </View>
 
-        {/* Form Section */}
-        <View style={styles.formWrapper}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContainer}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}>
-            <View style={styles.cardContainer}>
-              <View style={styles.formContent}>
-                {/* Event Name */}
-                <View style={styles.inputSection}>
-                  <InputBox
-                    label="Event Name"
-                    value={event}
-                    onChangeText={setEvent}
-                    placeholder="Enter Event Name"
-                    keyboardType="default"
-                    required
-                    error={eventError}
-                  />
-                </View>
-
-                {/* Description */}
-                <View style={styles.inputSection}>
-                  <TextAreaBox
-                    label="Description"
-                    value={description}
-                    onChangeText={setDescription}
-                    placeholder="Enter Description"
-                    keyboardType="default"
-                    required
-                    error={descriptionError}
-                  />
-                </View>
-
-                {/* Date and Event Type Row */}
-                <View style={styles.rowSection}>
-                  <View style={styles.columnWrapper}>
-                    <View style={styles.leftColumn}>
-                      <DatePickerBox
-                        label="Event Date"
-                        value={eventdate}
-                        onChange={setEventDate}
+        {/* Content and Button Container */}
+        <View style={styles.contentContainer}>
+          
+          {/* Scrollable Content */}
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <KeyboardAvoidingView 
+              style={styles.flexOne}
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              keyboardVerticalOffset={0}>
+              
+              <ScrollView
+                style={styles.flexOne}
+                contentContainerStyle={styles.scrollContainer}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                bounces={true}>
+                
+                {/* Form Card */}
+                <View style={styles.cardContainer}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.cardTitle}>Event Information</Text>
+                    <View style={styles.cardTitleUnderline} />
+                  </View>
+                  
+                  <View style={styles.formContent}>
+                    {/* Event Name */}
+                    <View style={styles.inputSection}>
+                      <InputBox
+                        label="Event Name"
+                        value={event}
+                        onChangeText={setEvent}
+                        placeholder="Enter Event Name"
+                        keyboardType="default"
                         required
-                        error={eventdateError}
+                        error={eventError}
                       />
                     </View>
-                    <View style={styles.rightColumn}>
-                      <Dropdown
-                        label="Event Type"
-                        data={data}
-                        onSelect={handleSelect}
-                        placeholder="Select an event"
+
+                    {/* Description */}
+                    <View style={styles.inputSection}>
+                      <TextAreaBox
+                        label="Description"
+                        value={description}
+                        onChangeText={setDescription}
+                        placeholder="Enter Event Description"
+                        keyboardType="default"
+                        required
+                        error={descriptionError}
                       />
                     </View>
+
+                    {/* Date and Event Type Row */}
+                    <View style={styles.rowSection}>
+                      <View style={styles.columnWrapper}>
+                        <View style={styles.leftColumn}>
+                          <DatePickerBox
+                            label="Event Date"
+                            value={eventdate}
+                            onChange={setEventDate}
+                            required
+                            error={eventdateError}
+                          />
+                        </View>
+                        <View style={styles.rightColumn}>
+                          <Dropdown
+                            label="Event Type"
+                            data={data}
+                            onSelect={handleSelect}
+                            placeholder="Select an event type"
+                          />
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Event Organiser */}
+                    <View style={styles.inputSection}>
+                      <InputBox
+                        label="Event Organiser"
+                        value={organiser}
+                        onChangeText={setOrganiser}
+                        placeholder="Enter Event Organiser"
+                        keyboardType="default"
+                        required
+                        error={organiserError}
+                      />
+                    </View>
+
+                    {/* Venue */}
+                    <View style={styles.inputSection}>
+                      <TextAreaBox
+                        label="Venue & Address"
+                        value={venue}
+                        onChangeText={setVenue}
+                        placeholder="Enter venue name and address"
+                        keyboardType="default"
+                        required
+                        error={venueError}
+                      />
+                    </View>
+
+                    {/* Button Section - Inside the form card */}
+                    <View style={styles.buttonSection}>
+                      <SmallButton 
+                        title="Create Event" 
+                        onPress={handleSubmit}
+                        style={styles.createButton}
+                      />
+                    </View>
+
                   </View>
                 </View>
 
-                <View style={styles.inputSection}>
-                  <InputBox
-                    label="Event Organiser"
-                    value={organiser}
-                    onChangeText={setOrganiser}
-                    placeholder="Enter Event Organiser"
-                    keyboardType="default"
-                    required
-                    error={organiserError}
-                  />
-                </View>
+                {/* Bottom Spacer */}
+                <View style={styles.bottomSpacer} />
 
-                {/* Venue */}
-                <View style={styles.inputSection}>
-                  <TextAreaBox
-                    label="Venue Name"
-                    value={venue}
-                    onChangeText={setVenue}
-                    placeholder="Enter Venue Name"
-                    keyboardType="default"
-                    required
-                    error={venueError}
-                  />
-                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
 
-                <View style={styles.buttonSection}>
-                  <SmallButton title="Create" onPress={handleSubmit} />
-                </View>
-              </View>
-            </View>
-          </ScrollView>
-
-          {/* Button Section */}
         </View>
-      </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
-  headerContainer: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  headerTitle: {
-    textAlign: 'center',
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  formWrapper: {
+
+  flexOne: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 16,
-    paddingBottom: 20,
-  },
-  cardContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    marginBottom: 16,
-    elevation: 4,
-    shadowColor: '#000',
+
+  // Header Styles
+  headerContainer: {
+    backgroundColor: colors.secondary,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    position: 'relative',
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
+    elevation: 4,
   },
-  formContent: {
+
+  headerContent: {
+    alignItems: 'center',
+  },
+
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: colors.text_color_1,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+
+  headerSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+
+  headerDecoration: {
+    position: 'absolute',
+    bottom: 0,
+    left: '50%',
+    marginLeft: -25,
+    width: 50,
+    height: 3,
+    backgroundColor: colors.gold,
+    borderRadius: 2,
+  },
+
+  // Content Container
+  contentContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+
+  scrollContainer: {
+    flexGrow: 1,
     padding: 20,
+    paddingTop: 24,
   },
+
+  // Card Styles
+  cardContainer: {
+    backgroundColor: colors.secondary,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+    marginBottom: 20,
+  },
+
+  cardHeader: {
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    alignItems: 'center',
+  },
+
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text_color_1,
+    marginBottom: 8,
+  },
+
+  cardTitleUnderline: {
+    width: 40,
+    height: 2,
+    backgroundColor: colors.gold,
+    borderRadius: 1,
+  },
+
+  formContent: {
+    padding: 24,
+  },
+
+  // Input Sections
   inputSection: {
     marginBottom: 20,
   },
+
   rowSection: {
     marginBottom: 20,
-    // backgroundColor: "black",
-    alignItems: 'center',
-    justifyContent: 'center',
   },
+
   columnWrapper: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    gap: 16,
   },
+
   leftColumn: {
     flex: 1,
-    marginRight: 8,
-    //  backgroundColor:"grey"
   },
+
   rightColumn: {
     flex: 1,
-    marginLeft: 8,
-    // backgroundColor:"grey"
   },
+
+  // Button Section - Now inside the card
   buttonSection: {
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-    backgroundColor: '#f5f5f5',
+    marginTop: 32,
+    marginBottom: 8,
     alignItems: 'center',
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+
+  createButton: {
+    width: width * 0.8,
+    maxWidth: 350,
+    paddingVertical: 18,
+    backgroundColor: colors.gold,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.goldDark,
+    shadowColor: colors.gold,
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+    minHeight: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Bottom spacer for extra scroll room
+  bottomSpacer: {
+    height: 40,
   },
 });
 

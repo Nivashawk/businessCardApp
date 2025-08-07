@@ -14,12 +14,10 @@ import {
   Image,
   TouchableWithoutFeedback,
   Keyboard,
-  Dimensions, // Import Dimensions
+  Dimensions,
 } from 'react-native';
 import {useRoute, useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
-import {colors} from '../../theme/colors';
-import {typography} from '../../theme/typography';
 import {updateBusiness} from '../../redux/slices/business/updateBusinessSlices';
 import {getCountry} from '../../redux/slices/business/getCountrySlices';
 import {getState} from '../../redux/slices/business/getStateSlices';
@@ -34,11 +32,32 @@ import {
   BottomSheetModalProvider,
 } from '@gorhom/bottom-sheet';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import ImageCropper from '../../components/imageCropper'; // Adjust path as needed
-import RNFS from 'react-native-fs'; // Import RNFS
+import ImageCropper from '../../components/imageCropper';
+import RNFS from 'react-native-fs';
 import {getIndustry} from '../../redux/slices/business/getIndustrySlices';
 
-const {width, height} = Dimensions.get('window'); // Destructure width and height
+// Your custom colors
+const colors = {
+  surface: '#2a2a2a',
+  border: '#404040',
+  textSecondary: '#C4C4C4',
+  background: '#1a1a1a',
+  primary: '#1f1c2c',
+  secondary: '#2d2d2d',
+  text_color_1: '#FFFFFF',
+  text_color_2: '#C4C4C4',
+  status_green: '#80D97E',
+  status_red: '#DA4035',
+  accent: '#928dab',
+  gold: '#FFD700',
+  goldDark: '#B8860B',
+  goldLight: '#FFFF99',
+  shadow: 'rgba(0, 0, 0, 0.3)',
+  cardGradient: ['#2d2d2d', '#2a2a2a'],
+  shimmer: 'rgba(255, 215, 0, 0.3)',
+};
+
+const {width, height} = Dimensions.get('window');
 
 const UpdateBusiness = () => {
   const navigation = useNavigation();
@@ -47,14 +66,10 @@ const UpdateBusiness = () => {
   const industryData = useSelector(
     state => state.industries?.data?.result?.data ?? [],
   );
-  // console.log('industryData from update', industryData);
   const {businessData} = route.params || {};
 
   const countries = useSelector(state => state?.countries?.data?.result?.data);
   const states = useSelector(state => state?.states?.data?.result?.data);
-
-  console.log("from redux in update business",states);
-  
 
   useEffect(() => {
     dispatch(getIndustry());
@@ -127,7 +142,6 @@ const UpdateBusiness = () => {
   const [selectedBackImage, setSelectedBackImage] = useState(null);
   const [selectedLogoImage, setSelectedLogoImage] = useState(null);
   const [currentImageType, setCurrentImageType] = useState(null);
-  // const [industry, setIndustry] = useState("");
   const bottomSheetModalRef = useRef(null);
   const snapPoints = useMemo(() => ['50%', '80%'], []);
 
@@ -135,48 +149,19 @@ const UpdateBusiness = () => {
   const reconstructImageFromBase64 = (base64String, imageType) => {
     if (!base64String || typeof base64String !== 'string') return null;
 
-    // Check if the base64String already contains the data URI prefix
     const uri = base64String.startsWith('data:')
       ? base64String
       : `data:image/jpeg;base64,${base64String}`;
 
     return {
-      base64: base64String.replace(/^data:image\/\w+;base64,/, ''), // Ensure only base64 part is stored
+      base64: base64String.replace(/^data:image\/\w+;base64,/, ''),
       uri: uri,
-      type: 'image/jpeg', // Assuming JPEG for simplicity or detect from base64String
+      type: 'image/jpeg',
       fileName: `${imageType}_image.jpg`,
-      width: 1000, // Placeholder
-      height: 1000, // Placeholder
+      width: 1000,
+      height: 1000,
     };
   };
-
-  //   const findAndSetIndustry = (industryValue, availableIndustries) => {
-
-  //     console.log("inside filter industry");
-  //     console.log(industryValue, availableIndustries);
-
-  //   if (!industryValue || !availableIndustries || availableIndustries.length === 0) {
-  //     setIndustry('');
-  //     return;
-  //   }
-
-  //   // Convert industryValue to string for consistent comparison
-  //   const industryId = String(industryValue);
-
-  //   // Find the matching industry object
-  //   const matchedIndustry = availableIndustries.find(
-  //     item => String(item.id) === industryId
-  //   );
-
-  //   if (matchedIndustry) {
-  //     console.log('Found matching industry:', matchedIndustry);
-  //     // Set the industry value that matches the dropdown's expected format
-  //     setIndustry(matchedIndustry?.name);
-  //   } else {
-  //     console.log('No matching industry found for ID:', industryId);
-  //     setIndustry('');
-  //   }
-  // };
 
   // Initialize form with existing business data
   useEffect(() => {
@@ -208,7 +193,6 @@ const UpdateBusiness = () => {
         business_mobile: businessData.business_mobile || '',
         industry: parseInt(initialIndustry?.value) || '',
         industryObject: initialIndustry,
-
         business_type: businessData.business_type || 'individual',
         designation: businessData.designation || '',
         is_primary:
@@ -224,7 +208,6 @@ const UpdateBusiness = () => {
         stateObject: initialState,
         country_id: parseInt(initialCountry?.value) || '',
         countryObject: initialCountry,
-        // These will be managed by selectedImage states
         logo: '',
         business_card_front: '',
         business_card_back: '',
@@ -264,8 +247,6 @@ const UpdateBusiness = () => {
           reconstructImageFromBase64(businessData.logo, 'logo'),
         );
       }
-
-      // findAndSetIndustry(businessData.business_industry, industryData);
     }
   }, [businessData]);
 
@@ -289,8 +270,8 @@ const UpdateBusiness = () => {
   const handleSelectIndustry = item => {
     setFormData(prev => ({
       ...prev,
-      industry: item.value, // for backend submission
-      industryObject: item, // for dropdown display
+      industry: item.value,
+      industryObject: item,
     }));
     setErrors(prev => ({...prev, industry: null}));
   };
@@ -301,16 +282,15 @@ const UpdateBusiness = () => {
       ...prev,
       country_id: item.value,
       countryObject: item,
-      state_id: '', // clear previously selected state
-      stateObject: null, // clear selected state object
+      state_id: '',
+      stateObject: null,
     }));
     setErrors(prev => ({
       ...prev,
       country_id: null,
-      state_id: null, // clear error on state as well
+      state_id: null,
     }));
 
-    // Fetch states for this country if needed (you already use useEffect)
     dispatch(getState({country_code: item.value}));
   };
 
@@ -318,10 +298,9 @@ const UpdateBusiness = () => {
   const handleSelectState = item => {
     setFormData(prev => ({
       ...prev,
-      state_id: item.value, // for backend submission
-      stateObject: item, // for dropdown display
+      state_id: item.value,
+      stateObject: item,
     }));
-    // handleInputChange('state_id', item.value);
     setErrors(prev => ({...prev, state_id: null}));
   };
 
@@ -329,25 +308,6 @@ const UpdateBusiness = () => {
   const handleDateChange = date => {
     handleInputChange('associated_date', date);
     setErrors(prev => ({...prev, associated_date: null}));
-  };
-
-  // Filter states based on selected country
-
-
-  // Get selected country name
-  const getSelectedCountryName = () => {
-    if (!formData.country_id) return '';
-    const country = countriesData.find(
-      c => c.id === parseInt(formData.country_id),
-    );
-    return country ? country.name : '';
-  };
-
-  // Get selected state name
-  const getSelectedStateName = () => {
-    if (!formData.state_id) return '';
-    const state = statesData.find(s => s.id === parseInt(formData.state_id));
-    return state ? state.name : '';
   };
 
   // Bottom Sheet functions for image selection
@@ -366,14 +326,13 @@ const UpdateBusiness = () => {
     try {
       bottomSheetModalRef.current?.dismiss();
 
-      // Add a small delay to allow the bottom sheet to dismiss visually
       setTimeout(async () => {
         try {
           const base64Data = await RNFS.readFile(image.path, 'base64');
           const imageData = {
             ...image,
             base64: base64Data,
-            uri: `data:image/jpeg;base64,${base64Data}`, // Ensure URI is set for preview
+            uri: `data:image/jpeg;base64,${base64Data}`,
           };
 
           switch (type) {
@@ -391,7 +350,7 @@ const UpdateBusiness = () => {
           console.error('Error reading image file:', err);
           Alert.alert('Error', 'Failed to read image file. Please try again.');
         }
-      }, 300); // 300ms delay
+      }, 300);
     } catch (err) {
       console.error('Error in handleImageSelected:', err);
     }
@@ -466,8 +425,7 @@ const UpdateBusiness = () => {
     setLoading(true);
 
     try {
-      const { countryObject, stateObject,industryObject , ...filteredFormData } = formData;
-      // Prepare update data with business ID and base64 images
+      const {countryObject, stateObject, industryObject, ...filteredFormData} = formData;
       const updateData = {
         id: businessData.id,
         ...filteredFormData,
@@ -476,10 +434,7 @@ const UpdateBusiness = () => {
         business_card_back: selectedBackImage?.base64 || '',
       };
 
-      // Dispatch update action
-      await dispatch(updateBusiness(updateData)).unwrap(); // Await the unwrap() for better error handling
-
-      // Alert.alert('Success', 'Business details updated successfully!');
+      await dispatch(updateBusiness(updateData)).unwrap();
       navigation.goBack();
     } catch (error) {
       console.error('Update business error:', error);
@@ -544,7 +499,7 @@ const UpdateBusiness = () => {
         <SafeAreaView style={styles.container}>
           <StatusBar
             backgroundColor={colors.background}
-            barStyle="dark-content"
+            barStyle="light-content"
           />
 
           {/* Header */}
@@ -578,7 +533,12 @@ const UpdateBusiness = () => {
                 keyboardShouldPersistTaps="handled">
                 {/* Basic Information */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Basic Information</Text>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIconContainer}>
+                      <Text style={styles.sectionIcon}>🏢</Text>
+                    </View>
+                    <Text style={styles.sectionTitle}>Basic Information</Text>
+                  </View>
 
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Business Name *</Text>
@@ -590,7 +550,7 @@ const UpdateBusiness = () => {
                       value={formData.name}
                       onChangeText={value => handleInputChange('name', value)}
                       placeholder="Enter business name"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                     />
                     {errors.name && (
                       <Text style={styles.errorText}>{errors.name}</Text>
@@ -606,7 +566,7 @@ const UpdateBusiness = () => {
                         handleInputChange('public_summary', value)
                       }
                       placeholder="Describe your business"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                       multiline
                       numberOfLines={4}
                       textAlignVertical="top"
@@ -638,7 +598,7 @@ const UpdateBusiness = () => {
                         handleInputChange('business_type', value)
                       }
                       placeholder="e.g., individual, company, partnership"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                     />
                   </View>
 
@@ -651,7 +611,7 @@ const UpdateBusiness = () => {
                         handleInputChange('services_products', value)
                       }
                       placeholder="What services or products do you offer?"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                       multiline
                       numberOfLines={3}
                       textAlignVertical="top"
@@ -667,12 +627,11 @@ const UpdateBusiness = () => {
                         handleInputChange('founded_year', value)
                       }
                       placeholder="e.g., 2020"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                       keyboardType="numeric"
                     />
                   </View>
 
-                  {/* Updated Associated Date with DatePickerBox */}
                   <View style={styles.inputContainer}>
                     <DatePickerBox
                       label="Date Associated with Organization"
@@ -686,7 +645,12 @@ const UpdateBusiness = () => {
 
                 {/* Contact Information */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Contact Information</Text>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIconContainer}>
+                      <Text style={styles.sectionIcon}>📞</Text>
+                    </View>
+                    <Text style={styles.sectionTitle}>Contact Information</Text>
+                  </View>
 
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Business Mobile *</Text>
@@ -700,7 +664,7 @@ const UpdateBusiness = () => {
                         handleInputChange('business_mobile', value)
                       }
                       placeholder="Enter mobile number"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                       keyboardType="phone-pad"
                     />
                     {errors.business_mobile && (
@@ -722,7 +686,7 @@ const UpdateBusiness = () => {
                         handleInputChange('mobile_2', value)
                       }
                       placeholder="Enter secondary mobile number"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                       keyboardType="phone-pad"
                     />
                     {errors.mobile_2 && (
@@ -742,7 +706,7 @@ const UpdateBusiness = () => {
                         handleInputChange('business_email', value)
                       }
                       placeholder="Enter email address"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                       keyboardType="email-address"
                       autoCapitalize="none"
                     />
@@ -765,7 +729,7 @@ const UpdateBusiness = () => {
                         handleInputChange('website', value)
                       }
                       placeholder="https://www.example.com"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                       keyboardType="url"
                       autoCapitalize="none"
                     />
@@ -777,7 +741,12 @@ const UpdateBusiness = () => {
 
                 {/* Location */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Location</Text>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIconContainer}>
+                      <Text style={styles.sectionIcon}>📍</Text>
+                    </View>
+                    <Text style={styles.sectionTitle}>Location</Text>
+                  </View>
 
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Street Address</Text>
@@ -786,7 +755,7 @@ const UpdateBusiness = () => {
                       value={formData.street}
                       onChangeText={value => handleInputChange('street', value)}
                       placeholder="Enter street address"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                     />
                   </View>
 
@@ -799,7 +768,7 @@ const UpdateBusiness = () => {
                         handleInputChange('street2', value)
                       }
                       placeholder="Enter additional address info"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                     />
                   </View>
 
@@ -810,7 +779,7 @@ const UpdateBusiness = () => {
                       value={formData.city}
                       onChangeText={value => handleInputChange('city', value)}
                       placeholder="Enter city name"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                     />
                   </View>
 
@@ -824,7 +793,7 @@ const UpdateBusiness = () => {
                       value={formData.zip}
                       onChangeText={value => handleInputChange('zip', value)}
                       placeholder="Enter postal code"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                       keyboardType="numeric"
                     />
                     {errors.zip && (
@@ -832,7 +801,6 @@ const UpdateBusiness = () => {
                     )}
                   </View>
 
-                  {/* Updated Country with DropdownWSearch */}
                   <View style={styles.inputContainer}>
                     <DropdownWSearch
                       label="Country"
@@ -847,7 +815,6 @@ const UpdateBusiness = () => {
                     />
                   </View>
 
-                  {/* Updated State with DropdownWSearch */}
                   <View style={styles.inputContainer}>
                     <DropdownWSearch
                       label="State"
@@ -866,7 +833,12 @@ const UpdateBusiness = () => {
 
                 {/* Leadership */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Leadership</Text>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIconContainer}>
+                      <Text style={styles.sectionIcon}>👤</Text>
+                    </View>
+                    <Text style={styles.sectionTitle}>Leadership</Text>
+                  </View>
 
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Partner/Owner Name</Text>
@@ -877,7 +849,7 @@ const UpdateBusiness = () => {
                         handleInputChange('partner_name', value)
                       }
                       placeholder="Enter partner/owner name"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                     />
                   </View>
 
@@ -890,14 +862,19 @@ const UpdateBusiness = () => {
                         handleInputChange('designation', value)
                       }
                       placeholder="e.g., CEO, Founder, Manager"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                     />
                   </View>
                 </View>
 
                 {/* Business Documents */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Business Documents</Text>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIconContainer}>
+                      <Text style={styles.sectionIcon}>📄</Text>
+                    </View>
+                    <Text style={styles.sectionTitle}>Business Documents</Text>
+                  </View>
 
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>GST Number</Text>
@@ -911,7 +888,7 @@ const UpdateBusiness = () => {
                         handleInputChange('gst', value.toUpperCase())
                       }
                       placeholder="Enter GST number"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                       autoCapitalize="characters"
                     />
                     {errors.gst && (
@@ -931,7 +908,7 @@ const UpdateBusiness = () => {
                         handleInputChange('pan', value.toUpperCase())
                       }
                       placeholder="Enter PAN number"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                       autoCapitalize="characters"
                     />
                     {errors.pan && (
@@ -942,7 +919,12 @@ const UpdateBusiness = () => {
 
                 {/* Business Media */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Business Media</Text>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIconContainer}>
+                      <Text style={styles.sectionIcon}>📸</Text>
+                    </View>
+                    <Text style={styles.sectionTitle}>Business Media</Text>
+                  </View>
 
                   {/* Logo */}
                   <View style={styles.inputContainer}>
@@ -950,9 +932,12 @@ const UpdateBusiness = () => {
                     <TouchableOpacity
                       style={styles.imagePickerButton}
                       onPress={() => openBottomSheet('logo')}>
-                      <Text style={styles.imagePickerText}>
-                        {selectedLogoImage ? 'Change Logo' : 'Upload Logo'}
-                      </Text>
+                      <View style={styles.imagePickerContent}>
+                        <Text style={styles.imagePickerIcon}>🏢</Text>
+                        <Text style={styles.imagePickerText}>
+                          {selectedLogoImage ? 'Change Logo' : 'Upload Logo'}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                     {renderImagePreview(selectedLogoImage, 'Current Logo')}
                   </View>
@@ -963,11 +948,14 @@ const UpdateBusiness = () => {
                     <TouchableOpacity
                       style={styles.imagePickerButton}
                       onPress={() => openBottomSheet('front')}>
-                      <Text style={styles.imagePickerText}>
-                        {selectedFrontImage
-                          ? 'Change Card Front'
-                          : 'Upload Card Front'}
-                      </Text>
+                      <View style={styles.imagePickerContent}>
+                        <Text style={styles.imagePickerIcon}>🎴</Text>
+                        <Text style={styles.imagePickerText}>
+                          {selectedFrontImage
+                            ? 'Change Card Front'
+                            : 'Upload Card Front'}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                     {renderImagePreview(
                       selectedFrontImage,
@@ -981,11 +969,14 @@ const UpdateBusiness = () => {
                     <TouchableOpacity
                       style={styles.imagePickerButton}
                       onPress={() => openBottomSheet('back')}>
-                      <Text style={styles.imagePickerText}>
-                        {selectedBackImage
-                          ? 'Change Card Back'
-                          : 'Upload Card Back'}
-                      </Text>
+                      <View style={styles.imagePickerContent}>
+                        <Text style={styles.imagePickerIcon}>🎴</Text>
+                        <Text style={styles.imagePickerText}>
+                          {selectedBackImage
+                            ? 'Change Card Back'
+                            : 'Upload Card Back'}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                     {renderImagePreview(selectedBackImage, 'Current Card Back')}
                   </View>
@@ -1000,7 +991,7 @@ const UpdateBusiness = () => {
                         handleInputChange('promo_video', value)
                       }
                       placeholder="Enter promotional video URL"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={colors.textSecondary}
                       autoCapitalize="none"
                     />
                   </View>
@@ -1008,90 +999,115 @@ const UpdateBusiness = () => {
 
                 {/* Social Media */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Social Media</Text>
-
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Instagram</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={formData.social_insta}
-                      onChangeText={value =>
-                        handleInputChange('social_insta', value)
-                      }
-                      placeholder="@username or full URL"
-                      placeholderTextColor="#9ca3af"
-                      autoCapitalize="none"
-                    />
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIconContainer}>
+                      <Text style={styles.sectionIcon}>📱</Text>
+                    </View>
+                    <Text style={styles.sectionTitle}>Social Media</Text>
                   </View>
 
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Facebook</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={formData.social_fb}
-                      onChangeText={value =>
-                        handleInputChange('social_fb', value)
-                      }
-                      placeholder="Username or full URL"
-                      placeholderTextColor="#9ca3af"
-                      autoCapitalize="none"
-                    />
-                  </View>
+                  <View style={styles.socialMediaGrid}>
+                    <View style={styles.socialInputContainer}>
+                      <Text style={styles.inputLabel}>Instagram</Text>
+                      <View style={styles.socialInputWrapper}>
+                        <Text style={styles.socialIcon}>📷</Text>
+                        <TextInput
+                          style={styles.socialTextInput}
+                          value={formData.social_insta}
+                          onChangeText={value =>
+                            handleInputChange('social_insta', value)
+                          }
+                          placeholder="@username"
+                          placeholderTextColor={colors.textSecondary}
+                          autoCapitalize="none"
+                        />
+                      </View>
+                    </View>
 
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>LinkedIn</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={formData.social_linkedin}
-                      onChangeText={value =>
-                        handleInputChange('social_linkedin', value)
-                      }
-                      placeholder="Username or full URL"
-                      placeholderTextColor="#9ca3af"
-                      autoCapitalize="none"
-                    />
-                  </View>
+                    <View style={styles.socialInputContainer}>
+                      <Text style={styles.inputLabel}>Facebook</Text>
+                      <View style={styles.socialInputWrapper}>
+                        <Text style={styles.socialIcon}>📘</Text>
+                        <TextInput
+                          style={styles.socialTextInput}
+                          value={formData.social_fb}
+                          onChangeText={value =>
+                            handleInputChange('social_fb', value)
+                          }
+                          placeholder="Username"
+                          placeholderTextColor={colors.textSecondary}
+                          autoCapitalize="none"
+                        />
+                      </View>
+                    </View>
 
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Twitter</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={formData.social_twitter}
-                      onChangeText={value =>
-                        handleInputChange('social_twitter', value)
-                      }
-                      placeholder="@username or full URL"
-                      placeholderTextColor="#9ca3af"
-                      autoCapitalize="none"
-                    />
-                  </View>
+                    <View style={styles.socialInputContainer}>
+                      <Text style={styles.inputLabel}>LinkedIn</Text>
+                      <View style={styles.socialInputWrapper}>
+                        <Text style={styles.socialIcon}>💼</Text>
+                        <TextInput
+                          style={styles.socialTextInput}
+                          value={formData.social_linkedin}
+                          onChangeText={value =>
+                            handleInputChange('social_linkedin', value)
+                          }
+                          placeholder="Username"
+                          placeholderTextColor={colors.textSecondary}
+                          autoCapitalize="none"
+                        />
+                      </View>
+                    </View>
 
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>YouTube</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={formData.social_youtube}
-                      onChangeText={value =>
-                        handleInputChange('social_youtube', value)
-                      }
-                      placeholder="Channel URL"
-                      placeholderTextColor="#9ca3af"
-                      autoCapitalize="none"
-                    />
-                  </View>
+                    <View style={styles.socialInputContainer}>
+                      <Text style={styles.inputLabel}>Twitter</Text>
+                      <View style={styles.socialInputWrapper}>
+                        <Text style={styles.socialIcon}>🐦</Text>
+                        <TextInput
+                          style={styles.socialTextInput}
+                          value={formData.social_twitter}
+                          onChangeText={value =>
+                            handleInputChange('social_twitter', value)
+                          }
+                          placeholder="@username"
+                          placeholderTextColor={colors.textSecondary}
+                          autoCapitalize="none"
+                        />
+                      </View>
+                    </View>
 
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Google Business</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={formData.social_google_business}
-                      onChangeText={value =>
-                        handleInputChange('social_google_business', value)
-                      }
-                      placeholder="Google Business profile URL"
-                      placeholderTextColor="#9ca3af"
-                      autoCapitalize="none"
-                    />
+                    <View style={styles.socialInputContainer}>
+                      <Text style={styles.inputLabel}>YouTube</Text>
+                      <View style={styles.socialInputWrapper}>
+                        <Text style={styles.socialIcon}>📺</Text>
+                        <TextInput
+                          style={styles.socialTextInput}
+                          value={formData.social_youtube}
+                          onChangeText={value =>
+                            handleInputChange('social_youtube', value)
+                          }
+                          placeholder="Channel URL"
+                          placeholderTextColor={colors.textSecondary}
+                          autoCapitalize="none"
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.socialInputContainer}>
+                      <Text style={styles.inputLabel}>Google Business</Text>
+                      <View style={styles.socialInputWrapper}>
+                        <Text style={styles.socialIcon}>🏪</Text>
+                        <TextInput
+                          style={styles.socialTextInput}
+                          value={formData.social_google_business}
+                          onChangeText={value =>
+                            handleInputChange('social_google_business', value)
+                          }
+                          placeholder="Profile URL"
+                          placeholderTextColor={colors.textSecondary}
+                          autoCapitalize="none"
+                        />
+                      </View>
+                    </View>
                   </View>
                 </View>
 
@@ -1112,17 +1128,14 @@ const UpdateBusiness = () => {
           enableOverDrag={false}
           keyboardBehavior="extend"
           keyboardBlurBehavior="restore"
-          backgroundStyle={{
-            borderRadius: 16,
-            backgroundColor: colors.secondary,
-          }}>
+          backgroundStyle={styles.bottomSheetBackground}>
           <BottomSheetView style={styles.modalContentContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Upload Image</Text>
               <TouchableOpacity
                 onPress={closeBottomSheet}
                 style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>×</Text>
+                <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
             </View>
             <ImageCropper
@@ -1141,50 +1154,60 @@ const UpdateBusiness = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#ffffff',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    borderBottomColor: colors.border,
+    elevation: 4,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
   },
   cancelButton: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.secondary,
   },
   cancelButtonText: {
     fontSize: 16,
-    color: '#6b7280',
-    fontWeight: '500',
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: colors.text_color_1,
+    textAlign: 'center',
+    flex: 1,
   },
   saveButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: colors.gold,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: colors.gold,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   saveButtonDisabled: {
-    backgroundColor: '#d1d5db',
+    backgroundColor: colors.accent,
+    opacity: 0.6,
   },
   saveButtonText: {
     fontSize: 16,
-    color: '#ffffff',
-    fontWeight: '600',
+    color: colors.background,
+    fontWeight: 'bold',
   },
   keyboardAvoid: {
     flex: 1,
@@ -1196,116 +1219,194 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   section: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.secondary,
     marginHorizontal: 16,
     marginTop: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    elevation: 3,
+    shadowColor: colors.shadow,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  sectionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.gold + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  sectionIcon: {
+    fontSize: 20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 20,
+    color: colors.text_color_1,
+    flex: 1,
   },
   inputContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text_color_1,
     marginBottom: 8,
   },
   textInput: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
-    color: '#1f2937',
-    backgroundColor: '#ffffff',
+    color: colors.text_color_1,
+    backgroundColor: colors.surface,
+    minHeight: 50,
   },
   multilineInput: {
-    height: 80,
+    minHeight: 100,
     textAlignVertical: 'top',
+    paddingTop: 14,
   },
   inputError: {
-    borderColor: '#ef4444',
+    borderColor: colors.status_red,
+    borderWidth: 2,
   },
   errorText: {
-    fontSize: 12,
-    color: '#ef4444',
-    marginTop: 4,
+    fontSize: 13,
+    color: colors.status_red,
+    marginTop: 6,
+    fontWeight: '500',
   },
   imagePickerButton: {
-    backgroundColor: '#f3f4f6',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingVertical: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.gold,
+    borderStyle: 'dashed',
+    borderRadius: 16,
+    paddingVertical: 20,
     paddingHorizontal: 16,
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+    elevation: 1,
+  },
+  imagePickerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  imagePickerIcon: {
+    fontSize: 24,
+    marginRight: 12,
   },
   imagePickerText: {
     fontSize: 16,
-    color: '#374151',
-    fontWeight: '500',
+    color: colors.gold,
+    fontWeight: '600',
   },
   imagePreview: {
-    marginTop: 8,
-    alignItems: 'center', // Center the image preview
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   imagePreviewLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 4,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 8,
+    fontWeight: '500',
   },
   previewImage: {
-    width: width * 0.4, // Make it responsive
-    height: width * 0.3, // Make it responsive, adjust aspect ratio as needed
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
+    width: width * 0.5,
+    height: width * 0.35,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.gold,
+  },
+  socialMediaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  socialInputContainer: {
+    width: '48%',
+    marginBottom: 16,
+  },
+  socialInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  socialIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  socialTextInput: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text_color_1,
+    paddingVertical: 10,
   },
   bottomSpacing: {
     height: 100,
   },
-  // Styles for BottomSheetModal from upload.jsx
+  bottomSheetBackground: {
+    borderRadius: 20,
+    backgroundColor: colors.secondary,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   modalContentContainer: {
-    padding: 16,
-    marginBottom: height * 0.01,
+    padding: 20,
+    flex: 1,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text || '#000',
-  },
-  closeButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButtonText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#666',
+    color: colors.text_color_1,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  closeButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.textSecondary,
   },
 });
 

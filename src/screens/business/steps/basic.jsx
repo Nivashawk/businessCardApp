@@ -17,6 +17,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
+import {colors} from '../../../theme/colors';
 import InputBox from '../../../components/inputs/textInput';
 import TextAreaBox from '../../../components/inputs/textArea';
 import PhoneNumberInput from '../../../components/inputs/phoneNumberInput';
@@ -205,7 +206,6 @@ const Basic = forwardRef(({initialData}, ref) => {
         isValid = false;
       }
 
-
       return isValid;
     },
 
@@ -349,14 +349,18 @@ const Basic = forwardRef(({initialData}, ref) => {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContainer: {
     flexGrow: 1,
+    backgroundColor: colors.background,
   },
   inner: {
     flexGrow: 1,
+    backgroundColor: colors.background,
     paddingTop: height * 0.025,
     paddingBottom: height * 0.1,
+    paddingHorizontal: 16,
   },
 });
 

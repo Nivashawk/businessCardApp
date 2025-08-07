@@ -1,4 +1,4 @@
-// Enhanced CreateBusiness.js with better upload handling
+// Enhanced CreateBusiness.js with better upload handling and updated colors
 
 import React, {useRef, useState, useEffect, useCallback} from 'react';
 import {
@@ -11,6 +11,8 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
+  SafeAreaView,
 } from 'react-native';
 import {useSelector, useDispatch} from 'react-redux';
 import {createBusiness} from '../../redux/slices/business/createBusinessSlices';
@@ -343,98 +345,112 @@ const CreateBusiness = () => {
   const StepComponent = steps[index].Component;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
-      {/* Progress Bar */}
-      <View style={styles.progressContainer}>
-        <Animated.View
-          style={[
-            styles.progressBar,
-            {
-              width: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: ['0%', '100%'],
-              }),
-            },
-          ]}
-        />
-      </View>
-
-      {/* Tab Navigation */}
-      <View style={styles.tabs}>
-        {steps.map((step, i) => (
-          <TouchableOpacity
-            key={step.key}
-            onPress={() => handleTabPress(i)}
-            style={[styles.tab, index === i && styles.activeTab]}>
-            <View
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={colors.background}
+        translucent={false}
+      />
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          style={styles.keyboardContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
+          
+          {/* Progress Bar */}
+          <View style={styles.progressContainer}>
+            <Animated.View
               style={[
-                styles.stepNumber,
-                index === i && styles.activeStepNumber,
-                i < index && styles.completedStepNumber,
-              ]}>
-              <Text
-                style={[
-                  styles.stepNumberText,
-                  index === i && styles.activeStepNumberText,
-                  i < index && styles.completedStepNumberText,
-                ]}>
-                {i + 1}
+                styles.progressBar,
+                {
+                  width: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%'],
+                  }),
+                },
+              ]}
+            />
+          </View>
+
+          {/* Tab Navigation */}
+          <View style={styles.tabs}>
+            {steps.map((step, i) => (
+              <TouchableOpacity
+                key={step.key}
+                onPress={() => handleTabPress(i)}
+                style={[styles.tab, index === i && styles.activeTab]}>
+                <View
+                  style={[
+                    styles.stepNumber,
+                    index === i && styles.activeStepNumber,
+                    i < index && styles.completedStepNumber,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.stepNumberText,
+                      index === i && styles.activeStepNumberText,
+                      i < index && styles.completedStepNumberText,
+                    ]}>
+                    {i + 1}
+                  </Text>
+                </View>
+
+                <Text
+                  style={[
+                    styles.tabText,
+                    index === i && styles.activeTabText,
+                    i < index && styles.completedTabText,
+                  ]}>
+                  {step.label}
+                </Text>
+
+                {index === i && <View style={styles.activeTabIndicator} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Step Content */}
+          <Animated.ScrollView 
+            style={styles.stepContainer}
+            contentContainerStyle={{flexGrow: 1}}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            {...panResponder.panHandlers}>
+            <StepComponent
+              ref={steps[index].ref}
+              initialData={getCurrentStepData()}
+              onDataChange={
+                index === 2
+                  ? data => {
+                      console.log('Upload component data changed:', data);
+                    }
+                  : undefined
+              }
+            />
+          </Animated.ScrollView>
+
+          {/* Navigation Buttons */}
+          <View style={styles.navButtons}>
+            <TouchableOpacity
+              style={[styles.button, styles.secondaryButton, index === 0 && styles.disabledButton]}
+              disabled={index === 0}
+              onPress={handlePrevious}>
+              <Text style={[styles.buttonText, styles.secondaryButtonText, index === 0 && styles.disabledButtonText]}>
+                Previous
               </Text>
-            </View>
+            </TouchableOpacity>
 
-            <Text
-              style={[
-                styles.tabText,
-                index === i && styles.activeTabText,
-                i < index && styles.completedTabText,
-              ]}>
-              {step.label}
-            </Text>
-
-            {index === i && <View style={styles.activeTabIndicator} />}
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Step Content */}
-      <Animated.ScrollView style={styles.stepContainer}
-    contentContainerStyle={{flexGrow: 1}}
-    keyboardShouldPersistTaps="handled"
-    showsVerticalScrollIndicator={true}
-    
-    {...panResponder.panHandlers} >
-        <StepComponent
-          ref={steps[index].ref}
-          initialData={getCurrentStepData()}
-          onDataChange={
-            index === 2
-              ? data => {
-                  console.log('Upload component data changed:', data);
-                }
-              : undefined
-          }
-        />
-      </Animated.ScrollView>
-
-      {/* Navigation Buttons */}
-      <View style={styles.navButtons}>
-        <TouchableOpacity
-          style={[styles.button, index === 0 && styles.disabledButton]}
-          disabled={index === 0}
-          onPress={handlePrevious}>
-          <Text style={styles.buttonText}>Previous</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>
-            {isLastStep ? 'Create' : 'Next'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+            <TouchableOpacity 
+              style={[styles.button, styles.primaryButton]} 
+              onPress={handleNext}>
+              <Text style={[styles.buttonText, styles.primaryButtonText]}>
+                {isLastStep ? 'Create Business' : 'Next'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 };
 
@@ -445,25 +461,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  progressContainer: {
-    height: 4,
-    width: '100%',
-    backgroundColor: colors.secondary,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: colors.primary,
-  },
-  tabs: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+  safeArea: {
+    flex: 1,
     backgroundColor: colors.background,
+  },
+  keyboardContainer: {
+    flex: 1,
+  },
+  progressContainer: {
+    height: 6,
+    width: '100%',
+    backgroundColor: colors.surface,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 1,
@@ -471,112 +481,189 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
+  progressBar: {
+    height: 6,
+    backgroundColor: colors.gold,
+    borderRadius: 3,
+  },
+  tabs: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    backgroundColor: colors.secondary,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    elevation: 4,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
   tab: {
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
     minWidth: 70,
     position: 'relative',
-  },
-  activeTab: {
-    backgroundColor: colors.primary + '10',
     borderRadius: 12,
   },
+  activeTab: {
+    backgroundColor: colors.gold + '15', // 15% opacity
+    transform: [{scale: 1.05}],
+  },
   stepNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#e0e0e0',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
     borderWidth: 2,
-    borderColor: '#e0e0e0',
+    borderColor: colors.border,
+    elevation: 2,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   activeStepNumber: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.gold,
+    borderColor: colors.gold,
+    elevation: 4,
+    shadowColor: colors.gold,
+    shadowOpacity: 0.3,
   },
   completedStepNumber: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
+    backgroundColor: colors.status_green,
+    borderColor: colors.status_green,
+    elevation: 3,
   },
   stepNumberText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#666',
+    color: colors.text_color_2,
   },
   activeStepNumberText: {
-    color: '#fff',
+    color: colors.primary,
+    fontSize: 15,
   },
   completedStepNumberText: {
-    color: '#fff',
+    color: colors.text_color_1,
   },
   tabText: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text_color_2,
     textAlign: 'center',
     fontWeight: '500',
   },
   activeTabText: {
-    color: colors.primary,
+    color: colors.gold,
     fontWeight: 'bold',
+    fontSize: 13,
   },
   completedTabText: {
-    color: '#4CAF50',
+    color: colors.status_green,
     fontWeight: '600',
   },
   activeTabIndicator: {
     position: 'absolute',
-    bottom: -16,
+    bottom: -20,
     left: '50%',
-    marginLeft: -12,
-    width: 24,
-    height: 3,
-    backgroundColor: colors.primary,
+    marginLeft: -15,
+    width: 30,
+    height: 4,
+    backgroundColor: colors.gold,
     borderRadius: 2,
+    elevation: 2,
+    shadowColor: colors.gold,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
   },
   stepContainer: {
     flex: 1,
-    paddingLeft: 20,
-    paddingRight: 20,
-    paddingBottom: 80,
+    paddingHorizontal: 20,
+    paddingBottom: 100, // Space for navigation buttons
+    backgroundColor: colors.background,
   },
   navButtons: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.background,
+    backgroundColor: colors.secondary,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
     borderTopWidth: 1,
-    borderTopColor: '#ddd',
+    borderTopColor: colors.border,
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
-      height: -2,
+      height: -4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    gap: 16,
+  },
+  button: {
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+    elevation: 3,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  button: {
-    backgroundColor: colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    minWidth: 100,
-    alignItems: 'center',
+  primaryButton: {
+    backgroundColor: colors.gold,
+    elevation: 4,
+    shadowColor: colors.gold,
+    shadowOpacity: 0.3,
+  },
+  secondaryButton: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   disabledButton: {
-    backgroundColor: '#ccc',
+    backgroundColor: colors.border,
+    borderColor: colors.border,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   buttonText: {
-    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  primaryButtonText: {
+    color: colors.primary,
+  },
+  secondaryButtonText: {
+    color: colors.text_color_1,
+  },
+  disabledButtonText: {
+    color: colors.text_color_2,
   },
 });

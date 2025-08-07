@@ -35,7 +35,7 @@ const Login = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.secondary} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
@@ -48,12 +48,14 @@ const Login = () => {
           <View style={styles.container}>
             {/* Hero Section */}
             <View style={styles.heroSection}>
-              {/* Decorative Elements */}
+              {/* Decorative Elements with Shimmer Effect */}
               <View style={styles.decorativeCircle1} />
               <View style={styles.decorativeCircle2} />
+              <View style={styles.shimmerOverlay} />
               
               {/* Logo */}
               <View style={styles.logoContainer}>
+                <View style={styles.logoGlow} />
                 <Image 
                   style={styles.logoImage} 
                   resizeMode="contain" 
@@ -74,6 +76,9 @@ const Login = () => {
 
             {/* Login Card */}
             <View style={styles.loginCard}>
+              {/* Gradient Overlay */}
+              <View style={styles.cardGradient} />
+              
               {/* Card Header */}
               <View style={styles.cardHeader}>
                 <View style={styles.stepIndicator}>
@@ -93,7 +98,7 @@ const Login = () => {
                   keyboardType="email-address"
                   required
                   error={emailError}
-                  editable={!loading} // Disable input during loading
+                  editable={!loading}
                 />
                 
                 {/* Help Text */}
@@ -107,7 +112,7 @@ const Login = () => {
                 <LargeButton 
                   title={loading ? "Sending Code..." : "Send Verification Code"}
                   onPress={handleSignIn}
-                  disabled={loading} // Disable button during loading
+                  disabled={loading}
                   style={[
                     styles.primaryButton,
                     loading && styles.buttonDisabled
@@ -119,7 +124,7 @@ const Login = () => {
                   <View style={styles.loadingContainer}>
                     <ActivityIndicator 
                       size="small" 
-                      color={colors.primary || '#007AFF'} 
+                      color={colors.gold} 
                     />
                     <Text style={styles.loadingText}>
                       Sending verification code...
@@ -145,11 +150,9 @@ const Login = () => {
               <TouchableOpacity 
                 style={styles.faqButton}
                 onPress={() => {
-                  // You can either navigate to FAQ page or show an alert
-                  // For now, showing inline explanation
                   alert('We use email + OTP for enhanced security. No passwords to remember or forget! 🔐');
                 }}
-                disabled={loading} // Disable during loading
+                disabled={loading}
               >
                 <Text style={[
                   styles.faqText,
@@ -163,7 +166,7 @@ const Login = () => {
               <TouchableOpacity 
                 onPress={navigateToSignup} 
                 style={styles.signupSection}
-                disabled={loading} // Disable during loading
+                disabled={loading}
               >
                 <Text style={[
                   styles.signupText,
@@ -189,7 +192,7 @@ const Login = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.background,
   },
   keyboardAvoid: {
     flex: 1,
@@ -217,7 +220,12 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: colors.primary ? `${colors.primary}15` : '#007AFF15',
+    backgroundColor: colors.gold + '15',
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 5,
   },
   decorativeCircle2: {
     position: 'absolute',
@@ -226,18 +234,46 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.accent ? `${colors.accent}20` : '#FF6B3520',
+    backgroundColor: colors.accent + '25',
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 3,
   },
+  // shimmerOverlay: {
+  //   position: 'absolute',
+  //   top: 0,
+  //   left: 0,
+  //   right: 0,
+  //   bottom: 0,
+  //   backgroundColor: colors.shimmer,
+  //   opacity: 0.1,
+  //   borderRadius: 20,
+  // },
   logoContainer: {
     marginBottom: 32,
     alignItems: 'center',
+    position: 'relative',
   },
+  // logoGlow: {
+  //   position: 'absolute',
+  //   width: width * 0.7,
+  //   height: height * 0.2,
+  //   backgroundColor: colors.gold,
+  //   opacity: 0.1,
+  //   borderRadius: 100,
+  //   blur: 50,
+  //   zIndex: 0,
+  // },
   logoImage: {
     height: height * 0.18,
     width: width * 0.65,
     maxHeight: 140,
     maxWidth: 280,
     opacity: 0.95,
+    zIndex: 1,
+    tintColor: colors.gold, // Apply white tint for dark mode
   },
   welcomeSection: {
     alignItems: 'center',
@@ -247,14 +283,17 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: colors.text || '#1a1a1a',
+    color: colors.text_color_1,
     textAlign: 'center',
     marginBottom: 8,
     letterSpacing: -0.5,
+    textShadowColor: colors.shadow,
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   welcomeSubtitle: {
     fontSize: 16,
-    color: colors.textSecondary || '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     maxWidth: 280,
@@ -263,15 +302,28 @@ const styles = StyleSheet.create({
   // Login Card
   loginCard: {
     flex: 0.4,
-    backgroundColor: 'white',
+    backgroundColor: colors.secondary,
     borderRadius: 24,
     padding: 24,
     marginHorizontal: 4,
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.4,
     shadowRadius: 24,
-    elevation: 8,
+    elevation: 12,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  cardGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: colors.gold,
+    opacity: 0.8,
   },
   cardHeader: {
     marginBottom: 24,
@@ -285,12 +337,16 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.primary || '#007AFF',
+    backgroundColor: colors.gold,
     marginRight: 8,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
   },
   stepText: {
     fontSize: 12,
-    color: colors.primary || '#007AFF',
+    color: colors.gold,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -298,7 +354,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.text || '#1a1a1a',
+    color: colors.text_color_1,
     letterSpacing: -0.3,
   },
   inputSection: {
@@ -306,7 +362,7 @@ const styles = StyleSheet.create({
   },
   helpText: {
     fontSize: 14,
-    color: colors.textSecondary || '#666',
+    color: colors.textSecondary,
     marginTop: 8,
     lineHeight: 20,
   },
@@ -314,14 +370,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   primaryButton: {
-    shadowColor: colors.primary || '#007AFF',
+    shadowColor: colors.gold,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.4,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 8,
   },
   buttonDisabled: {
-    opacity: 0.7,
+    opacity: 0.6,
     shadowOpacity: 0.1,
     elevation: 2,
   },
@@ -332,23 +388,27 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.surface,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   loadingText: {
     marginLeft: 8,
     fontSize: 14,
-    color: colors.textSecondary || '#666',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   securityNote: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.surface,
     padding: 12,
     borderRadius: 12,
     borderLeftWidth: 3,
-    borderLeftColor: colors.success || '#28a745',
+    borderLeftColor: colors.status_green,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   securityIcon: {
     marginRight: 8,
@@ -359,7 +419,7 @@ const styles = StyleSheet.create({
   securityText: {
     flex: 1,
     fontSize: 13,
-    color: colors.textSecondary || '#666',
+    color: colors.textSecondary,
     lineHeight: 18,
   },
 
@@ -371,15 +431,17 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   faqButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: colors.surface + '80',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: colors.border + '40',
   },
   faqText: {
     fontSize: 14,
-    color: colors.textSecondary || '#666',
+    color: colors.textSecondary,
     fontStyle: 'italic',
   },
   signupSection: {
@@ -388,22 +450,26 @@ const styles = StyleSheet.create({
   },
   signupText: {
     fontSize: 16,
-    color: colors.textSecondary || '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   signupLink: {
-    color: colors.primary || '#007AFF',
+    color: colors.gold,
     fontWeight: '600',
     textDecorationLine: 'underline',
+    textShadowColor: colors.gold + '40',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   
   // Loading States
   textDisabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   linkDisabled: {
-    opacity: 0.5,
+    opacity: 0.4,
     textDecorationLine: 'none',
+    textShadowRadius: 0,
   },
 });
 

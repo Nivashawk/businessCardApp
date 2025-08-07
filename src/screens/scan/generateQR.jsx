@@ -83,6 +83,7 @@ const GenerateQR = () => {
   const selectedEventName = useMemo(() => {
     return selectedEventOption?.label || '';
   }, [selectedEventOption]);
+  
   const hasQRCode = QRData?.qr_code;
   const hasBusinessUrl = QRData?.business_url;
 
@@ -197,19 +198,23 @@ const GenerateQR = () => {
       <View style={styles.qrContainer}>
         {hasQRCode ? (
           <View style={styles.qrWrapper}>
-            <Image
-              style={styles.qrCode}
-              source={{uri: `data:image/png;base64,${QRData.qr_code}`}}
-              resizeMode="contain"
-            />
+            <View style={styles.qrInnerWrapper}>
+              <Image
+                style={styles.qrCode}
+                source={{uri: `data:image/png;base64,${QRData.qr_code}`}}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.qrGlow} />
             {overallLoading && (
               <View style={styles.loadingOverlay}>
-                <ActivityIndicator size="large" color={colors.primary} />
+                <ActivityIndicator size="large" color={colors.gold} />
               </View>
             )}
           </View>
         ) : (
           <View style={styles.placeholderQR}>
+            <View style={styles.shimmerOverlay} />
             <Image
               source={QrCode}
               style={styles.placeholderImage}
@@ -224,6 +229,7 @@ const GenerateQR = () => {
         {/* QR Info Card */}
         {(selectedBusinessName || selectedEventName) && (
           <View style={styles.infoCard}>
+            <View style={styles.infoCardHeader} />
             {selectedBusinessName && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Business:</Text>
@@ -283,9 +289,12 @@ const GenerateQR = () => {
 
       {/* Instructions */}
       <View style={styles.instructionsContainer}>
-        <Text style={[typography.description, styles.instructionsTitle]}>
-          How to use:
-        </Text>
+        <View style={styles.instructionsHeader}>
+          <Text style={styles.instructionsIcon}>💡</Text>
+          <Text style={[typography.description, styles.instructionsTitle]}>
+            How to use:
+          </Text>
+        </View>
         <Text style={[typography.description, styles.instructionsText]}>
           1. Your primary business is selected by default{'\n'}
           2. Optionally select an event{'\n'}
@@ -312,13 +321,16 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   headerText: {
-    color: colors.text,
+    color: colors.text_color_1,
     marginBottom: 5,
+    textShadowColor: colors.shadow,
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   subHeaderText: {
-    color: colors.textSecondary || colors.text,
+    color: colors.textSecondary,
     textAlign: 'center',
-    opacity: 0.7,
+    opacity: 0.9,
   },
   qrContainer: {
     alignItems: 'center',
@@ -326,21 +338,46 @@ const styles = StyleSheet.create({
   },
   qrWrapper: {
     position: 'relative',
-    backgroundColor: colors.white || '#ffffff',
+    backgroundColor: colors.secondary,
     padding: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 8,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
+    overflow: 'hidden',
+  },
+  qrInnerWrapper: {
+    backgroundColor: colors.text_color_1,
+    borderRadius: 12,
+    padding: 15,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+  },
+  qrGlow: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    right: 10,
+    bottom: 10,
+    backgroundColor: colors.gold,
+    opacity: 0.1,
+    borderRadius: 16,
+    zIndex: 0,
   },
   qrCode: {
     height: height * 0.3,
     width: width * 0.7,
+    zIndex: 1,
   },
   loadingOverlay: {
     position: 'absolute',
@@ -348,56 +385,87 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: colors.surface + 'CC',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 20,
   },
   placeholderQR: {
     alignItems: 'center',
     padding: 30,
-    backgroundColor: colors.surface || colors.background,
-    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.border || colors.primary,
+    borderColor: colors.border,
     borderStyle: 'dashed',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  shimmerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.shimmer,
+    opacity: 0.1,
   },
   placeholderImage: {
     height: height * 0.2,
     width: width * 0.5,
-    opacity: 0.3,
+    opacity: 0.4,
+    tintColor: colors.textSecondary,
   },
   placeholderText: {
     marginTop: 15,
     textAlign: 'center',
-    color: colors.textSecondary || colors.text,
-    opacity: 0.6,
+    color: colors.textSecondary,
+    opacity: 0.8,
   },
   infoCard: {
     marginTop: 20,
-    backgroundColor: colors.surface || colors.primary,
-    padding: 15,
-    borderRadius: 12,
+    backgroundColor: colors.secondary,
+    padding: 20,
+    borderRadius: 16,
     width: width * 0.8,
-    opacity: 0.9,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  infoCardHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: colors.gold,
+    opacity: 0.8,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 8,
+    paddingVertical: 4,
   },
   infoLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary || colors.white,
+    color: colors.gold,
   },
   infoValue: {
     fontSize: 14,
-    color: colors.text || colors.white,
+    color: colors.text_color_1,
     flex: 1,
     textAlign: 'right',
     marginLeft: 10,
+    fontWeight: '500',
   },
   controlsContainer: {
     marginBottom: 30,
@@ -414,34 +482,55 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     flex: 1,
-    backgroundColor: colors.surface || colors.background,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: colors.gold,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   secondaryButtonText: {
-    color: colors.primary,
+    color: colors.gold,
     fontSize: 16,
     fontWeight: '600',
   },
   instructionsContainer: {
-    backgroundColor: colors.surface || colors.background,
+    backgroundColor: colors.secondary,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     marginTop: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  instructionsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  instructionsIcon: {
+    fontSize: 18,
+    marginRight: 8,
   },
   instructionsTitle: {
     fontWeight: '600',
-    marginBottom: 10,
-    color: colors.text,
+    color: colors.text_color_1,
   },
   instructionsText: {
-    lineHeight: 20,
-    color: colors.textSecondary || colors.text,
-    opacity: 0.8,
+    lineHeight: 22,
+    color: colors.textSecondary,
+    opacity: 0.9,
+    paddingLeft: 4,
   },
 });
 

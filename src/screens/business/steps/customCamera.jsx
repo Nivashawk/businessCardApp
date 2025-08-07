@@ -1,5 +1,14 @@
 import React, {useEffect, useState, useRef, useCallback} from 'react';
-import {View, AppState, TouchableOpacity, StyleSheet, Text} from 'react-native';
+import {
+  View, 
+  AppState, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Text, 
+  StatusBar, 
+  SafeAreaView,
+  Platform,
+} from 'react-native';
 import {
   Camera,
   useCameraDevices,
@@ -9,8 +18,13 @@ import {useFocusEffect} from '@react-navigation/native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {capture} from 'react-native-view-shot'; // optional for snapshot, otherwise use frame processor
 import {TabBarStyle} from '../../../theme/tabBar';
-import { colors } from '../../../theme/colors';
-import BackArrow from '../../../../assets/backArrow.svg'
+import {colors} from '../../../theme/colors';
+import BackArrow from '../../../../assets/backArrow.svg';
+
+// Get status bar height for proper positioning
+const getStatusBarHeight = () => {
+  return Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
+};
 
 const CustomCamera = () => {
   const camera = useRef(null);
@@ -139,7 +153,12 @@ const CustomCamera = () => {
   if (!isAppActive) {
     // Don't render camera if app is in background
     return (
-      <View style={styles.container}>
+      <View style={styles.centerContainer}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={colors.background}
+          translucent={false}
+        />
         <Text style={styles.text}>App is not active</Text>
       </View>
     );
@@ -148,7 +167,12 @@ const CustomCamera = () => {
   if (hasPermission === undefined || hasPermission === null) {
     // Still waiting for permission status
     return (
-      <View style={styles.container}>
+      <View style={styles.centerContainer}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={colors.background}
+          translucent={false}
+        />
         <Text style={styles.text}>Checking permissions...</Text>
       </View>
     );
@@ -156,7 +180,12 @@ const CustomCamera = () => {
 
   if (!hasPermission) {
     return (
-      <View style={styles.container}>
+      <View style={styles.centerContainer}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={colors.background}
+          translucent={false}
+        />
         <Text style={styles.text}>Camera permission denied.</Text>
         <Text style={styles.text}>
           Please grant permission in app settings.
@@ -169,7 +198,12 @@ const CustomCamera = () => {
   // If permission granted, but still finding device
   if (!cameraDevice) {
     return (
-      <View style={styles.container}>
+      <View style={styles.centerContainer}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={colors.background}
+          translucent={false}
+        />
         <Text style={styles.text}>Loading camera device...</Text>
         <Text style={styles.text}>Ensure camera permissions are enabled.</Text>
       </View>
@@ -201,6 +235,12 @@ const CustomCamera = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      
       <Camera
         ref={camera}
         style={StyleSheet.absoluteFill}
@@ -209,16 +249,28 @@ const CustomCamera = () => {
         photo={true}
       />
 
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <BackArrow width={30} height={30} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Camera</Text>
-      </View>
+      {/* Fixed Header with proper SafeArea positioning */}
+      <SafeAreaView style={styles.safeAreaTop}>
+        <View style={styles.topBar}>
+          <TouchableOpacity 
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <BackArrow width={24} height={24} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Camera</Text>
+          <View style={styles.placeholder} />
+        </View>
+      </SafeAreaView>
 
-      <TouchableOpacity style={styles.captureBtn} onPress={takePicture}>
-        <Text style={styles.captureText}>📸</Text>
-      </TouchableOpacity>
+      {/* Capture Button with SafeArea for bottom */}
+      <SafeAreaView style={styles.safeAreaBottom}>
+        <TouchableOpacity style={styles.captureBtn} onPress={takePicture}>
+          <View style={styles.captureInner}>
+            <Text style={styles.captureText}>📸</Text>
+          </View>
+        </TouchableOpacity>
+      </SafeAreaView>
     </View>
   );
 };
@@ -228,32 +280,97 @@ export default CustomCamera;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
+  },
+  centerContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  text: {
+    color: colors.text_color_1,
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 10,
+  },
+  safeAreaTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    paddingTop: 10, // Extra padding to ensure clearance from status bar
+  },
+  safeAreaBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingBottom: 20,
+  },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    marginHorizontal: 16,
+    marginTop: 30, // Increased from 10 to 30 for more clearance
+    borderRadius: 25,
+    elevation: 4,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  backButton: {
+    padding: 10,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    color: colors.text_color_1,
+    fontSize: 18,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
+  },
+  placeholder: {
+    width: 44, // Same as backButton to center the title
   },
   captureBtn: {
-    position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 40,
+    backgroundColor: colors.gold,
+    padding: 6,
+    borderRadius: 50,
+    elevation: 8,
+    shadowColor: colors.gold,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+  },
+  captureInner: {
+    backgroundColor: colors.text_color_1,
+    padding: 18,
+    borderRadius: 44,
+    minWidth: 72,
+    minHeight: 72,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   captureText: {
-    fontSize: 24,
+    fontSize: 28,
   },
-    topBar: {
-      position: 'absolute',
-      top: 50,
-      left: 20,
-      right: 20,
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      zIndex: 10,
-    },
-    title: {
-      paddingLeft: 20,
-      color: colors.background,
-      fontSize: 20,
-      fontWeight: '600',
-    },
 });

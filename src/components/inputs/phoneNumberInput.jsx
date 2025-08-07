@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   },
   prefixText: {
     fontSize: 16,
-    color: '#000',
+    color: colors.gold,
   },
   input: {
     flex: 1,

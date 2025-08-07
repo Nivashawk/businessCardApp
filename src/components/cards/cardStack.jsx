@@ -1,734 +1,824 @@
-// CardStack.js
-import React, {useState, useCallback, useEffect, useMemo, useRef} from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
-  Dimensions, // Keep Dimensions for initial window size
   TouchableOpacity,
   Image,
-  Platform,
   Text,
   Linking,
-  useWindowDimensions, // Import useWindowDimensions
-  PixelRatio, // Import PixelRatio for font scaling
-  Animated, // Legacy Animated for EmptyCard
+  useWindowDimensions,
+  PixelRatio,
 } from 'react-native';
-import ReanimatedAnimated, {
+import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  useDerivedValue,
   withTiming,
   runOnJS,
+  interpolate,
+  Extrapolate,
+  withSpring,
+  cancelAnimation,
 } from 'react-native-reanimated';
-import {formatCompanyName, truncateText} from '../../utlis/stringHandler';
-import {GestureDetector, Gesture} from 'react-native-gesture-handler';
-import {useNavigation} from '@react-navigation/native';
-import {colors} from '../../theme/colors';
-import {typography} from '../../theme/typography';
-import Editicon from '../../../assets/edit.svg';
+import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useNavigation } from '@react-navigation/native';
+
+// Import your existing utilities and assets
+import { formatCompanyName, truncateText } from '../../utlis/stringHandler';
+import { colors } from '../../theme/colors';
 import EmptyLogo from '../../../assets/emptylogo.svg';
 import PhoneIcon from '../../../assets/phone.png';
 import MailIcon from '../../../assets/mailIcon.png';
 import Facebook from '../../../assets/socialIcons/facebook.svg';
 import Instagram from '../../../assets/socialIcons/instagram.svg';
 import LinkedIn from '../../../assets/socialIcons/linkedIn.svg';
-import Telegram from '../../../assets/socialIcons/telegram.svg';
-import Whatsapp from '../../../assets/socialIcons/whatsapp.svg';
-import WebsiteIcon from '../../../assets/socialIcons/website.svg'; // Assuming you have a website icon SVG
+import WebsiteIcon from '../../../assets/socialIcons/website.svg';
 
-// Define base dimensions and aspect ratio for responsive scaling
-const BASE_WIDTH = 375; // A common base width for design (e.g., iPhone 8/X)
-const BASE_CARD_WIDTH_RATIO = 0.95; // Card takes 95% of screen width
-const CARD_ASPECT_RATIO = 0.65; // Height / Width, e.g., for a card that's roughly 2/3 as tall as it is wide
+const BASE_WIDTH = 375;
+const CARD_WIDTH_RATIO = 0.92;
+const CARD_HEIGHT = 240;
+const STACK_OFFSET = 14;
+const STACK_SCALE = 0.03;
+const STACK_ROTATION = 1.5;
+const MAX_VISIBLE_CARDS = 4;
 
-const Card = React.memo(({card, style}) => {
-  const navigation = useNavigation();
-  const {width: windowWidth} = useWindowDimensions(); // Get current window dimensions
+const StackedCard = React.memo(({
+  card,
+  index,
+  totalCards,
+  currentIndex,
+  translateX,
+  isFrontCard,
+}) => {
+  const { width: windowWidth } = useWindowDimensions();
 
-  // Calculate dynamic font sizes
+  // Calculate responsive sizes
   const scale = windowWidth / BASE_WIDTH;
+  const cardWidth = windowWidth * CARD_WIDTH_RATIO;
+
   const getResponsiveFontSize = (baseFontSize) => {
     const newSize = baseFontSize * scale;
     return Math.round(PixelRatio.roundToNearestPixel(newSize));
   };
 
-  if (!card) {
-    return null;
-  }
-
+  // Check if card has social links
   const hasSocialLinks = useMemo(() => {
-    return (
-      card.social_fb ||
-      card.social_insta ||
-      card.social_linkedin ||
-      card.social_twitter ||
-      card.social_youtube ||
-      card.website
-    );
-  }, [card]);
+    return !!(card?.social_fb || card?.social_insta || card?.social_linkedin || card?.website);
+  }, [card?.social_fb, card?.social_insta, card?.social_linkedin, card?.website]);
 
+  // Handle website press
   const handleWebsitePress = useCallback(() => {
-    if (card.website) {
+    if (card?.website) {
       const url = card.website.startsWith('http://') || card.website.startsWith('https://')
         ? card.website
         : `http://${card.website}`;
       Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
     }
-  }, [card.website]);
+  }, [card?.website]);
 
-  // Dynamic card styles
-  const responsiveCardWidth = windowWidth * BASE_CARD_WIDTH_RATIO;
-  const responsiveCardHeight = responsiveCardWidth * CARD_ASPECT_RATIO;
+  // Calculate card position in stack based on its index relative to the current front card
+  const position = (index - currentIndex + totalCards) % totalCards;
+  const isVisible = position < MAX_VISIBLE_CARDS;
 
-  // Responsive logo size
-  const responsiveLogoSize = getResponsiveFontSize(50); // Base 50px
+  // Animated styles for stacking effect
+  const cardAnimatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    
+    // Only animate cards that are visible in the stack
+    if (!isVisible) {
+      return {
+        opacity: 0,
+        transform: [
+          { scale: 0.7 },
+          { translateY: STACK_OFFSET * 3 },
+          { translateX: 0 },
+          { rotateZ: '0deg' }
+        ],
+        zIndex: -1,
+      };
+    }
+    
+    // Determine the animated position, which is a key change.
+    // If it's the front card, its position is directly from the gesture (translateX).
+    // Otherwise, its position is static relative to the stack.
+    let animatedPosition;
+    if (isFrontCard) {
+      animatedPosition = interpolate(
+        Math.abs(translateX.value),
+        [0, windowWidth],
+        [0, 1],
+        Extrapolate.CLAMP
+      );
+    } else {
+      animatedPosition = position;
+    }
+    
+    const absPosition = isFrontCard ? animatedPosition : position;
+
+    const scale = interpolate(
+      absPosition,
+      [0, 1, 2, 3],
+      [1, 1 - STACK_SCALE, 1 - STACK_SCALE * 2, 1 - STACK_SCALE * 3],
+      Extrapolate.CLAMP
+    );
+
+    const translateY = interpolate(
+      absPosition,
+      [0, 1, 2, 3],
+      [0, STACK_OFFSET, STACK_OFFSET * 1.8, STACK_OFFSET * 2.5],
+      Extrapolate.CLAMP
+    );
+
+    const staticTranslateX = interpolate(
+      absPosition,
+      [0, 1, 2, 3],
+      [0, -2, 2, -1],
+      Extrapolate.CLAMP
+    );
+
+    const rotateZ = interpolate(
+      absPosition,
+      [0, 1, 2, 3],
+      [0, -STACK_ROTATION, STACK_ROTATION * 0.8, -STACK_ROTATION * 0.5],
+      Extrapolate.CLAMP
+    );
+    
+    // The opacity of the front card is animated based on its swipe
+    // The opacity of the other cards is static based on their position
+    const opacity = isFrontCard
+      ? interpolate(
+          Math.abs(translateX.value),
+          [0, windowWidth],
+          [1, 0],
+          Extrapolate.CLAMP
+        )
+      : interpolate(
+          absPosition,
+          [0, 1, 2, 3],
+          [1, 0.85, 0.7, 0.5],
+          Extrapolate.CLAMP
+        );
+    
+    // The main transform property.
+    // The front card gets the gesture's translateX
+    // The other cards get a static translateX
+    let swipeTranslateX = isFrontCard ? translateX.value : 0;
+    
+    // The rotation is also driven by the front card's swipe
+    let swipeRotation = isFrontCard
+      ? interpolate(
+          translateX.value,
+          [-windowWidth / 2, 0, windowWidth / 2],
+          [-10, 0, 10],
+          Extrapolate.CLAMP
+        )
+      : 0;
+
+    return {
+      opacity,
+      transform: [
+        { scale },
+        { translateY },
+        { translateX: staticTranslateX + swipeTranslateX },
+        { rotateZ: `${rotateZ + swipeRotation}deg` }
+      ],
+      zIndex: MAX_VISIBLE_CARDS - Math.floor(position),
+    };
+  }, [index, currentIndex, totalCards, windowWidth, isFrontCard, translateX, isVisible]);
 
   return (
-    <ReanimatedAnimated.View style={[
-      styles.card,
-      style,
-      {
-        width: responsiveCardWidth,
-        height: responsiveCardHeight,
-        // Add min/max constraints if necessary for very small/large screens
-        minHeight: 180, // Example min height
-        maxHeight: 280, // Example max height
-      }
-    ]}>
-      <View style={[styles.header]}>
-        <View style={[styles.headerLeft]}>
-          {card.logo ? (
-            <Image source={{uri: `data:image/png;base64,${ card.logo}`}} style={[styles.logo, {width: responsiveLogoSize, height: responsiveLogoSize}]} />
-          ) : (
-            <EmptyLogo width={responsiveLogoSize} height={responsiveLogoSize} />
-          )}
-          <ReanimatedAnimated.Text
-            style={[typography.heading, styles.title, {fontSize: getResponsiveFontSize(18), lineHeight: getResponsiveFontSize(25)}]}
-            numberOfLines={2}
-            ellipsizeMode="tail">
-            {formatCompanyName(card.name || '')}
-          </ReanimatedAnimated.Text>
-        </View>
-        {card.active !== undefined && (
-          <View
-            style={[
-              styles.activeStatusContainer,
+    <Animated.View
+      style={[
+        styles.card,
+        cardAnimatedStyle,
+        {
+          width: cardWidth,
+          height: CARD_HEIGHT,
+        }
+      ]}
+      pointerEvents={isFrontCard ? 'auto' : 'none'}
+    >
+      {/* Card background */}
+      <View style={styles.cardBackground} />
+
+      {/* Gold accent border */}
+      <View style={styles.goldBorder} />
+
+      {/* Card content */}
+      <View style={styles.cardContent}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <View style={styles.logoContainer}>
+              {card.logo ? (
+                <Image
+                  source={{ uri: `data:image/png;base64,${card.logo}` }}
+                  style={[styles.logo, {
+                    width: getResponsiveFontSize(40),
+                    height: getResponsiveFontSize(40)
+                  }]}
+                />
+              ) : (
+                <View style={[styles.emptyLogoContainer, {
+                  width: getResponsiveFontSize(40),
+                  height: getResponsiveFontSize(40)
+                }]}>
+                  <EmptyLogo width={getResponsiveFontSize(24)} height={getResponsiveFontSize(24)} />
+                </View>
+              )}
+            </View>
+            <View style={styles.titleContainer}>
+              <Text
+                style={[styles.companyName, { fontSize: getResponsiveFontSize(16) }]}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {formatCompanyName(card.name || '')}
+              </Text>
+              {card.public_summary && (
+                <Text style={[styles.tagline, { fontSize: getResponsiveFontSize(11) }]} numberOfLines={2}>
+                  {truncateText(card.public_summary, 60)}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          {card.active !== undefined && (
+            <View style={[
+              styles.statusContainer,
               card.active ? styles.activeBackground : styles.inactiveBackground,
             ]}>
-            <Text
-              style={[
+              <Text style={[
                 styles.statusText,
-                {fontSize: getResponsiveFontSize(12)}, // Apply responsive font size
+                { fontSize: getResponsiveFontSize(9) },
                 card.active ? styles.activeText : styles.inactiveText,
               ]}>
-              {card.active ? 'Active' : 'Inactive'}
-            </Text>
-          </View>
-        )}
-      </View>
-      <View style={styles.descriptionContainer}>
-        <ReanimatedAnimated.Text style={[typography.description, styles.tagline, {fontSize: getResponsiveFontSize(14)}]}>
-          {truncateText(card.public_summary || '', 70)}
-        </ReanimatedAnimated.Text>
-      </View>
-      <View style={styles.contactContainer}>
-        {card.business_mobile ? (
-          <View style={styles.contactItem}>
-            <Image source={PhoneIcon} style={[styles.contactIcon, {width: getResponsiveFontSize(18), height: getResponsiveFontSize(18)}]} />
-            <Text style={[typography.inputText, styles.contactText, {fontSize: getResponsiveFontSize(14)}]}>
-              {card.business_mobile}
-            </Text>
-          </View>
-        ) : null}
-        {card.business_email ? (
-          <View style={styles.contactItem}>
-            <Image source={MailIcon} style={[styles.contactIcon, {width: getResponsiveFontSize(18), height: getResponsiveFontSize(18)}]} />
-            <Text style={[typography.inputText, styles.contactText, {fontSize: getResponsiveFontSize(14)}]}>
-              {card.business_email}
-            </Text>
-          </View>
-        ) : null}
-      </View>
-      <View style={styles.socialContainer}>
-        <View style={styles.socialleftContainer}>
-          {hasSocialLinks ? (
-            <View style={[styles.socialBg, {padding: getResponsiveFontSize(8), gap: getResponsiveFontSize(15)}]}>
-              {card.social_fb ? <Facebook width={getResponsiveFontSize(20)} height={getResponsiveFontSize(20)} /> : null}
-              {card.social_insta ? <Instagram width={getResponsiveFontSize(20)} height={getResponsiveFontSize(20)} /> : null}
-              {card.social_linkedin ? <LinkedIn width={getResponsiveFontSize(20)} height={getResponsiveFontSize(20)} /> : null}
-              {/* Add Twitter, YouTube if they become available in your data */}
-              {/* {card.social_twitter ? <Twitter width={getResponsiveFontSize(20)} height={getResponsiveFontSize(20)} /> : null} */}
-              {/* {card.social_youtube ? <YouTube width={getResponsiveFontSize(20)} height={getResponsiveFontSize(20)} /> : null} */}
-
-              {card.website ? (
-                <TouchableOpacity onPress={handleWebsitePress}>
-                  <WebsiteIcon width={getResponsiveFontSize(20)} height={getResponsiveFontSize(20)} />
-                </TouchableOpacity>
-              ) : null}
+                {card.active ? 'Active' : 'Inactive'}
+              </Text>
             </View>
-          ) : (
-            <Text style={[typography.description, styles.noSocialLinksText, {fontSize: getResponsiveFontSize(13)}]}>
-              No social links added
-            </Text>
           )}
         </View>
-        <ReanimatedAnimated.View style={styles.socialrightContainer}>
-          {card.is_primary && (
-            <ReanimatedAnimated.Text style={[typography.description, {fontWeight:'bold', fontSize: getResponsiveFontSize(14)}]}>
-              Primary
-            </ReanimatedAnimated.Text>
+
+        {/* Contact info */}
+        <View style={styles.contactSection}>
+          {card.business_mobile && (
+            <View style={styles.contactItem}>
+              <Image
+                source={PhoneIcon}
+                style={[styles.contactIcon, {
+                  width: getResponsiveFontSize(12),
+                  height: getResponsiveFontSize(12)
+                }]}
+              />
+              <Text style={[styles.contactText, { fontSize: getResponsiveFontSize(11) }]}>
+                {card.business_mobile}
+              </Text>
+            </View>
           )}
-        </ReanimatedAnimated.View>
+
+          {card.business_email && (
+            <View style={styles.contactItem}>
+              <Image
+                source={MailIcon}
+                style={[styles.contactIcon, {
+                  width: getResponsiveFontSize(12),
+                  height: getResponsiveFontSize(12)
+                }]}
+              />
+              <Text style={[styles.contactText, { fontSize: getResponsiveFontSize(11) }]}>
+                {card.business_email}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Bottom section with social links and primary badge */}
+        <View style={styles.bottomSection}>
+          <View style={styles.socialContainer}>
+            {hasSocialLinks ? (
+              <View style={styles.socialIcons}>
+                {card.social_fb && (
+                  <Facebook width={getResponsiveFontSize(14)} height={getResponsiveFontSize(14)} />
+                )}
+                {card.social_insta && (
+                  <Instagram width={getResponsiveFontSize(14)} height={getResponsiveFontSize(14)} />
+                )}
+                {card.social_linkedin && (
+                  <LinkedIn width={getResponsiveFontSize(14)} height={getResponsiveFontSize(14)} />
+                )}
+                {card.website && (
+                  <TouchableOpacity onPress={handleWebsitePress}>
+                    <WebsiteIcon width={getResponsiveFontSize(14)} height={getResponsiveFontSize(14)} />
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : (
+              <Text style={[styles.noSocialText, { fontSize: getResponsiveFontSize(9) }]}>
+                No social links
+              </Text>
+            )}
+          </View>
+
+          {card.is_primary && (
+            <View style={styles.primaryBadge}>
+              <Text style={[styles.primaryText, { fontSize: getResponsiveFontSize(8) }]}>
+                PRIMARY
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
-    </ReanimatedAnimated.View>
+
+      {/* Bottom accent */}
+      <View style={styles.cardAccent} />
+    </Animated.View>
   );
 });
 
-const EmptyCard = () => {
-  const navigation = useNavigation();
+const EmptyCard = ({ onPress }) => {
   const { width: windowWidth } = useWindowDimensions();
   const scale = windowWidth / BASE_WIDTH;
-  
-  // Animation values using legacy Animated
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const opacityAnim = useRef(new Animated.Value(0.8)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const cardWidth = windowWidth * CARD_WIDTH_RATIO;
 
   const getResponsiveFontSize = (baseFontSize) => {
     const newSize = baseFontSize * scale;
     return Math.round(PixelRatio.roundToNearestPixel(newSize));
   };
 
-  const responsiveCardWidth = windowWidth * BASE_CARD_WIDTH_RATIO;
-  const responsiveCardHeight = responsiveCardWidth * CARD_ASPECT_RATIO;
-
-  // Subtle pulse animation
-  useEffect(() => {
-    const pulseAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.02,
-          duration: 3000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 3000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    pulseAnimation.start();
-
-    return () => pulseAnimation.stop();
-  }, []);
-
-  const handlePressIn = () => {
-    Animated.parallel([
-      Animated.timing(scaleAnim, {
-        toValue: 0.96,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(rotateAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.parallel([
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 0.8,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(rotateAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const rotateInterpolate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '45deg'],
-  });
-
   return (
     <TouchableOpacity
-      style={[
-        // styles.emptyCard,
-        {
-          width: responsiveCardWidth,
-          height: responsiveCardHeight,
-          minHeight: 180,
-          maxHeight: 280,
-          marginTop: 10
-        }
-      ]}
-      onPress={() => navigation.navigate('CreateBusiness')}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      activeOpacity={1}>
-      
-      <Animated.View
-        style={[
-          styles.cardContainer,
-          {
-            transform: [
-              { scale: scaleAnim },
-              { scale: pulseAnim },
-            ],
-            opacity: opacityAnim,
-          },
-        ]}>
-        
-        {/* Background gradient overlay */}
-        <View style={styles.gradientOverlay} />
-        
-        {/* Decorative circles */}
-        <View style={styles.decorativeCircle1} />
-        <View style={styles.decorativeCircle2} />
-        <View style={styles.decorativeCircle3} />
-        
-        {/* Main content */}
-        <View style={styles.contentContainer}>
-          <Animated.View
-            style={[
-              styles.iconContainer,
-              {
-                transform: [{ rotate: rotateInterpolate }],
-              },
-            ]}>
-            <Text style={[styles.plusIcon, { fontSize: getResponsiveFontSize(36) }]}>
-              +
-            </Text>
-          </Animated.View>
-          
-          <Text style={[styles.titleText, { fontSize: getResponsiveFontSize(16) }]}>
-            Create New Business
-          </Text>
-          
-          <Text style={[styles.subtitleText, { fontSize: getResponsiveFontSize(12) }]}>
-            Tap to get started
-          </Text>
+      style={[styles.emptyCard, { width: cardWidth, height: CARD_HEIGHT }]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <View style={styles.emptyCardContent}>
+        <View style={styles.plusContainer}>
+          <Text style={[styles.plusIcon, { fontSize: getResponsiveFontSize(24) }]}>+</Text>
         </View>
-        
-        {/* Bottom accent line */}
-        <View style={styles.accentLine} />
-      </Animated.View>
+        <Text style={[styles.emptyTitle, { fontSize: getResponsiveFontSize(14) }]}>
+          Create New Business
+        </Text>
+        <Text style={[styles.emptySubtitle, { fontSize: getResponsiveFontSize(10) }]}>
+          Tap to get started
+        </Text>
+      </View>
+      <View style={styles.emptyCardAccent} />
     </TouchableOpacity>
   );
 };
 
-const CardStack = ({cardData}) => {
-  // Use useWindowDimensions here as well for consistent scaling logic
-  const {width: windowWidth, height: windowHeight} = useWindowDimensions();
+const CardStack = ({ cardData }) => {
+  const { width: windowWidth } = useWindowDimensions();
+  const navigation = useNavigation();
+  const isAnimatingRef = useRef(false);
 
-  console.log('CardStack Debug:', {
-    cardDataExists: !!cardData,
-    businessProfiles: cardData?.business_profiles,
-    businessProfilesLength: cardData?.business_profiles?.length,
-  });
-
+  // Process card data safely
   const safeCardData = useMemo(() => {
     const profiles = cardData?.business_profiles;
-    return Array.isArray(profiles) ? profiles : [];
+    if (!Array.isArray(profiles)) return [];
+    return profiles.filter(profile => profile != null);
   }, [cardData?.business_profiles]);
 
-  const [cards, setCards] = useState(safeCardData);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const cardLength = useMemo(() => cards.length, [cards.length]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const translateX = useSharedValue(0);
 
-  const offsetX = useSharedValue(0);
-  const offsetY = useSharedValue(0);
-  const rotateZ = useDerivedValue(() => `${offsetX.value / 20}deg`);
+  // Navigation functions with animation lock
+  const goToNext = useCallback(() => {
+    if (safeCardData.length <= 1 || isAnimatingRef.current) return;
+    setCurrentIndex(prevIndex => (prevIndex + 1) % safeCardData.length);
+  }, [safeCardData.length]);
 
-  const marginTop = useMemo(() => {
-    // Dynamically adjust margin based on window height and card count
-    const baseMargin = Platform.OS === 'ios' ? windowHeight * 0.03 : windowHeight * 0.02;
-    
-    switch (cardLength) {
-      case 0:
-        return baseMargin;
-      case 1:
-        return baseMargin;
-      case 2:
-        return windowHeight * 0.04;
-      default:
-        return windowHeight * 0.06;
-    }
-  }, [cardLength, windowHeight]);
+  const goToPrevious = useCallback(() => {
+    if (safeCardData.length <= 1 || isAnimatingRef.current) return;
+    setCurrentIndex(prevIndex => (prevIndex === 0 ? safeCardData.length - 1 : prevIndex - 1));
+  }, [safeCardData.length]);
 
-  useEffect(() => {
-    console.log('CardStack: cardData changed, updating cards. New length:', safeCardData.length);
-    setCards(safeCardData);
-  }, [safeCardData]);
+  // Gesture handling with proper cleanup
+  const gesture = useMemo(() => {
+    return Gesture.Pan()
+      .enabled(safeCardData.length > 1)
+      .onUpdate((event) => {
+        'worklet';
+        translateX.value = event.translationX;
+      })
+      .onEnd((event) => {
+        'worklet';
+        const threshold = windowWidth * 0.25;
 
-  const moveTopCardToBack = useCallback(() => {
-    console.log('Moving top card to back, current cards length:', cards.length);
-    if (cards.length <= 1) return;
-    
-    setCards(prev => {
-      if (prev.length === 0) return prev;
-      const [first, ...rest] = prev;
-      return [...rest, first];
+        if (event.translationX > threshold) {
+          // Swipe right - previous card
+          translateX.value = withTiming(windowWidth, { duration: 200 }, () => {
+            runOnJS(goToPrevious)();
+            translateX.value = 0;
+          });
+        } else if (event.translationX < -threshold) {
+          // Swipe left - next card
+          translateX.value = withTiming(-windowWidth, { duration: 200 }, () => {
+            runOnJS(goToNext)();
+            translateX.value = 0;
+          });
+        } else {
+          // Snap back
+          translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+        }
+      })
+      .onFinalize(() => {
+        'worklet';
+        // Always reset translateX if it's not already 0 to prevent stale state
+        if (translateX.value !== 0) {
+            cancelAnimation(translateX);
+            translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+        }
+      });
+  }, [safeCardData.length, windowWidth, goToNext, goToPrevious, translateX]);
+
+  // Handle indicator press
+  const handleIndicatorPress = useCallback((index) => {
+    if (index === currentIndex || isAnimatingRef.current) return;
+
+    // A small animation to make the change smoother
+    isAnimatingRef.current = true;
+    translateX.value = withTiming((index > currentIndex ? -1 : 1) * 20, { duration: 150 }, () => {
+      translateX.value = withTiming(0, { duration: 150 }, () => {
+        runOnJS(() => {
+          setCurrentIndex(index);
+          isAnimatingRef.current = false;
+        })();
+      });
     });
-  }, [cards.length]);
-
-  const resetAnimationState = useCallback(() => {
-    console.log('Resetting animation state');
-    setIsAnimating(false);
-  }, []);
-
-  const pan = Gesture.Pan()
-    .onStart(() => {
-      console.log('Pan gesture started');
-      runOnJS(setIsAnimating)(true);
-    })
-    .onUpdate(e => {
-      offsetX.value = e.translationX;
-      offsetY.value = e.translationY;
-    })
-    .onEnd(e => {
-      console.log('Pan gesture ended, translationX:', e.translationX);
-      const threshold = windowWidth * 0.25;
-      
-      if (Math.abs(e.translationX) > threshold) {
-        console.log('Swiping card away');
-        offsetX.value = withTiming(
-          e.translationX > 0 ? windowWidth : -windowWidth,
-          {duration: 250},
-          (finished) => {
-            if (finished) {
-              offsetX.value = 0;
-              offsetY.value = 0;
-              runOnJS(moveTopCardToBack)();
-              runOnJS(resetAnimationState)();
-            }
-          },
-        );
-      } else {
-        console.log('Snapping card back');
-        offsetX.value = withTiming(0, {duration: 150});
-        offsetY.value = withTiming(0, {duration: 150}, (finished) => {
-          if (finished) {
-            runOnJS(resetAnimationState)();
-          }
-        });
-      }
-    });
-
-  const topCardAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      {translateX: offsetX.value},
-      {translateY: offsetY.value},
-      {rotateZ: rotateZ.value},
-    ],
-    marginTop: marginTop,
-  }));
-
-  const backgroundCards = useMemo(() => {
-    console.log('Rendering background cards, cardLength:', cardLength);
-    if (cardLength <= 1) return [];
-
-    // Calculate responsive top offset for stacked cards
-    const responsiveStackOffset = PixelRatio.roundToNearestPixel(windowWidth / BASE_WIDTH * 15);
+  }, [currentIndex, translateX]);
 
 
-    return cards.slice(1).map((card, index) => {
-      if (!card?.id) {
-        console.log('Skipping card without ID at index:', index);
-        return null;
-      }
-      
-      console.log('Rendering background card:', card.id, 'at index:', index);
-      return (
-        <Card
-          key={`${card.id}-${index}`}
-          card={card}
-          style={[
-            {
-              top: (index + 1) * -responsiveStackOffset, // Dynamic stacking
-              zIndex: -(index + 1),
-              marginTop: marginTop,
-            },
-          ]}
-        />
-      );
-    }).filter(Boolean);
-  }, [cards, cardLength, marginTop, windowWidth]); // Add windowWidth to dependencies
+  if (safeCardData.length === 0) {
+    return (
+      <GestureHandlerRootView style={styles.container}>
+        <EmptyCard onPress={() => navigation.navigate('CreateBusiness')} />
+      </GestureHandlerRootView>
+    );
+  }
 
   return (
-    <View style={[styles.container, {height: windowHeight * 0.5}]}>
-      {cardLength === 0 ? (
-        <EmptyCard />
-      ) : (
-        <GestureDetector gesture={pan}>
-          <View style={[styles.stackContainer, {width: windowWidth * BASE_CARD_WIDTH_RATIO, height: windowWidth * BASE_CARD_WIDTH_RATIO * CARD_ASPECT_RATIO}]}>
-            {backgroundCards}
-            {cards[0] && (
-              <Card 
-                card={cards[0]} 
-                style={[topCardAnimatedStyle, styles.topCard]} 
-              />
-            )}
-          </View>
-        </GestureDetector>
+    <GestureHandlerRootView style={styles.container}>
+      <GestureDetector gesture={gesture}>
+        <View style={styles.stackContainer}>
+          {safeCardData.map((card, index) => (
+            <StackedCard
+              key={card?.id || `card-${index}`}
+              card={card}
+              index={index}
+              totalCards={safeCardData.length}
+              currentIndex={currentIndex}
+              translateX={translateX}
+              isFrontCard={index === currentIndex}
+            />
+          ))}
+        </View>
+      </GestureDetector>
+
+      {/* Card indicators */}
+      {safeCardData.length > 1 && (
+        <View style={styles.indicatorContainer}>
+          {safeCardData.map((_, index) => (
+            <TouchableOpacity
+              key={`indicator-${index}`}
+              style={[
+                styles.indicator,
+                index === currentIndex && styles.activeIndicator
+              ]}
+              onPress={() => handleIndicatorPress(index)}
+              disabled={isAnimatingRef.current}
+            />
+          ))}
+        </View>
       )}
-    </View>
+
+      {/* Card counter */}
+      {safeCardData.length > 1 && (
+        <Text style={styles.cardCounter}>
+          {currentIndex + 1} of {safeCardData.length}
+        </Text>
+      )}
+    </GestureHandlerRootView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: 'flex-start',
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.background,
-    // Height is set dynamically in the component
+    paddingVertical: 20,
   },
   stackContainer: {
-    position: 'relative',
-    // Width and Height are set dynamically in the component
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: CARD_HEIGHT + STACK_OFFSET * 4,
+    width: '100%',
   },
   card: {
-    backgroundColor: colors.secondary,
-    borderRadius: 10,
-    padding: 10,
     position: 'absolute',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 5},
+    backgroundColor: colors.secondary,
+    borderRadius: 22,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 10,
-    // Width and Height are set dynamically in the component
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flex: 0.3, // Takes 30% of card height
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flexShrink: 1, // Allow text to shrink
-  },
-  logo: {
-    borderRadius: 25, // Assuming circular logos
-    resizeMode: 'cover',
-    // Size is set dynamically in the component
-  },
-  activeStatusContainer: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minWidth: 70,
-    marginLeft: 'auto', // Push to the right
-  },
-  activeBackground: {
-    backgroundColor: '#4CAF50', // Green for active
-  },
-  inactiveBackground: {
-    backgroundColor: '#BDBDBD', // Grey for inactive
-  },
-  statusText: {
-    fontWeight: 'bold',
-    // Font size is set dynamically
-  },
-  activeText: {
-    color: '#FFFFFF', // White text for active
-  },
-  inactiveText: {
-    color: '#333333', // Dark text for inactive
-  },
-  descriptionContainer: {
-    // width: '80%', // Remove fixed width
-    flex: 0.3, // Takes 30% of card height
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    paddingRight: 10, // Add some padding to prevent text overflow at edges
-  },
-  contactContainer: {
-    flex: 0.15, // Takes 15% of card height
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    gap: 20,
-    flexWrap: 'wrap', // Allow contact items to wrap
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  contactIcon: {
-    resizeMode: 'contain',
-    // Size is set dynamically
-  },
-  contactText: {
-    // Font size is set dynamically
-  },
-  socialContainer: {
-    flex: 0.25, // Takes 25% of card height
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  socialleftContainer: {
-    flex: 1, // Take available space
-    flexWrap: 'wrap',
-    justifyContent: 'center', // Center content when no social links
-  },
-  socialBg: {
-    borderRadius: 15,
-    flexWrap: 'wrap',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary
-    // Padding and gap are set dynamically
-    // background color remains constant
-  },
-  noSocialLinksText: {
-    color: colors.text,
-    fontStyle: 'italic',
-    // Font size is set dynamically
-  },
-  socialrightContainer: {
-    width: '40%', // Can remain percentage if it behaves well, or adjust to fixed relative
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
-  },
-  topCard: {
-    zIndex: 1,
-  },
-  title: {
-    flexShrink: 1,
-    flexWrap: 'wrap',
-    // lineHeight and font size set dynamically
-  },
-  // Enhanced EmptyCard styles
-  emptyCard: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    marginTop: 10,
-  },
-  cardContainer: {
-    flex: 1,
-    backgroundColor: colors.secondary || '#ffffff',
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.border || '#f0f4f8',
-    position: 'relative',
+    shadowRadius: 18,
+    elevation: 12,
+    borderWidth: 1.5,
+    borderColor: colors.goldDark,
     overflow: 'hidden',
   },
-  gradientOverlay: {
+  cardBackground: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: '40%',
-    backgroundColor: colors.primary ? `${colors.primary}08` : 'rgba(99, 102, 241, 0.03)',
-    borderRadius: 16,
+    bottom: 0,
+    backgroundColor: colors.surface,
+    opacity: 0.05,
   },
-  decorativeCircle1: {
+  goldBorder: {
     position: 'absolute',
-    top: -20,
-    right: -20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.primary ? `${colors.primary}15` : 'rgba(99, 102, 241, 0.08)',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: colors.gold,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
   },
-  decorativeCircle2: {
-    position: 'absolute',
-    bottom: -15,
-    left: -15,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.accent ? `${colors.accent}10` : 'rgba(168, 85, 247, 0.06)',
+  cardContent: {
+    flex: 1,
+    padding: 22,
+    justifyContent: 'space-between',
   },
-  decorativeCircle3: {
-    position: 'absolute',
-    top: '50%',
-    right: 10,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.primary ? `${colors.primary}35` : 'rgba(99, 102, 241, 0.2)',
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 14,
   },
-  contentContainer: {
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flex: 1,
+    gap: 14,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  logo: {
+    borderRadius: 10,
+    resizeMode: 'cover',
+    borderWidth: 1,
+    borderColor: colors.goldLight,
+  },
+  emptyLogoContainer: {
+    borderRadius: 10,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.goldDark,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  titleContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    zIndex: 2,
   },
-  iconContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: colors.primary ? `${colors.primary}20` : 'rgba(99, 102, 241, 0.1)',
+  companyName: {
+    fontWeight: '700',
+    color: colors.text_color_1,
+    lineHeight: 22,
+    marginBottom: 3,
+    letterSpacing: 0.3,
+  },
+  tagline: {
+    color: colors.textSecondary,
+    lineHeight: 16,
+    opacity: 0.9,
+  },
+  statusContainer: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    minWidth: 55,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  activeBackground: {
+    backgroundColor: colors.status_green,
+  },
+  inactiveBackground: {
+    backgroundColor: colors.text_color_2,
+  },
+  statusText: {
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  activeText: {
+    color: '#FFFFFF',
+  },
+  inactiveText: {
+    color: '#FFFFFF',
+  },
+  contactSection: {
+    gap: 8,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  contactIcon: {
+    resizeMode: 'contain',
+    opacity: 0.8,
+    tintColor: colors.goldLight,
+  },
+  contactText: {
+    color: colors.text_color_1,
+    fontWeight: '500',
+    flex: 1,
+  },
+  bottomSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  socialContainer: {
+    flex: 1,
+  },
+  socialIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: colors.goldDark,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  noSocialText: {
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+  },
+  primaryBadge: {
+    backgroundColor: colors.gold,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: colors.goldLight,
+  },
+  primaryText: {
+    color: colors.primary,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  cardAccent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: colors.gold,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+  },
+  // Empty card styles
+  emptyCard: {
+    backgroundColor: colors.secondary,
+    borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.primary ? `${colors.primary}40` : 'rgba(99, 102, 241, 0.2)',
+    borderColor: colors.goldDark,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    overflow: 'hidden',
+  },
+  emptyCardContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  plusContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: colors.goldLight,
   },
   plusIcon: {
-    color: colors.primary || '#6366f1',
-    fontWeight: '300',
+    color: colors.primary,
+    fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 36,
   },
-  titleText: {
-    color: colors.text || '#1f2937',
+  emptyTitle: {
+    color: colors.text_color_1,
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 4,
-    letterSpacing: 0.5,
   },
-  subtitleText: {
-    color: colors.textSecondary || '#6b7280',
-    fontWeight: '400',
+  emptySubtitle: {
+    color: colors.textSecondary,
     textAlign: 'center',
-    opacity: 0.8,
   },
-  accentLine: {
+  emptyCardAccent: {
     position: 'absolute',
     bottom: 0,
     left: '20%',
     right: '20%',
-    height: 3,
-    backgroundColor: colors.primary || '#6366f1',
+    height: 4,
+    backgroundColor: colors.gold,
     borderRadius: 2,
-    opacity: 0.6,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+  },
+  // Indicators
+  indicatorContainer: {
+    flexDirection: 'row',
+    marginTop: 24,
+    gap: 10,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  indicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.border,
+    borderWidth: 1,
+    borderColor: colors.goldDark,
+  },
+  activeIndicator: {
+    backgroundColor: colors.gold,
+    width: 24,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 4,
+    borderColor: colors.goldLight,
+  },
+  cardCounter: {
+    marginTop: 8,
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
 

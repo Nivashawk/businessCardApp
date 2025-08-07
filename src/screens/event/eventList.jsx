@@ -234,7 +234,7 @@ const ListEvent = () => {
             placeholder={selectedTab === 'active' ? "Search events by name..." : "Search expired events by name..."}
             value={searchText}
             onChangeText={setSearchText}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textSecondary}
           />
           <TouchableOpacity
             style={styles.filterIconButton}
@@ -303,8 +303,8 @@ const ListEvent = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onPullToRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
+            tintColor={colors.gold}
+            colors={[colors.gold]}
           />
         }
       />
@@ -409,14 +409,11 @@ const styles = StyleSheet.create({
   // Tab Styles
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.secondary,
     paddingHorizontal: 16,
     paddingTop: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
 
   tabButton: {
@@ -424,116 +421,115 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     marginHorizontal: 4,
-    borderRadius: 8,
-    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 
   tabButtonSelected: {
     backgroundColor: colors.primary,
+    borderColor: colors.gold,
+    shadowColor: colors.gold,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   tabButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginRight: 4,
   },
 
   tabButtonTextSelected: {
-    color: '#FFFFFF',
+    color: colors.text_color_1,
   },
 
   tabCountText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.textSecondary,
+    fontWeight: '500',
   },
 
   tabCountTextSelected: {
-    color: '#FFFFFF',
+    color: colors.gold,
+    fontWeight: '600',
   },
 
   headerContainer: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 8,
-    backgroundColor: '#FFFFFF',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    paddingBottom: 12,
+    backgroundColor: colors.secondary,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
 
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
 
   searchInput: {
     flex: 1,
-    height: 44,
-    backgroundColor: '#F9FAFB',
+    height: 48,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: '#374151',
+    color: colors.text_color_1,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
   },
 
   filterIconButton: {
     marginLeft: 12,
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: colors.gold,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   filterIcon: {
     fontSize: 18,
-    color: '#FFFFFF',
-  },
-
-  clearSearchButton: {
-    marginLeft: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-  },
-
-  clearSearchText: {
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: '600',
+    color: colors.background,
   },
 
   activeFiltersContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    marginBottom: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: colors.surface,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 
   activeFiltersText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
 
   clearFiltersText: {
     fontSize: 12,
-    color: colors.primary,
+    color: colors.gold,
     fontWeight: '600',
   },
 
@@ -545,79 +541,92 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
+    paddingHorizontal: 20,
   },
 
   emptyText: {
-    fontSize: 48,
-    marginBottom: 16,
+    fontSize: 64,
+    marginBottom: 20,
+    opacity: 0.6,
   },
 
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text_color_1,
+    marginBottom: 12,
+    textAlign: 'center',
   },
 
   emptySubtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 32,
+    lineHeight: 20,
   },
 
   createEventButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 10,
+    backgroundColor: colors.gold,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    shadowColor: colors.gold,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   createEventButtonText: {
-    color: '#FFFFFF',
+    color: colors.background,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   floatingButton: {
     position: 'absolute',
     bottom: 30,
     right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
+    shadowColor: colors.gold,
     shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.4,
     shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: colors.goldDark,
   },
 
   floatingButtonText: {
-    fontSize: 24,
-    color: '#FFFFFF',
+    fontSize: 28,
+    color: colors.background,
     fontWeight: 'bold',
   },
 
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'flex-end',
   },
 
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: colors.secondary,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 40,
     maxHeight: '80%',
+    borderTopWidth: 2,
+    borderTopColor: colors.border,
   },
 
   modalHeader: {
@@ -625,90 +634,109 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
 
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#1F2937',
+    color: colors.text_color_1,
   },
 
   modalCloseText: {
-    fontSize: 18,
-    color: '#6B7280',
+    fontSize: 20,
+    color: colors.textSecondary,
     fontWeight: 'bold',
+    width: 32,
+    height: 32,
+    textAlign: 'center',
+    lineHeight: 30,
   },
 
   filterSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 12,
+    color: colors.text_color_1,
+    marginBottom: 16,
   },
 
   filterButtonsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 24,
+    gap: 10,
+    marginBottom: 32,
   },
 
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
   },
 
   filterButtonSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.gold,
+    borderColor: colors.goldDark,
+    shadowColor: colors.gold,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   filterButtonText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
 
   filterButtonTextSelected: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: colors.background,
+    fontWeight: '700',
   },
 
   modalActions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
   },
 
   clearButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.surface,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 
   clearButtonText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: colors.textSecondary,
     fontWeight: '600',
   },
 
   applyButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.gold,
     alignItems: 'center',
+    shadowColor: colors.gold,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   applyButtonText: {
     fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: colors.background,
+    fontWeight: '700',
   },
 });
 

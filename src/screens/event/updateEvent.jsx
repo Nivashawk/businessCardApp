@@ -12,6 +12,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
+  ScrollView,
+  SafeAreaView,
 } from 'react-native';
 import {format} from 'date-fns';
 import Toast from 'react-native-toast-message';
@@ -19,6 +21,7 @@ import InputBox from '../../components/inputs/textInput';
 import TextAreaBox from '../../components/inputs/textArea';
 import DatePickerBox from '../../components/inputs/datePicker';
 import {typography} from '../../theme/typography';
+import {colors} from '../../theme/colors';
 import SmallButton from '../../components/buttons/smallButton';
 import Dropdown from '../../components/inputs/dropdown';
 import {useDispatch, useSelector} from 'react-redux';
@@ -28,8 +31,7 @@ import {getEvent} from '../../redux/slices/events/getEvents';
 import {updateEvents} from '../../redux/slices/events/updateEvents';
 import {useNavigation} from '@react-navigation/native';
 import {resetUpdateEvents} from '../../redux/slices/events/updateEvents';
-// Add this import for resetting getEvent state
-import {resetGetEvents} from '../../redux/slices/events/getEvents'; // You'll need to create this action
+import {resetGetEvents} from '../../redux/slices/events/getEvents';
 
 const {width, height} = Dimensions.get('window');
 
@@ -80,7 +82,7 @@ const UpdateEvent = () => {
   const [eventDatePlaceholder, setEventDatePlaceholder] = useState('');
   const [eventTypePlaceholder, setEventTypePlaceholder] = useState('');
   const [loading, setLoading] = useState(false);
-  const [hasCheckedExpiry, setHasCheckedExpiry] = useState(false); // Add this state
+  const [hasCheckedExpiry, setHasCheckedExpiry] = useState(false);
 
   // Modal states
   const [modalVisible, setModalVisible] = useState(false);
@@ -99,17 +101,14 @@ const UpdateEvent = () => {
 
   // Clear Redux state on component mount and unmount
   useEffect(() => {
-    // Clear any existing event data when component mounts
     if (typeof resetGetEvents === 'function') {
       dispatch(resetGetEvents());
     }
     
-    // Fetch fresh event data
     if (id) {
       dispatch(getEvent({event_id: id}));
     }
 
-    // Cleanup on unmount
     return () => {
       if (typeof resetGetEvents === 'function') {
         dispatch(resetGetEvents());
@@ -126,19 +125,17 @@ const UpdateEvent = () => {
     setModalVisible(true);
   };
 
-  // Event validation and modal display - Modified to prevent duplicate checks
+  // Event validation and modal display
   useEffect(() => {
     if (eventData && eventData.event_date && !hasCheckedExpiry) {
       const eventDate = new Date(eventData.event_date);
       const today = new Date();
       
-      // Set time to start of day for accurate date comparison
       const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const eventDateStart = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
       
-      setHasCheckedExpiry(true); // Mark as checked to prevent duplicate checks
+      setHasCheckedExpiry(true);
       
-      // Check if event date is in the past (expired)
       if (eventDateStart.getTime() < todayStart.getTime()) {
         showModal(
           'Event Expired',
@@ -146,7 +143,6 @@ const UpdateEvent = () => {
           () => navigation.goBack()
         );
       } 
-      // Check if event is today
       else if (eventDateStart.getTime() === todayStart.getTime()) {
         showModal(
           'Cannot Update',
@@ -154,7 +150,6 @@ const UpdateEvent = () => {
           () => navigation.goBack()
         );
       }
-      // If eventDateStart > todayStart, it's a future event - allow editing (no modal)
     }
   }, [eventData, navigation, hasCheckedExpiry]);
 
@@ -167,9 +162,8 @@ const UpdateEvent = () => {
           text1: updateEventData?.message,
         });
         dispatch(resetUpdateEvents());
-        // Clear the getEvent data as well
-        if (typeof resetGetEvent === 'function') {
-          dispatch(resetGetEvent());
+        if (typeof resetGetEvents === 'function') {
+          dispatch(resetGetEvents());
         }
         setTimeout(() => {
           navigation.goBack();
@@ -309,251 +303,405 @@ const UpdateEvent = () => {
   );
 
   return (
-    <>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      
       <View style={styles.container}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <KeyboardAvoidingView
-            style={styles.keyboardView}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            
-            <Animated.View style={[styles.content, {opacity: fadeAnim}]}>
+        {/* Fixed Header */}
+        <View style={styles.headerContainer}>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Update Event</Text>
+            <Text style={styles.headerSubtitle}>
+              Modify your event details
+            </Text>
+          </View>
+          <View style={styles.headerDecoration} />
+        </View>
+
+        {/* Main Content */}
+        <View style={styles.mainContent}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <KeyboardAvoidingView 
+              style={styles.keyboardContainer}
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}>
               
-              {/* Form Grid */}
-              <View style={styles.formGrid}>
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContainer}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                bounces={true}>
                 
-                {/* Row 1: Event Name & Date */}
-                <View style={styles.formRow}>
-                  <View style={styles.formColumnHalf}>
-                    <InputBox
-                      label="Event Name"
-                      value={event}
-                      onChangeText={setEvent}
-                      placeholder="Enter event name"
-                      keyboardType="default"
-                      required
-                      error={eventError}
-                      style={styles.input}
-                    />
+                <Animated.View style={[styles.content, {opacity: fadeAnim}]}>
+                  
+                  {/* Form Card */}
+                  <View style={styles.cardContainer}>
+                    <View style={styles.cardHeader}>
+                      <Text style={styles.cardTitle}>Event Information</Text>
+                      <View style={styles.cardTitleUnderline} />
+                    </View>
+                    
+                    <View style={styles.formContent}>
+                      
+                      {/* Event Name & Date Row */}
+                      <View style={styles.formRow}>
+                        <View style={styles.formColumnHalf}>
+                          <InputBox
+                            label="Event Name"
+                            value={event}
+                            onChangeText={setEvent}
+                            placeholder="Enter event name"
+                            keyboardType="default"
+                            required
+                            error={eventError}
+                          />
+                        </View>
+                        <View style={styles.formColumnHalf}>
+                          <DatePickerBox
+                            label="Event Date"
+                            value={eventdate}
+                            onChange={setEventDate}
+                            required
+                            error={eventdateError}
+                            placeholder={eventDatePlaceholder}
+                          />
+                        </View>
+                      </View>
+
+                      {/* Event Type */}
+                      <View style={styles.inputSection}>
+                        <Dropdown
+                          label="Event Type"
+                          data={eventTypeData}
+                          onSelect={handleSelect}
+                          placeholder={eventTypePlaceholder || 'Select event type'}
+                          selectedValue={eventType}
+                        />
+                      </View>
+
+                      {/* Description */}
+                      <View style={styles.inputSection}>
+                        <TextAreaBox
+                          label="Description"
+                          value={description}
+                          onChangeText={setDescription}
+                          placeholder="Describe your event..."
+                          keyboardType="default"
+                          required
+                          error={descriptionError}
+                        />
+                      </View>
+
+                      {/* Venue */}
+                      <View style={styles.inputSection}>
+                        <TextAreaBox
+                          label="Venue & Address"
+                          value={venue}
+                          onChangeText={setVenue}
+                          placeholder="Enter event venue address"
+                          keyboardType="default"
+                          required
+                          error={venueError}
+                        />
+                      </View>
+
+                      {/* Update Button - Inside card */}
+                      <View style={styles.buttonSection}>
+                        <TouchableOpacity
+                          style={[
+                            styles.updateButton, 
+                            loading && styles.updateButtonDisabled
+                          ]}
+                          onPress={handleSubmit}
+                          disabled={loading}>
+                          <Text style={styles.updateButtonText}>
+                            {loading ? 'Updating...' : 'Update Event'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+
+                    </View>
                   </View>
-                  <View style={styles.formColumnHalf}>
-                    <DatePickerBox
-                      label="Event Date"
-                      value={eventdate}
-                      onChange={setEventDate}
-                      required
-                      error={eventdateError}
-                      placeholder={eventDatePlaceholder}
-                      style={styles.input}
-                    />
-                  </View>
-                </View>
 
-                {/* Row 2: Event Type */}
-                <View style={styles.formRow}>
-                  <View style={styles.formColumnFull}>
-                    <Dropdown
-                      label="Event Type"
-                      data={eventTypeData}
-                      onSelect={handleSelect}
-                      placeholder={eventTypePlaceholder || 'Select event type'}
-                      selectedValue={eventType}
-                      style={styles.input}
-                    />
-                  </View>
-                </View>
+                  {/* Bottom Spacer */}
+                  <View style={styles.bottomSpacer} />
 
-                {/* Row 3: Description */}
-                <View style={styles.formRow}>
-                  <View style={styles.formColumnFull}>
-                    <TextAreaBox
-                      label="Description"
-                      value={description}
-                      onChangeText={setDescription}
-                      placeholder="Describe your event..."
-                      keyboardType="default"
-                      required
-                      error={descriptionError}
-                      style={[styles.input, styles.textAreaCompact]}
-                    />
-                  </View>
-                </View>
-
-                {/* Row 4: Venue */}
-                <View style={styles.formRow}>
-                  <View style={styles.formColumnFull}>
-                    <TextAreaBox
-                      label="Venue"
-                      value={venue}
-                      onChangeText={setVenue}
-                      placeholder="Enter event venue address"
-                      keyboardType="default"
-                      required
-                      error={venueError}
-                      style={[styles.input, styles.textAreaCompact]}
-                    />
-                  </View>
-                </View>
-
-              </View>
-
-              {/* Submit Button */}
-              <View style={styles.submitContainer}>
-                <TouchableOpacity
-                  style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-                  onPress={handleSubmit}
-                  disabled={loading}>
-                  <Text style={styles.submitButtonText}>
-                    {loading ? 'Updating...' : 'Update Event'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-            </Animated.View>
-          </KeyboardAvoidingView>
-        </TouchableWithoutFeedback>
+                </Animated.View>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
+        </View>
 
         <CustomModal />
       </View>
-    </>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
   },
-  header: {
-    backgroundColor: '#FFFFFF',
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
-    paddingBottom: 12,
-    paddingHorizontal: 20,
+
+  // Header Styles
+  headerContainer: {
+    backgroundColor: colors.secondary,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    flexDirection: 'row',
+    borderBottomColor: colors.border,
+    position: 'relative',
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+
+  headerContent: {
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 6,
-    backgroundColor: '#F9FAFB',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backArrow: {
-    fontSize: 16,
-    color: '#374151',
-    fontWeight: '600',
-  },
+
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: 26,
+    fontWeight: '700',
+    color: colors.text_color_1,
+    marginBottom: 6,
+    textAlign: 'center',
   },
-  headerSpacer: {
-    width: 36,
+
+  headerSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
   },
-  keyboardView: {
+
+  headerDecoration: {
+    position: 'absolute',
+    bottom: 0,
+    left: '50%',
+    marginLeft: -25,
+    width: 50,
+    height: 3,
+    backgroundColor: colors.gold,
+    borderRadius: 2,
+  },
+
+  // Main Content
+  mainContent: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+
+  keyboardContainer: {
     flex: 1,
   },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 20,
+    paddingTop: 24,
+  },
+
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
   },
-  formGrid: {
-    flex: 1,
-    gap: 16,
+
+  // Card Styles
+  cardContainer: {
+    backgroundColor: colors.secondary,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+    marginBottom: 20,
   },
+
+  cardHeader: {
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    alignItems: 'center',
+  },
+
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text_color_1,
+    marginBottom: 8,
+  },
+
+  cardTitleUnderline: {
+    width: 40,
+    height: 2,
+    backgroundColor: colors.gold,
+    borderRadius: 1,
+  },
+
+  formContent: {
+    padding: 24,
+  },
+
+  // Form Layout
   formRow: {
     flexDirection: 'row',
-    gap: 12,
+    alignItems: 'flex-start',
+    gap: 16,
+    marginBottom: 20,
   },
+
   formColumnHalf: {
     flex: 1,
   },
-  formColumnFull: {
-    flex: 1,
-  },
-  input: {
-    borderRadius: 6,
-    backgroundColor: '#F9FAFB',
-    borderColor: '#E5E7EB',
-    fontSize: 14,
-  },
-  textAreaCompact: {
-    minHeight: 60,
-    maxHeight: 80,
-  },
-  submitContainer: {
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    marginTop: 'auto',
-  },
-  submitButton: {
-    backgroundColor: '#111827',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitButtonDisabled: {
-    backgroundColor: '#9CA3AF',
-  },
-  submitButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: width * 0.8,
-    maxWidth: 350,
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  modalMessage: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 20,
+
+  inputSection: {
     marginBottom: 20,
   },
-  modalButton: {
-    backgroundColor: '#111827',
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 6,
-    minWidth: 60,
+
+  // Button Section
+  buttonSection: {
+    marginTop: 32,
+    marginBottom: 8,
+    alignItems: 'center',
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
+
+  updateButton: {
+    width: width * 0.8,
+    maxWidth: 350,
+    paddingVertical: 18,
+    backgroundColor: colors.gold,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.goldDark,
+    shadowColor: colors.gold,
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+    minHeight: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  updateButtonDisabled: {
+    backgroundColor: colors.border,
+    borderColor: colors.border,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+
+  updateButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.background,
+    textAlign: 'center',
+  },
+
+  // Bottom spacer
+  bottomSpacer: {
+    height: 40,
+  },
+
+  // Modal Styles - Dark Theme
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  modalContainer: {
+    width: width * 0.85,
+    maxWidth: 400,
+  },
+
+  modalContent: {
+    backgroundColor: colors.secondary,
+    borderRadius: 16,
+    padding: 28,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text_color_1,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+
+  modalMessage: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 28,
+  },
+
+  modalButton: {
+    backgroundColor: colors.gold,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 10,
+    minWidth: 100,
+    borderWidth: 1,
+    borderColor: colors.goldDark,
+    shadowColor: colors.gold,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+
   modalButtonText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.background,
     textAlign: 'center',
   },
 });
 
-export default UpdateEvent;
+export default UpdateEvent
