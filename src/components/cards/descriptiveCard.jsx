@@ -90,12 +90,6 @@ const DescriptiveCard = ({title, date, description, onPress, priority = 'normal'
         {/* Glass effect highlight */}
         <View style={styles.glassHighlight} />
 
-        {/* Priority indicator with enhanced design */}
-        <View style={styles.priorityIndicatorContainer}>
-          <View style={[styles.priorityIndicator, {backgroundColor: priorityConfig.color}]}>
-            <View style={[styles.priorityDot, {backgroundColor: colors.text_color_1}]} />
-          </View>
-        </View>
 
         {/* Content container with fixed layout */}
         <View style={styles.contentContainer}>

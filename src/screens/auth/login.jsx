@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     maxWidth: 280,
     opacity: 0.95,
     zIndex: 1,
-    tintColor: colors.gold, // Apply white tint for dark mode
+    // tintColor: colors.gold, // Apply white tint for dark mode
   },
   welcomeSection: {
     alignItems: 'center',

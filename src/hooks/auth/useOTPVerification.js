@@ -4,7 +4,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {registerUser} from '../../redux/slices/auth/registerSlices';
 import {resetOTPData, sendOTP} from '../../redux/slices/auth/sendOTPSlices';
 import {isOTPVerified} from '../../redux/slices/auth/sendOTPSlices';
-import { loginUser } from '../../redux/slices/auth/loginSlices';
+import {loginUser} from '../../redux/slices/auth/loginSlices';
 import Toast from 'react-native-toast-message';
 
 export const useOTPVerification = () => {
@@ -30,18 +30,6 @@ export const useOTPVerification = () => {
   // Refs
   const inputRefs = useRef([]);
   const intervalRef = useRef(null);
-
-  // Get loading states from Redux
-  const registerData = useSelector(
-    state => state.register?.data?.result?.data ?? null,
-  );
-
-    const loginData = useSelector(
-    state => state.login ?? null,
-  );
-
-  // console.log("loginData",loginData);
-  
 
   // Check if any API call is loading
   const isLoading = registerState?.loading || loginState?.loading || isVerifying || isResending;
@@ -87,10 +75,10 @@ export const useOTPVerification = () => {
           text1: 'OTP Resent',
           text2: 'A new verification code has been sent to your email',
         });
-      }else if(result.status === "error"){
+      } else if(result.status === "error"){
         Toast.show({
-          type: 'success',
-          text1: 'OTP Resent',
+          type: 'error',
+          text1: 'OTP Resend Failed',
           text2: result.message,
         });
       }
@@ -152,7 +140,8 @@ export const useOTPVerification = () => {
       setIsVerifying(true);
       
       if (purpose === 'Register') {
-        await dispatch(
+        // For signup flow - directly register user
+        const result = await dispatch(
           registerUser({
             name,
             phone,
@@ -163,21 +152,24 @@ export const useOTPVerification = () => {
             referral_code
           }),
         ).unwrap();
-        console.log("result==>>", registerData);
         
-        if (registerData?.status === "success") {
+        console.log("Register result:", result);
+        
+        if (result?.result?.status === "success") {
           Toast.show({
             type: 'success',
             text1: 'Registration Successful',
             text2: 'Welcome! Your account has been created.',
           });
-         
+          
+          // Mark as verified and navigate to home
+          dispatch(isOTPVerified(true));
+          // Navigation will be handled by rootNavigation based on isOTPVerified state
         }
         
       } else if (purpose === 'Login') {
-        console.log("purpose", purpose);
-        
-        await dispatch(
+        // For login flow - verify OTP and check user type
+        const result = await dispatch(
           loginUser({
             email, 
             otp: enteredOTP, 
@@ -185,24 +177,48 @@ export const useOTPVerification = () => {
           }),
         ).unwrap();
         
-        if (loginData?.status === "success") {
-          Toast.show({
-            type: 'success',
-            text1: 'Login Successful',
-            text2: 'Welcome back!',
-          });
-         
-        }
+        console.log("Login result:", result);
         
+        if (result?.result?.status === "success") {
+          const userType = result?.result?.type;
+          
+          if (userType === '0') {
+            // User exists in DB - proceed to home
+            Toast.show({
+              type: 'success',
+              text1: 'Login Successful',
+              text2: 'Welcome back!',
+            });
+            
+            dispatch(isOTPVerified(true));
+            // Navigation will be handled by rootNavigation based on isOTPVerified state
+            
+          } else if (userType === '1') {
+            // User doesn't exist - redirect to signup
+            Toast.show({
+              type: 'info',
+              text1: 'Account Not Found',
+              text2: 'Please complete your registration.',
+            });
+            
+            // Navigate to signup with email and OTP token (OTP already verified)
+            navigation.navigate('Signup', { 
+              email: email,
+              otpToken: data?.result?.token
+            });
+          }
+        }
       } else {
         Toast.show({
           type: 'error',
           text1: 'Invalid Operation',
-          text2: "It is not your fault, please reopen the app",
+          text2: "Something went wrong. Please restart the app.",
         });
       }
       
     } catch (error) {
+      console.error('OTP Verification Error:', error);
+      
       Toast.show({
         type: 'error',
         text1: 'Verification Failed',
@@ -229,7 +245,7 @@ export const useOTPVerification = () => {
     isLoading
   ]);
 
-  // Handle side effects for registration and login states
+  // Handle side effects for registration and login errors
   useEffect(() => {
     if (registerState?.error) {
       Toast.show({

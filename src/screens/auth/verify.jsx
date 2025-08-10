@@ -433,8 +433,8 @@ const styles = StyleSheet.create({
     width: width * 0.65,
     maxHeight: 140,
     maxWidth: 280,
-    opacity: 0.95,
-        tintColor: colors.gold, // Apply white tint for dark mode
+    // opacity: 0.95,
+        // tintColor: colors.gold, // Apply white tint for dark mode
     
   },
   progressSection: {

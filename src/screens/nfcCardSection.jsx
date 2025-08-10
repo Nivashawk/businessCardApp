@@ -192,22 +192,28 @@ const NFCCardPage = () => {
 
   const cardOptions = [
     {
-      name: 'Classic Edition',
-      price: 'Starting from INR 1,500',
-      features: ['Standard NFC chip', 'Matte finish', 'Custom design', 'Basic analytics'],
+      name: 'Standard NFC Card',
+      price: '₹500',
+      originalPrice: '₹1,500',
+      features: ['Premium NFC chip', 'Professional finish', 'Custom design', 'Basic analytics', 'Instant setup'],
       color: ['#2d2d2d', '#1a1a1a'],
-    },
-    {
-      name: 'Premium Edition',
-      price: 'Starting from INR 2,500',
-      features: ['Advanced NFC chip', 'Metallic finish', 'Premium materials', 'Advanced analytics', 'Priority support'],
-      color: [colors.gold, colors.goldDark],
       popular: true,
+      savings: '67% OFF',
     },
+    // {
+    //   name: 'Bulk Order (10+ Cards)',
+    //   price: '₹450',
+    //   priceNote: 'per card',
+    //   originalPrice: '₹500',
+    //   features: ['All standard features', 'Volume discount', 'Team management', 'Priority support', 'Custom packaging'],
+    //   color: [colors.gold, colors.goldDark],
+    //   savings: '10% OFF',
+    // },
     {
-      name: 'Luxury Edition',
-      price: 'Starting from INR 8,000',
-      features: ['Ultra-premium NFC chip', 'Carbon fiber body', 'Luxury packaging', 'Complete analytics suite', '24/7 premium support', '2-year warranty'],
+      name: 'Enterprise Package',
+      price: 'Custom Pricing',
+      priceNote: 'contact us',
+      features: ['Unlimited cards', 'White-label solution', 'Advanced analytics', 'API integration', '24/7 dedicated support', 'Custom features'],
       color: ['#C0C0C0', '#808080'],
     },
   ];
@@ -240,7 +246,7 @@ const NFCCardPage = () => {
           
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>NFC Business Cards</Text>
-            <Text style={styles.headerSubtitle}>The future of professional networking</Text>
+            <Text style={styles.headerSubtitle}>Starting at just ₹500 per card</Text>
           </View>
         </Animated.View>
 
@@ -265,6 +271,13 @@ const NFCCardPage = () => {
             <Text style={styles.heroSubtitle}>
               Revolutionary NFC technology that transforms how you network and share your professional information
             </Text>
+
+            {/* Price Highlight */}
+            <View style={styles.priceHighlight}>
+              <Text style={styles.priceHighlightText}>Starting at just</Text>
+              <Text style={styles.priceHighlightAmount}>₹500</Text>
+              <Text style={styles.priceHighlightNote}>per card</Text>
+            </View>
 
             {/* Demo NFC Card */}
             <Animated.View
@@ -452,11 +465,11 @@ const NFCCardPage = () => {
           </View>
         </View>
 
-        {/* Card Options Preview */}
+        {/* Card Options with New Pricing */}
         <View style={styles.optionsSection}>
-          <Text style={styles.sectionTitle}>Available Options</Text>
+          <Text style={styles.sectionTitle}>Choose Your Package</Text>
           <Text style={styles.sectionDescription}>
-            Choose from our range of premium NFC business cards
+            Affordable pricing for professionals and businesses of all sizes
           </Text>
           
           <View style={styles.optionsGrid}>
@@ -472,9 +485,28 @@ const NFCCardPage = () => {
                     </View>
                   )}
                   
+                  {option.savings && (
+                    <View style={styles.savingsBadge}>
+                      <Text style={styles.savingsText}>{option.savings}</Text>
+                    </View>
+                  )}
+                  
                   <View style={styles.optionContent}>
                     <Text style={styles.optionName}>{option.name}</Text>
-                    <Text style={styles.optionPrice}>{option.price}</Text>
+                    
+                    <View style={styles.priceContainer}>
+                      <View style={styles.priceRow}>
+                        <Text style={styles.optionPrice}>{option.price}</Text>
+                        {option.priceNote && (
+                          <Text style={styles.priceNote}>{option.priceNote}</Text>
+                        )}
+                      </View>
+                      {option.originalPrice && (
+                        <Text style={styles.originalPrice}>
+                          Was {option.originalPrice}
+                        </Text>
+                      )}
+                    </View>
                     
                     <View style={styles.optionFeatures}>
                       {option.features.map((feature, idx) => (
@@ -512,6 +544,10 @@ const NFCCardPage = () => {
               q: 'Do I need internet to use the card?',
               a: 'The recipient needs internet to view your full profile, but the initial tap and basic contact sharing works offline.',
             },
+            {
+              q: 'Is there any additional cost after purchase?',
+              a: 'No hidden fees! The ₹500 is a one-time payment. You can update your information unlimited times at no extra cost.',
+            },
           ].map((faq, index) => (
             <View key={index} style={styles.faqItem}>
               <Text style={styles.faqQuestion}>{faq.q}</Text>
@@ -539,6 +575,12 @@ const NFCCardPage = () => {
               Join thousands of professionals who've upgraded to smart business cards
             </Text>
             
+            <View style={styles.finalPriceBox}>
+              <Text style={styles.finalPriceLabel}>Starting Price</Text>
+              <Text style={styles.finalPrice}>₹500</Text>
+              <Text style={styles.finalPriceNote}>per NFC card • One-time payment</Text>
+            </View>
+            
             <TouchableOpacity
               style={styles.purchaseButton}
               onPress={handleBuyNow}
@@ -550,14 +592,14 @@ const NFCCardPage = () => {
                 end={{x: 1, y: 0}}
                 style={styles.purchaseButtonGradient}
               >
-                <Text style={styles.purchaseButtonText}>Explore All Options</Text>
+                <Text style={styles.purchaseButtonText}>Order Your NFC Card</Text>
                 <Text style={styles.purchaseButtonIcon}>🛍️</Text>
               </LinearGradient>
             </TouchableOpacity>
             
-            <Text style={styles.purchaseNote}>
+            {/* <Text style={styles.purchaseNote}>
               Free shipping • 30-day money-back guarantee • 24/7 support
-            </Text>
+            </Text> */}
           </LinearGradient>
         </Animated.View>
 
@@ -608,8 +650,9 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     ...typography.body2,
     fontSize: 14,
-    color: colors.text_color_2,
+    color: colors.gold,
     marginTop: 4,
+    fontWeight: '600',
   },
   heroSection: {
     marginHorizontal: 16,
@@ -643,7 +686,35 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     opacity: 0.9,
-    marginBottom: 32,
+    marginBottom: 24,
+  },
+  priceHighlight: {
+    alignItems: 'center',
+    marginBottom: 24,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+  },
+  priceHighlightText: {
+    fontSize: 14,
+    color: colors.text_color_2,
+    marginBottom: 4,
+  },
+  priceHighlightAmount: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: colors.gold,
+    textShadowColor: 'rgba(255, 215, 0, 0.3)',
+    textShadowOffset: {width: 0, height: 2},
+    textShadowRadius: 4,
+  },
+  priceHighlightNote: {
+    fontSize: 12,
+    color: colors.text_color_2,
+    opacity: 0.8,
   },
   demoCard: {
     width: width * 0.7,
@@ -907,6 +978,21 @@ const styles = StyleSheet.create({
     color: colors.background,
     letterSpacing: 1,
   },
+  savingsBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: colors.status_red,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  savingsText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.text_color_1,
+    letterSpacing: 1,
+  },
   optionContent: {
     paddingTop: 8,
   },
@@ -914,13 +1000,32 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: colors.text_color_1,
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  priceContainer: {
+    marginBottom: 16,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
   },
   optionPrice: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: '800',
     color: colors.gold,
-    marginBottom: 16,
+  },
+  priceNote: {
+    fontSize: 14,
+    color: colors.text_color_2,
+    fontStyle: 'italic',
+  },
+  originalPrice: {
+    fontSize: 14,
+    color: colors.text_color_2,
+    textDecorationLine: 'line-through',
+    opacity: 0.7,
+    marginTop: 2,
   },
   optionFeatures: {
     gap: 8,
@@ -994,6 +1099,36 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     opacity: 0.9,
   },
+  finalPriceBox: {
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    width: '100%',
+  },
+  finalPriceLabel: {
+    fontSize: 14,
+    color: colors.text_color_2,
+    marginBottom: 4,
+  },
+  finalPrice: {
+    fontSize: 42,
+    fontWeight: '900',
+    color: colors.gold,
+    textShadowColor: 'rgba(255, 215, 0, 0.3)',
+    textShadowOffset: {width: 0, height: 2},
+    textShadowRadius: 4,
+  },
+  finalPriceNote: {
+    fontSize: 12,
+    color: colors.text_color_2,
+    opacity: 0.8,
+    marginTop: 4,
+  },
   purchaseButton: {
     width: '100%',
     borderRadius: 16,
@@ -1027,9 +1162,6 @@ const styles = StyleSheet.create({
     color: colors.text_color_2,
     textAlign: 'center',
     opacity: 0.8,
-  },
-  bottomSpacer: {
-    height: 40,
   },
 });
 

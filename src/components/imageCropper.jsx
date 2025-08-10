@@ -28,44 +28,16 @@ const ImageCropper = ({navigation, type, onImageSelected}) => {
   const captureFromCamera = () => {
     navigation.navigate('CustomCamera', {
       onCapture: async capturedImagePath => {
-        try {
-          // --- Workaround for Status Bar Overlap (Android) ---
-          // Save current status bar state
-          const currentBarStyle = StatusBar.isTranslucent() ? 'light-content' : 'dark-content';
-          const currentBgColor = StatusBar.isTranslucent() ? 'transparent' : StatusBar.backgroundColor;
-
-          // Temporarily set a specific status bar style to force redraw
-          StatusBar.setBarStyle('dark-content', true);
-          StatusBar.setTranslucent(false);
-          StatusBar.setBackgroundColor('black', true);
-          
           const cropped = await ImagePicker.openCropper({
             path: capturedImagePath,
             width: 300,
             height: 300,
             cropping: true,
             freeStyleCropEnabled: true,
-            // These properties can sometimes help, but the StatusBar change is more reliable
-            // cropperStatusBarColor: 'black', 
-            // cropperToolbarColor: 'black', 
-            // cropperToolbarWidgetColor: 'white', 
+
           });
-
-          // Restore previous status bar settings
-          StatusBar.setBarStyle(currentBarStyle, true);
-          StatusBar.setTranslucent(currentBgColor === 'transparent');
-          StatusBar.setBackgroundColor(currentBgColor, true);
-
           console.log("cropped_images",cropped);
           onImageSelected?.(type, cropped);
-
-        } catch (error) {
-          // Restore status bar in case of an error
-          StatusBar.setBarStyle('dark-content', true);
-          StatusBar.setTranslucent(false);
-          StatusBar.setBackgroundColor('black', true);
-          Alert.alert('Error', 'Cropping failed');
-        }
       },
     });
   };

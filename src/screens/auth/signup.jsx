@@ -65,6 +65,8 @@ const SignUp = () => {
     emailError,
     loading,
     handleSignUp,
+    navigateToLogin,
+    fromLogin,
   } = useSignUp();
 
   return (
@@ -99,10 +101,18 @@ const SignUp = () => {
               {/* Welcome Text */}
               <View style={styles.welcomeSection}>
                 <Text style={styles.welcomeTitle}>
-                  Join Us Today! ✨
+                  Complete Your Registration ✨
                 </Text>
                 <Text style={styles.welcomeSubtitle}>
-                  Create your account and start your journey
+                  Please complete your account setup to continue
+                </Text>
+              </View>
+
+              {/* Coming from login notification */}
+              <View style={styles.infoBanner}>
+                <Text style={styles.infoBannerIcon}>ℹ️</Text>
+                <Text style={styles.infoBannerText}>
+                  We found your email but need a few more details to set up your account
                 </Text>
               </View>
             </View>
@@ -140,6 +150,7 @@ const SignUp = () => {
                   placeholder="Enter your full name"
                   required
                   error={nameError}
+                  editable={!loading}
                 />
 
                 <PhoneNumberInput
@@ -151,6 +162,7 @@ const SignUp = () => {
                   selectedCode={selectedCode}
                   onSelectCode={setSelectedCode}
                   error={phoneError}
+                  editable={!loading}
                 />
 
                 <InputBox
@@ -161,6 +173,7 @@ const SignUp = () => {
                   keyboardType="email-address"
                   required
                   error={emailError}
+                  editable={false} // Always disable editing since email comes from login
                 />
 
                 {/* Optional Section */}
@@ -171,6 +184,7 @@ const SignUp = () => {
                     value={referral}
                     onChangeText={setReferral}
                     placeholder="Have a referral code? Enter here"
+                    editable={!loading}
                   />
                   
                   {/* Referral Benefits */}
@@ -187,13 +201,18 @@ const SignUp = () => {
                 {/* Terms & Conditions */}
                 <View style={styles.termsSection}>
                   <View style={styles.checkboxContainer}>
-                    <CustomCheckbox value={agree} onValueChange={setAgree} />
+                    <CustomCheckbox 
+                      value={agree} 
+                      onValueChange={setAgree}
+                      disabled={loading}
+                    />
                     <View style={styles.termsTextContainer}>
                       <Text style={styles.termsText}>
                         I agree to the{' '}
                         <TouchableOpacity 
                           style={styles.linkButton}
                           onPress={() => {/* Navigate to Terms */}}
+                          disabled={loading}
                         >
                           <Text style={styles.link}>Terms of Service</Text>
                         </TouchableOpacity>
@@ -201,6 +220,7 @@ const SignUp = () => {
                         <TouchableOpacity 
                           style={styles.linkButton}
                           onPress={() => {/* Navigate to Privacy */}}
+                          disabled={loading}
                         >
                           <Text style={styles.link}>Privacy Policy</Text>
                         </TouchableOpacity>
@@ -230,13 +250,19 @@ const SignUp = () => {
                   {loading ? (
                     <View style={styles.loadingContainer}>
                       <ActivityIndicator size="large" color={colors.gold} />
-                      <Text style={styles.loadingText}>Creating your account...</Text>
+                      <Text style={styles.loadingText}>
+                        Setting up your account...
+                      </Text>
                     </View>
                   ) : (
                     <LargeButton 
-                      title="Create Account" 
+                      title="Complete Registration"
                       onPress={handleSignUp}
-                      style={styles.createButton}
+                      style={[
+                        styles.createButton,
+                        loading && styles.buttonDisabled
+                      ]}
+                      disabled={loading}
                     />
                   )}
                 </View>
@@ -246,12 +272,24 @@ const SignUp = () => {
             {/* Bottom Section */}
             <View style={styles.bottomSection}>
               <TouchableOpacity 
-                onPress={() => navigation.navigate('Login')}
-                style={styles.loginSection}
+                onPress={navigateToLogin}
+                style={[
+                  styles.loginSection,
+                  loading && styles.linkDisabled
+                ]}
+                disabled={loading}
               >
-                <Text style={styles.loginText}>
+                <Text style={[
+                  styles.loginText,
+                  loading && styles.textDisabled
+                ]}>
                   Already have an account?{' '}
-                  <Text style={styles.loginLink}>Sign In Instead</Text>
+                  <Text style={[
+                    styles.loginLink,
+                    loading && styles.linkDisabled
+                  ]}>
+                    Sign In Instead
+                  </Text>
                 </Text>
               </TouchableOpacity>
             </View>
@@ -337,11 +375,11 @@ const styles = StyleSheet.create({
     maxHeight: 140,
     maxWidth: 280,
     opacity: 0.95,
-    tintColor: colors.gold, // Apply white tint for dark mode
   },
   welcomeSection: {
     alignItems: 'center',
     paddingHorizontal: 20,
+    marginBottom: 16,
   },
   welcomeTitle: {
     fontSize: 26,
@@ -359,6 +397,33 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+
+  // Info Banner (for coming from login)
+  infoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${colors.gold}15`,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 16,
+    marginHorizontal: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.gold,
+    borderWidth: 1,
+    borderColor: `${colors.gold}30`,
+  },
+  infoBannerIcon: {
+    fontSize: 16,
+    marginRight: 10,
+  },
+  infoBannerText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.gold,
+    lineHeight: 20,
+    fontWeight: '500',
   },
 
   // Form Card
@@ -561,6 +626,11 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 8,
   },
+  buttonDisabled: {
+    opacity: 0.6,
+    shadowOpacity: 0.1,
+    elevation: 2,
+  },
 
   // Bottom Section
   bottomSection: {
@@ -572,13 +642,22 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontSize: 16,
-    color: colors.gold,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   loginLink: {
     color: colors.gold,
     fontWeight: '600',
     textDecorationLine: 'underline',
+  },
+  
+  // Loading States
+  textDisabled: {
+    opacity: 0.4,
+  },
+  linkDisabled: {
+    opacity: 0.4,
+    textDecorationLine: 'none',
   },
 });
 

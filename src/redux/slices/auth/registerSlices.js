@@ -9,7 +9,7 @@ export const registerUser = createAsyncThunk(
   'auth/registerUser',
   async ({name, phone, email, country_code, otp, token, referral_code}, thunkAPI) => {
     try {
-      const response = await apiClient.post('api/register', {
+      const response = await apiClient.post('api/user/register', {
         params: {
           name,
           email: email.toLowerCase(),
@@ -23,11 +23,11 @@ export const registerUser = createAsyncThunk(
 
       console.log("response register", response);
       
-      const responseMessage = response?.result?.message;
+      const responseMessage = response?.result?.status;
       const partnerId = response?.result?.partner_id;
 
       // Check if registration was successful
-      if (responseMessage === 'Registered successful.') {
+      if (responseMessage === 'success') {
         // Show success toast
         Toast.show({
           type: 'success',

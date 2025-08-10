@@ -283,7 +283,7 @@ const Home = () => {
           <View style={[styles.serviceRow, styles.nfcCardRow]}>
             <ServiceCard
               title={'NFC Business Card'}
-              subtitle={'Coming Soon'}
+              subtitle={'Buy Now'}
               image={NFCImage}
               onPress={() => {
                 navigation.navigate('NFCCardPage');

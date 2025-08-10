@@ -58,8 +58,8 @@ const getHeaderDimensions = () => {
   
   return {
     headerHeight: isTablet ? height * 0.08 : isSmallDevice ? height * 0.08 : height * 0.08,
-    logoHeight: isTablet ? 35 : isSmallDevice ? 60 : 84,
-    logoWidth: isTablet ? 80 : isSmallDevice ? 55 : 65,
+    logoHeight: isTablet ? 35 : isSmallDevice ? 80 : 100,
+    logoWidth: isTablet ? 80 : isSmallDevice ? 65 : 85,
     iconSize: isTablet ? 24 : isSmallDevice ? 20 : 22,
     fontSize: {
       title: isTablet ? 20 : isSmallDevice ? 14 : 16,
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   logo: {
-    tintColor: colors.gold, // Apply gold tint to logo
+    // tintColor: colors.gold, // Apply gold tint to logo
   },
   titleContainer: {
     flex: 2,

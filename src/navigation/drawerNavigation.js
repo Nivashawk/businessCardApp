@@ -28,6 +28,7 @@ import {resetOTPData} from '../redux/slices/auth/sendOTPSlices';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const {width, height} = Dimensions.get('window');
 import {CommonActions} from '@react-navigation/native';
+import RNRestart from 'react-native-restart';
 
 // Get status bar height for proper positioning
 const getStatusBarHeight = () => {
@@ -761,6 +762,9 @@ function CustomDrawerContent(props) {
           routes: [{name: 'Login'}],
         }),
       );
+
+      // Reload the app to force RootNavigator to re-check auth state
+      RNRestart.Restart();
 
       console.log('Navigation dispatch completed');
     } catch (error) {

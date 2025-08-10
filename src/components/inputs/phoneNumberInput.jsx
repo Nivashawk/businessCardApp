@@ -34,7 +34,7 @@ const PhoneInputBox = ({
   useEffect(() => {
     const fetchCountryCodes = async () => {
       try {
-        const response = await axios.get('https://restcountries.com/v3.1/all');
+        const response = await axios.get('https://restcountries.com/v3.1/all?fields=idd,name');
         const data = response.data
           .map(country => ({
             code: country.idd?.root + (country.idd?.suffixes?.[0] || ''),
