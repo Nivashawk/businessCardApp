@@ -13,7 +13,9 @@ import {
   Platform,
   StatusBar,
   SafeAreaView,
+  Keyboard,
 } from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useSelector, useDispatch} from 'react-redux';
 import {createBusiness} from '../../redux/slices/business/createBusinessSlices';
 import {
@@ -42,6 +44,7 @@ const CreateBusiness = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const businessData = useSelector(state => state.businessData);
 
   // Get current tab from Redux state
@@ -61,6 +64,7 @@ const CreateBusiness = () => {
   const [index, setIndex] = useState(initialTab);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasNavigatedAway, setHasNavigatedAway] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const progress = useRef(new Animated.Value(initialTab / 4)).current;
 
   const BusinessCreated = useSelector(
@@ -71,6 +75,21 @@ const CreateBusiness = () => {
   useEffect(() => {
     dispatch(setCurrentTab(index));
   }, [index, dispatch]);
+
+  // Keyboard event listeners
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true);
+    });
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   // Reset component state when screen is focused
   useFocusEffect(
@@ -348,14 +367,17 @@ const CreateBusiness = () => {
     <View style={styles.container}>
       <StatusBar
         barStyle="light-content"
-        backgroundColor={colors.background}
+        backgroundColor={colors.secondary}
         translucent={false}
       />
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
+        {/* Status Bar Spacer */}
+        <View style={{ height: insets.top, backgroundColor: colors.secondary }} />
+        
         <KeyboardAvoidingView
           style={styles.keyboardContainer}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
+          keyboardVerticalOffset={0}>
           
           {/* Progress Bar */}
           <View style={styles.progressContainer}>
@@ -372,8 +394,19 @@ const CreateBusiness = () => {
             />
           </View>
 
-          {/* Tab Navigation */}
-          <View style={styles.tabs}>
+          {/* Tab Navigation with Back Button */}
+          <View style={styles.tabsContainer}>
+            {/* Back Button */}
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.backButtonText}>Back</Text>
+            </TouchableOpacity>
+
+            {/* Stepper Tabs */}
+            <View style={styles.tabs}>
             {steps.map((step, i) => (
               <TouchableOpacity
                 key={step.key}
@@ -407,6 +440,7 @@ const CreateBusiness = () => {
                 {index === i && <View style={styles.activeTabIndicator} />}
               </TouchableOpacity>
             ))}
+            </View>
           </View>
 
           {/* Step Content */}
@@ -428,28 +462,35 @@ const CreateBusiness = () => {
               }
             />
           </Animated.ScrollView>
-
-          {/* Navigation Buttons */}
-          <View style={styles.navButtons}>
-            <TouchableOpacity
-              style={[styles.button, styles.secondaryButton, index === 0 && styles.disabledButton]}
-              disabled={index === 0}
-              onPress={handlePrevious}>
-              <Text style={[styles.buttonText, styles.secondaryButtonText, index === 0 && styles.disabledButtonText]}>
-                Previous
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.button, styles.primaryButton]} 
-              onPress={handleNext}>
-              <Text style={[styles.buttonText, styles.primaryButtonText]}>
-                {isLastStep ? 'Create Business' : 'Next'}
-              </Text>
-            </TouchableOpacity>
-          </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+
+        {/* Navigation Buttons - Outside KeyboardAvoidingView */}
+        <View style={[
+          styles.navButtons, 
+          { 
+            paddingBottom: keyboardVisible 
+              ? 12 // Minimal padding when keyboard is visible
+              : Math.max(insets.bottom + 10, 20) // Normal safe area padding when keyboard is hidden
+          }
+        ]}>
+          <TouchableOpacity
+            style={[styles.button, styles.secondaryButton, index === 0 && styles.disabledButton]}
+            disabled={index === 0}
+            onPress={handlePrevious}>
+            <Text style={[styles.buttonText, styles.secondaryButtonText, index === 0 && styles.disabledButtonText]}>
+              Previous
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.button, styles.primaryButton]} 
+            onPress={handleNext}>
+            <Text style={[styles.buttonText, styles.primaryButtonText]}>
+              {isLastStep ? 'Create Business' : 'Next'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 };
@@ -486,11 +527,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gold,
     borderRadius: 3,
   },
-  tabs: {
+  tabsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    alignItems: 'center',
     backgroundColor: colors.secondary,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -502,27 +541,52 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    paddingVertical: 10,
+    paddingLeft: 4,
+    paddingRight: 8,
+  },
+  backButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderRadius: 6,
+    backgroundColor: 'transparent',
+  },
+  backButtonText: {
+    fontSize: 14,
+    color: colors.text_color_1,
+    fontWeight: '600',
+    opacity: 0.9,
+  },
+  tabs: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingHorizontal: 8,
   },
   tab: {
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    minWidth: 70,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    minWidth: 60,
     position: 'relative',
-    borderRadius: 12,
+    borderRadius: 10,
   },
   activeTab: {
-    backgroundColor: colors.gold + '15', // 15% opacity
-    transform: [{scale: 1.05}],
+    backgroundColor: colors.gold + '20', // 20% opacity
+    transform: [{scale: 1.02}],
   },
   stepNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
     borderWidth: 2,
     borderColor: colors.border,
     elevation: 2,
@@ -547,39 +611,42 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   stepNumberText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     color: colors.text_color_2,
   },
   activeStepNumberText: {
-    color: colors.primary,
-    fontSize: 15,
+    color: colors.text_color_1,
+    fontSize: 13,
   },
   completedStepNumberText: {
     color: colors.text_color_1,
+    fontSize: 12,
   },
   tabText: {
-    fontSize: 12,
+    fontSize: 10,
     color: colors.text_color_2,
     textAlign: 'center',
     fontWeight: '500',
+    marginTop: 2,
   },
   activeTabText: {
     color: colors.gold,
     fontWeight: 'bold',
-    fontSize: 13,
+    fontSize: 11,
   },
   completedTabText: {
     color: colors.status_green,
     fontWeight: '600',
+    fontSize: 10,
   },
   activeTabIndicator: {
     position: 'absolute',
-    bottom: -20,
+    bottom: -12,
     left: '50%',
-    marginLeft: -15,
-    width: 30,
-    height: 4,
+    marginLeft: -12,
+    width: 24,
+    height: 3,
     backgroundColor: colors.gold,
     borderRadius: 2,
     elevation: 2,
@@ -594,7 +661,7 @@ const styles = StyleSheet.create({
   stepContainer: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingBottom: 100, // Space for navigation buttons
+    paddingBottom: 80, // Space for navigation buttons
     backgroundColor: colors.background,
   },
   navButtons: {
@@ -605,8 +672,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.secondary,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    paddingHorizontal: 20,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: colors.border,
     elevation: 8,
@@ -617,16 +684,16 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.15,
     shadowRadius: 8,
-    gap: 16,
+    gap: 12,
   },
   button: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    minHeight: 44,
     elevation: 3,
     shadowColor: colors.shadow,
     shadowOffset: {
@@ -655,7 +722,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 15,
   },
   primaryButtonText: {
     color: colors.primary,

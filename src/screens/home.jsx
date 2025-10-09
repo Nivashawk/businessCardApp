@@ -6,6 +6,7 @@ import {
   ScrollView,
   Platform,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import React, {useEffect, useState, useCallback, useMemo} from 'react';
 import CardStack from '../components/cards/cardStack';
@@ -28,6 +29,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 
 const {width, height} = Dimensions.get('window');
+
 
 const handleReferral = () => {
   console.log('clicked referral');
@@ -211,6 +213,7 @@ const Home = () => {
     fetchHomeData();
   }, [fetchHomeData]);
 
+
   // Premium section header component
   const SectionHeader = ({title, subtitle, icon}) => (
     <View style={styles.sectionHeaderContainer}>
@@ -232,24 +235,90 @@ const Home = () => {
   );
 
   return (
-    <ScrollView
-      style={styles.screenContainer}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={colors.gold}
-          colors={[colors.gold, colors.accent]}
-          progressBackgroundColor={colors.surface}
-        />
-      }
-    >
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.screenContainer}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.gold}
+            colors={[colors.gold, colors.accent]}
+            progressBackgroundColor={colors.surface}
+          />
+        }
+      >
       {/* Hero Section - Card Stack */}
       <View style={styles.heroSection}>
         <GestureHandlerRootView style={styles.cardStackContainer}>
           <CardStack cardData={homeData} />
         </GestureHandlerRootView>
+      </View>
+
+      {/* AI Scanner Hero Section */}
+      <View style={styles.contentSection}>
+        <View style={styles.aiScannerHero}>
+          <LinearGradient
+            colors={[colors.primary, '#4A5568']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.aiScannerGradient}
+          >
+            <View style={styles.aiScannerContent}>
+              <View style={styles.aiScannerHeader}>
+                {/* <Text style={styles.aiScannerIcon}>🤖</Text> */}
+                <View style={styles.aiScannerTitleContainer}>
+                  <Text style={styles.aiScannerTitle}>AI Business Card Scanner</Text>
+                  <Text style={styles.aiScannerSubtitle}>Scan & save contacts instantly</Text>
+                </View>
+              </View>
+              
+              <View style={styles.aiFeatureHighlights}>
+                <View style={styles.aiFeatureItem}>
+                  <Text style={styles.aiFeatureIcon}>⚡</Text>
+                  <Text style={styles.aiFeatureText}>Instant extraction</Text>
+                </View>
+                <View style={styles.aiFeatureItem}>
+                  <Text style={styles.aiFeatureIcon}>🎯</Text>
+                  <Text style={styles.aiFeatureText}>Smart detection</Text>
+                </View>
+                {/* <View style={styles.aiFeatureItem}>
+                  <Text style={styles.aiFeatureIcon}>📱</Text>
+                  <Text style={styles.aiFeatureText}>Easy scanning</Text>
+                </View> */}
+              </View>
+
+              <TouchableOpacity 
+                style={styles.aiScannerButton}
+                onPress={() => {
+                  console.log('🚀 Home screen: Navigating to Contacts tab with openManualContact=true');
+                  // Navigate to the Contacts tab and pass parameters to the Contact screen
+                  navigation.navigate('Contacts', { 
+                    screen: 'Contact', 
+                    params: { openManualContact: true } 
+                  });
+                }}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={[colors.gold, '#F59E0B']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 0}}
+                  style={styles.aiScannerButtonGradient}
+                >
+                  {/* <Text style={styles.aiScannerButtonIcon}>📸</Text> */}
+                  <Text style={styles.aiScannerButtonText}>Scan Business Card Now</Text>
+                  {/* <Text style={styles.aiScannerButtonArrow}>→</Text> */}
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <Text style={styles.aiScannerFooter}>
+                Works with any business card
+              </Text>
+            </View>
+          </LinearGradient>
+        </View>
       </View>
 
       {/* Services Section - Updated with NFC Card */}
@@ -346,13 +415,18 @@ const Home = () => {
         </View>
       </View>
 
-      {/* Bottom spacing for better scroll experience */}
-      <View style={styles.bottomSpacer} />
-    </ScrollView>
+        {/* Bottom spacing for better scroll experience */}
+        <View style={styles.bottomSpacer} />
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   screenContainer: {
     flex: 1,
     backgroundColor: colors.background,
@@ -501,7 +575,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   emptyEventsTitle: {
-    ...typography.headline,
+    ...typography.heading,
     fontSize: 18,
     fontWeight: '600',
     color: colors.text_color_1,
@@ -519,6 +593,117 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 20,
+  },
+  // AI Scanner Hero Section Styles
+  aiScannerHero: {
+    marginHorizontal: 16,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  aiScannerGradient: {
+    borderRadius: 20,
+  },
+  aiScannerContent: {
+    padding: 24,
+  },
+  aiScannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  aiScannerIcon: {
+    fontSize: 36,
+    marginRight: 16,
+  },
+  aiScannerTitleContainer: {
+    flex: 1,
+  },
+  aiScannerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  aiScannerSubtitle: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
+    lineHeight: 20,
+  },
+  aiFeatureHighlights: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  aiFeatureItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  aiFeatureIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  aiFeatureText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontWeight: '500',
+    opacity: 0.9,
+  },
+  aiScannerButton: {
+    borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: colors.gold,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  aiScannerButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+  },
+  aiScannerButtonIcon: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  aiScannerButtonText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text_color_1,
+    textAlign: 'center',
+  },
+  aiScannerButtonArrow: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text_color_1,
+    marginLeft: 8,
+  },
+  aiScannerFooter: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    opacity: 0.7,
+    lineHeight: 16,
   },
 });
 

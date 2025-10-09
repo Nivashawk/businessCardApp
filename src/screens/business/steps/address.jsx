@@ -58,7 +58,7 @@ const Address = forwardRef(({initialData}, ref) => {
   // Add a stable flag to prevent unnecessary resets
   const [isInitialized, setIsInitialized] = useState(false);
   const [countriesLoaded, setCountriesLoaded] = useState(false);
-
+  
   // input errors
   const [streetError, setStreetError] = useState('');
   const [street2Error, setStreet2Error] = useState('');
@@ -169,7 +169,7 @@ const Address = forwardRef(({initialData}, ref) => {
 
   // Update state when initialData changes (when user navigates back) - IMPROVED
   useEffect(() => {
-    if (initialData && !isInitialized) {
+    if (initialData && !isInitialized && countriesLoaded) {
       console.log('Updating Address form with initialData:', initialData);
 
       setStreet(initialData.street || '');
@@ -195,7 +195,7 @@ const Address = forwardRef(({initialData}, ref) => {
 
       setIsInitialized(true);
     }
-  }, [initialData, isInitialized]);
+  }, [initialData, isInitialized, countriesLoaded]);
 
   // Separate effect to handle country/state preservation after countries load
   useEffect(() => {

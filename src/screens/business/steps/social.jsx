@@ -120,9 +120,12 @@ const Social = forwardRef((props, ref) => {
     }
   }, [businessData]);
 
-  // Initialize from props.initialData if available
+  // Track if we've initialized from initialData to prevent unnecessary resets
+  const [hasInitialized, setHasInitialized] = useState(false);
+  
+  // Initialize from props.initialData if available - Only if not already set
   useEffect(() => {
-    if (props.initialData) {
+    if (props.initialData && !hasInitialized) {
       console.log('=== PROPS DATA INITIALIZATION ===');
       console.log('Social component - initialData:', props.initialData);
       
@@ -141,8 +144,10 @@ const Social = forwardRef((props, ref) => {
           ...props.initialData.enabled
         }));
       }
+      
+      setHasInitialized(true);
     }
-  }, [props.initialData]);
+  }, [props.initialData, hasInitialized]);
 
   // SIMPLIFIED: Input change handlers WITHOUT Redux dispatch for testing
   const handleInputChange = useCallback((platform, value) => {

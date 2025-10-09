@@ -40,7 +40,7 @@ export default function HomeStack() {
       <Stack.Screen
         name="CreateBusiness"
         component={CreateBusiness}
-        options={{ header: () => <CustomHeader title="Details" /> }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="ListBusiness"

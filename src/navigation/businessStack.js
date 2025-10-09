@@ -25,7 +25,7 @@ export default function BusinessStack() {
         name="CreateBusiness"
         component={CreateBusiness}
         options={{
-          header: () => <CustomHeader title="Create Business" />,
+          headerShown: false,
         }}
       />
       <Stack.Screen

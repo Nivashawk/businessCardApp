@@ -44,6 +44,31 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
   const [currentScanType, setCurrentScanType] = useState(null);
   const {processScanResult, extractBusinessCardData, showScanResultSummary} = useDocumentScanner();
 
+  // Function to clear all form data
+  const clearFormData = () => {
+    setBusinessTitle('');
+    setFrontImageUri(null);
+    setBackImageUri(null);
+    setName('');
+    setBusinessName('');
+    setPhone('');
+    setEmail('');
+    setWebsite('');
+    setAddress('');
+    setOcrProcessedImages(new Set());
+    setIsProcessingOCR(false);
+    setShowManualOCRModal(false);
+    setCurrentImageForOCR(null);
+    setShowDocumentScanner(false);
+    setCurrentScanType(null);
+  };
+
+  // Handle modal close with form clearing
+  const handleClose = () => {
+    clearFormData();
+    onClose();
+  };
+
   const selectImage = async (setImage, cardType) => {
     Alert.alert(
       `Add ${cardType} of Business Card`,
@@ -271,17 +296,8 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
       createdAt: new Date().toISOString(),
     });
     
-    // Reset fields
-    setBusinessTitle('');
-    setFrontImageUri(null);
-    setBackImageUri(null);
-    setName('');
-    setBusinessName('');
-    setPhone('');
-    setEmail('');
-    setWebsite('');
-    setAddress('');
-    setOcrProcessedImages(new Set());
+    // Reset fields and close
+    clearFormData();
     onClose();
   };
 
@@ -291,22 +307,128 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
       animationType="slide"
       transparent={true}
       visible={visible}
-      onRequestClose={onClose}>
+      onRequestClose={handleClose}>
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           <View style={styles.header}>
             <Text style={styles.title}>Add Manual Contact</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButtonContainer}>
+            <TouchableOpacity onPress={handleClose} style={styles.closeButtonContainer}>
               <Text style={styles.closeButton}>✕</Text>
             </TouchableOpacity>
           </View>
 
           <ScrollView 
             contentContainerStyle={styles.scrollViewContent}
-            showsVerticalScrollIndicator={false}>
+            showsVerticalScrollIndicator={true}
+            indicatorStyle="default">
             
+            {/* AI-Powered Document Scanner Section */}
+            <View style={styles.heroSection}>
+              <View style={styles.heroHeader}>
+                {/* <Text style={styles.heroIcon}>🤖</Text> */}
+                <View style={styles.heroTitleContainer}>
+                  <Text style={styles.heroTitle}>AI-Powered Business Card Scanner</Text>
+                  <Text style={styles.heroSubtitle}>Scan & extract information instantly</Text>
+                </View>
+              </View>
+              
+              <View style={styles.featureHighlights}>
+                <View style={styles.featureItem}>
+                  <Text style={styles.featureIcon}>⚡</Text>
+                  <Text style={styles.featureText}>Instant text extraction</Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <Text style={styles.featureIcon}>🎯</Text>
+                  <Text style={styles.featureText}>Smart field detection</Text>
+                </View>
+                {/* <View style={styles.featureItem}>
+                  <Text style={styles.featureIcon}>🌍</Text>
+                  <Text style={styles.featureText}>Multi-language support</Text>
+                </View> */}
+              </View>
+
+              {isProcessingOCR && (
+                <View style={styles.ocrProcessing}>
+                  <Text style={styles.ocrProcessingText}>🔍 AI is processing and extracting information...</Text>
+                </View>
+              )}
+              
+              <View style={styles.scannerContainer}>
+                <Text style={styles.scannerTitle}>📸 Scan Business Card</Text>
+                <Text style={styles.scannerSubtitle}>Recommended: Let AI do the work for you!</Text>
+                
+                <View style={styles.imagePickerContainer}>
+                  <TouchableOpacity
+                    style={styles.primaryImagePlaceholder}
+                    onPress={() => selectImage(setFrontImageUri, "Front Side")}>
+                    {frontImageUri ? (
+                      <>
+                        <Image source={{uri: frontImageUri}} style={styles.imagePreview} />
+                        <TouchableOpacity
+                          style={styles.clearImageButton}
+                          onPress={() => setFrontImageUri(null)}>
+                          <Text style={styles.clearImageText}>✕</Text>
+                        </TouchableOpacity>
+                        <View style={styles.imageLabel}>
+                          <Text style={styles.imageLabelText}>Front Side</Text>
+                        </View>
+                      </>
+                    ) : (
+                      <View style={styles.primaryPlaceholderContent}>
+                        <Text style={styles.primaryImageIcon}>📱</Text>
+                        <Text style={styles.primaryImageText}>Scan Front Side</Text>
+                        <Text style={styles.primaryImageSubtext}>AI will extract all details</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.secondaryImagePlaceholder}
+                    onPress={() => selectImage(setBackImageUri, "Back Side")}>
+                    {backImageUri ? (
+                      <>
+                        <Image source={{uri: backImageUri}} style={styles.imagePreview} />
+                        <TouchableOpacity
+                          style={styles.clearImageButton}
+                          onPress={() => setBackImageUri(null)}>
+                          <Text style={styles.clearImageText}>✕</Text>
+                        </TouchableOpacity>
+                        <View style={styles.imageLabel}>
+                          <Text style={styles.imageLabelText}>Back Side</Text>
+                        </View>
+                      </>
+                    ) : (
+                      <View style={styles.secondaryPlaceholderContent}>
+                        <Text style={styles.secondaryImageIcon}>📷</Text>
+                        <Text style={styles.secondaryImageText}>Scan Back Side</Text>
+                        <Text style={styles.secondaryImageSubtext}>Optional</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              {/* Scroll Indicator */}
+              <View style={styles.scrollIndicator}>
+                <Text style={styles.scrollText}>📝 Scroll down to edit details or add manually</Text>
+                <Text style={styles.scrollArrow}>⬇️</Text>
+              </View>
+            </View>
+
+            {/* Form Preview Indicator */}
+            {/* <View style={styles.formPreview}>
+              <View style={styles.formPreviewHeader}>
+                <Text style={styles.formPreviewIcon}>📋</Text>
+                <Text style={styles.formPreviewTitle}>Contact Form Below</Text>
+              </View>
+              <Text style={styles.formPreviewText}>
+                Business Title • Name • Phone • Email • Address & More
+              </Text>
+            </View> */}
+
+            {/* Business Title */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Business Title</Text>
+              <Text style={styles.sectionTitle}>Business Card Title</Text>
               <TextInput
                 style={styles.textInput}
                 placeholder="E.g., John Doe - ABC Corp"
@@ -316,10 +438,15 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
               />
             </View>
 
-            {/* OCR Extracted Fields */}
+            {/* Manual Entry Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Contact Information</Text>
-              <Text style={styles.sectionSubtitle}>Automatically extracted from business card images</Text>
+              <View style={styles.manualEntryHeader}>
+                <Text style={styles.sectionTitle}>Contact Information</Text>
+                <View style={styles.manualEntryBadge}>
+                  <Text style={styles.manualEntryBadgeText}>✏️ Manual Entry</Text>
+                </View>
+              </View>
+              <Text style={styles.sectionSubtitle}>Edit or manually enter details (AI extracted fields appear here automatically)</Text>
               
               <TextInput
                 style={styles.textInput}
@@ -375,63 +502,6 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
                 multiline={true}
                 numberOfLines={2}
               />
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Business Card Images</Text>
-              <Text style={styles.sectionSubtitle}>Add front and/or back of business card (OCR will auto-extract information)</Text>
-              
-              {isProcessingOCR && (
-                <View style={styles.ocrProcessing}>
-                  <Text style={styles.ocrProcessingText}>🔍 Processing image and extracting information...</Text>
-                </View>
-              )}
-              
-              <View style={styles.imagePickerContainer}>
-                <TouchableOpacity
-                  style={styles.imagePlaceholder}
-                  onPress={() => selectImage(setFrontImageUri, "Front Side")}>
-                  {frontImageUri ? (
-                    <>
-                      <Image source={{uri: frontImageUri}} style={styles.imagePreview} />
-                      <TouchableOpacity
-                        style={styles.clearImageButton}
-                        onPress={() => setFrontImageUri(null)}>
-                        <Text style={styles.clearImageText}>✕</Text>
-                      </TouchableOpacity>
-                    </>
-                  ) : (
-                    <View style={styles.placeholderContent}>
-                      <Text style={styles.addImageIcon}>📷</Text>
-                      <Text style={styles.imagePlaceholderText}>
-                        {backImageUri ? 'Front Side (Optional)' : 'Add Front Side'}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.imagePlaceholder}
-                  onPress={() => selectImage(setBackImageUri, "Back Side")}>
-                  {backImageUri ? (
-                    <>
-                      <Image source={{uri: backImageUri}} style={styles.imagePreview} />
-                      <TouchableOpacity
-                        style={styles.clearImageButton}
-                        onPress={() => setBackImageUri(null)}>
-                        <Text style={styles.clearImageText}>✕</Text>
-                      </TouchableOpacity>
-                    </>
-                  ) : (
-                    <View style={styles.placeholderContent}>
-                      <Text style={styles.addImageIcon}>📷</Text>
-                      <Text style={styles.imagePlaceholderText}>
-                        Add Back Side (Optional)
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </View>
             </View>
           </ScrollView>
 
@@ -654,6 +724,239 @@ const styles = StyleSheet.create({
     color: colors.text_color_1,
     fontSize: 14,
     fontWeight: '500',
+  },
+  // New hero section styles
+  heroSection: {
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  heroHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  heroIcon: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  heroTitleContainer: {
+    flex: 1,
+  },
+  heroTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.95,
+  },
+  featureHighlights: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  featureItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  featureIcon: {
+    fontSize: 20,
+    marginBottom: 4,
+  },
+  featureText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  scannerContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  scannerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  scannerSubtitle: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 16,
+    opacity: 0.95,
+  },
+  primaryImagePlaceholder: {
+    flex: 1,
+    height: 160,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginRight: 8,
+    overflow: 'hidden',
+    position: 'relative',
+    borderWidth: 2,
+    borderColor: colors.gold,
+    borderStyle: 'dashed',
+  },
+  secondaryImagePlaceholder: {
+    flex: 1,
+    height: 160,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginLeft: 8,
+    overflow: 'hidden',
+    position: 'relative',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderStyle: 'dashed',
+  },
+  primaryPlaceholderContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  secondaryPlaceholderContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  primaryImageIcon: {
+    fontSize: 40,
+    marginBottom: 8,
+    color: colors.primary,
+  },
+  secondaryImageIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+    color: colors.textSecondary,
+  },
+  primaryImageText: {
+    color: colors.primary,
+    fontSize: 16,
+    textAlign: 'center',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  secondaryImageText: {
+    color: colors.text_color_1,
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  primaryImageSubtext: {
+    color: colors.gold,
+    fontSize: 12,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  secondaryImageSubtext: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  imageLabel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingVertical: 4,
+  },
+  imageLabelText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  manualEntryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  manualEntryBadge: {
+    backgroundColor: colors.secondary,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  manualEntryBadgeText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  // Scroll indicator styles
+  scrollIndicator: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  scrollText: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 4,
+    opacity: 0.9,
+  },
+  scrollArrow: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    opacity: 0.8,
+  },
+  // Form preview styles
+  formPreview: {
+    backgroundColor: colors.secondary,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+  },
+  formPreviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  formPreviewIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  formPreviewTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text_color_1,
+  },
+  formPreviewText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    textAlign: 'center',
   },
 });
 

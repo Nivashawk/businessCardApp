@@ -385,9 +385,16 @@ const Upload = forwardRef((props, ref) => {
   const openModal = useCallback(type => {
     console.log(`Opening modal for: ${type}`);
     
-    // For logo, open device gallery directly
+    // For logo, show options: Document Scanner or Device Gallery
     if (type === 'logo') {
-      openDeviceGallery(type);
+      Alert.alert(
+        'Add Business Logo',
+        'Choose how you would like to add your logo.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: '📷 Upload Logo', onPress: () => openDocumentScanner('logo') },
+        ]
+      );
     } else {
       setCurrentImageType(type);
       setIsModalVisible(true);
@@ -428,7 +435,14 @@ const Upload = forwardRef((props, ref) => {
   const openDocumentScanner = useCallback((type) => {
     console.log(`Opening document scanner for: ${type}`);
     setCurrentImageType(type);
-    setScannerMode('businessCard');
+    
+    // Set appropriate scanner mode based on image type
+    if (type === 'logo') {
+      setScannerMode('logo');
+    } else {
+      setScannerMode('businessCard');
+    }
+    
     setShowDocumentScanner(true);
   }, []);
 
@@ -484,6 +498,10 @@ const Upload = forwardRef((props, ref) => {
           setSelectedBackImage(processedImage);
           updateData.business_card_back = base64Data;
           break;
+        case 'logo':
+          setSelectedLogoImage(processedImage);
+          updateData.logo = base64Data;
+          break;
         default:
           console.warn(`Unknown image type: ${type}`);
           break;
@@ -495,8 +513,8 @@ const Upload = forwardRef((props, ref) => {
         console.log(`Dispatched update for ${type} with document scanner`);
       }
 
-      // Show scan result summary to user
-      if (processedResult.ocrData && processedResult.hasOCRData) {
+      // Show scan result summary to user (skip for logo)
+      if (type !== 'logo' && processedResult.ocrData && processedResult.hasOCRData) {
         showScanResultSummary(processedResult);
         
         // Auto-populate business fields from OCR data if available
@@ -509,11 +527,14 @@ const Upload = forwardRef((props, ref) => {
       }
 
       console.log(`Document scan processed successfully for ${type}`);
+      
+      // Close scanner
+      closeDocumentScanner();
     } catch (error) {
       console.error('Error handling document scan:', error);
       Alert.alert('Scan Error', 'Failed to process the scanned document');
     }
-  }, [currentImageType, processScanResult, extractBusinessCardData, showScanResultSummary, dispatch]);
+  }, [currentImageType, processScanResult, extractBusinessCardData, showScanResultSummary, dispatch, closeDocumentScanner]);
 
   const handleDocumentScanError = useCallback((error) => {
     console.error('Document scanner error:', error);
@@ -955,8 +976,12 @@ const Upload = forwardRef((props, ref) => {
         onScanComplete={handleDocumentScanComplete}
         onError={handleDocumentScanError}
         mode={scannerMode}
-        title={`Scan ${currentImageType === 'front' ? 'Front' : 'Back'} Business Card`}
-        enableOCR={true}
+        title={
+          currentImageType === 'logo' 
+            ? 'Scan Business Logo' 
+            : `Scan ${currentImageType === 'front' ? 'Front' : 'Back'} Business Card`
+        }
+        enableOCR={scannerMode !== 'logo'}
       />
     </View>
   );

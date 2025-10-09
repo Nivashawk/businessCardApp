@@ -204,7 +204,7 @@ const DropdownWSearch = React.memo(({
         transparent 
         animationType="none" 
         onRequestClose={close}
-        statusBarTranslucent={true}
+        statusBarTranslucent={false}
       >
         <TouchableOpacity 
           style={styles.overlay} 

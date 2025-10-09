@@ -1,7 +1,7 @@
 // components/contacts/Contacts.js
 import React, {useState, useEffect, useMemo, useCallback} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
 
 import {SafeAreaView, StatusBar, TouchableOpacity, StyleSheet, Text, Modal, View, Image, Alert} from 'react-native'; // Import TouchableOpacity and Text for FAB
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
@@ -29,7 +29,7 @@ import ManualContactListItem from './contactComponent/ManualContactListItem'; //
 
 const MANUAL_CONTACTS_KEY = '@manual_contacts';
 
-const Contacts = () => {
+const Contacts = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
@@ -177,6 +177,43 @@ const Contacts = () => {
   useEffect(() => {
     fetchAllContacts();
   }, [fetchAllContacts]);
+
+  // Handle navigation from home screen to open manual contact modal
+  useEffect(() => {
+    console.log('📋 Contacts screen mounted with route params:', route?.params);
+    
+    // Check immediately on mount or param change
+    if (route?.params?.openManualContact) {
+      console.log('✅ Detected openManualContact parameter - switching to Manual Contacts tab');
+      
+      // Switch to Manual Contacts tab immediately
+      setActiveTab('Manual Contacts');
+      
+      // Open the manual contact modal after a short delay
+      setTimeout(() => {
+        console.log('✅ Opening manual contact modal');
+        setShowManualContactModal(true);
+      }, 300); // Reduced delay for better UX
+      
+      // Clear the parameter to prevent reopening on subsequent visits
+      navigation.setParams({ openManualContact: undefined });
+    }
+  }, [route?.params?.openManualContact, navigation]); // Watch specific param to avoid unnecessary re-renders
+
+  // Also check on screen focus for cases where navigation happens while screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      console.log('📱 Contacts screen focused with params:', route?.params);
+      if (route?.params?.openManualContact) {
+        console.log('🎯 useFocusEffect: Switching to Manual Contacts tab and opening modal');
+        setActiveTab('Manual Contacts');
+        setTimeout(() => {
+          setShowManualContactModal(true);
+        }, 300);
+        navigation.setParams({ openManualContact: undefined });
+      }
+    }, [route?.params?.openManualContact, navigation])
+  );
 
   useEffect(() => {
     const allDataLoading = isLoading || (activeTab === 'Manual Contacts' && refreshing);
@@ -399,7 +436,10 @@ const Contacts = () => {
         transparent={true}
         animationType="fade"
         onRequestClose={closeImageModal}>
-        <View style={styles.modalContainer}>
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          onPress={closeImageModal}
+          activeOpacity={1}>
           <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" />
           
           {/* Close Button */}
@@ -420,22 +460,24 @@ const Contacts = () => {
           {/* Full Screen Image */}
           <View style={styles.fullScreenImageContainer}>
             {selectedImage && ( // Only render Image if selectedImage exists
-              <Image
-                source={{uri: selectedImage}}
-                style={styles.fullScreenImage}
-                resizeMode="contain"
-              />
+              <TouchableOpacity 
+                onPress={closeImageModal}
+                activeOpacity={1}
+                style={styles.imageWrapper}>
+                <Image
+                  source={{uri: selectedImage}}
+                  style={styles.fullScreenImage}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             )}
           </View>
 
           {/* Tap to close hint */}
-          <TouchableOpacity 
-            style={styles.tapToCloseArea}
-            onPress={closeImageModal}
-            activeOpacity={1}>
+          <View style={styles.tapToCloseArea}>
             <Text style={styles.tapToCloseText}>Tap anywhere to close</Text>
-          </TouchableOpacity>
-        </View>
+          </View>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
@@ -467,7 +509,7 @@ const manualContactStyles = StyleSheet.create({
 
 // Styles for YOUR custom image modal
 const styles = StyleSheet.create({
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.9)', // Semi-transparent black background
     justifyContent: 'center',
@@ -507,6 +549,12 @@ const styles = StyleSheet.create({
   fullScreenImageContainer: {
     flex: 1,
     width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageWrapper: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },

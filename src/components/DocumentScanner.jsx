@@ -11,18 +11,19 @@ import {
   Animated,
   Modal,
 } from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import DocumentScanner from 'react-native-document-scanner-plugin';
 import ImageResizer from 'react-native-image-resizer';
 import {colors} from '../theme/colors';
 import {processImageOCR} from '../utils/ocrUtilsMLKit';
 
-const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
+const {width: screenWidth} = Dimensions.get('window');
 
 const DocumentScannerComponent = ({
   visible,
   onClose,
   onScanComplete,
-  mode = 'businessCard', // 'businessCard' | 'document'
+  mode = 'businessCard', // 'businessCard' | 'document' | 'logo'
   title = 'Scan Document',
   enableOCR = true,
   onError,
@@ -30,6 +31,7 @@ const DocumentScannerComponent = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState('');
   const progressAnim = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (isProcessing) {
@@ -77,6 +79,14 @@ const DocumentScannerComponent = ({
         scannerOptions.documentDetectionConfidence = 0.8;
       }
 
+      // Add specific options for logo scanning
+      if (mode === 'logo') {
+        scannerOptions.maxNumDocuments = 1;
+        scannerOptions.documentDetectionConfidence = 0.7; // More flexible for logos
+        scannerOptions.croppedImageQuality = 95; // Higher quality for logos
+        scannerOptions.quality = 1.0;
+      }
+
       const result = await DocumentScanner.scanDocument(scannerOptions);
 
       if (result.status === 'success' && result.scannedImages?.length > 0) {
@@ -115,12 +125,28 @@ const DocumentScannerComponent = ({
       setProcessingStep('Optimizing image...');
       
       // Resize and optimize the image for better processing
+      let width, height, quality;
+      
+      if (mode === 'logo') {
+        width = 800;   // Square-ish for logos
+        height = 800;
+        quality = 95;  // High quality for logos
+      } else if (mode === 'businessCard') {
+        width = 1200;
+        height = 800;
+        quality = 85;
+      } else {
+        width = 1600;
+        height = 1200;
+        quality = 85;
+      }
+
       const optimizedImage = await ImageResizer.createResizedImage(
         imagePath,
-        mode === 'businessCard' ? 1200 : 1600, // Smaller for business cards
-        mode === 'businessCard' ? 800 : 1200,
+        width,
+        height,
         'JPEG',
-        85, // Good quality vs file size balance
+        quality,
         0,
         undefined,
         false,
@@ -132,8 +158,8 @@ const DocumentScannerComponent = ({
 
       let extractedData = null;
 
-      // Process OCR if enabled
-      if (enableOCR) {
+      // Process OCR if enabled (skip for logos)
+      if (enableOCR && mode !== 'logo') {
         setProcessingStep('Extracting text...');
         try {
           extractedData = await processImageOCR(optimizedImage.uri);
@@ -196,6 +222,8 @@ const DocumentScannerComponent = ({
     switch (mode) {
       case 'businessCard':
         return 'Position the business card within the frame. The scanner will automatically detect edges and capture when ready.';
+      case 'logo':
+        return 'Position your logo or image within the frame. You can adjust the crop area after scanning for perfect results.';
       case 'document':
         return 'Position the document within the frame. Make sure all edges are visible and the document is well-lit.';
       default:
@@ -241,7 +269,7 @@ const DocumentScannerComponent = ({
       <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" />
       
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
           <Text style={styles.closeButtonText}>✕</Text>
         </TouchableOpacity>
@@ -268,7 +296,9 @@ const DocumentScannerComponent = ({
           </View>
           
           <Text style={styles.frameHint}>
-            📄 {mode === 'businessCard' ? 'Business Card' : 'Document'}
+            {mode === 'businessCard' ? '📄 Business Card' : 
+             mode === 'logo' ? '🏢 Logo' : 
+             '📄 Document'}
           </Text>
         </View>
       </View>
@@ -316,7 +346,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 50,
     paddingBottom: 20,
   },
   closeButton: {

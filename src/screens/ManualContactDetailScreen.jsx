@@ -11,6 +11,7 @@ import {
   TextInput,
   StatusBar,
 } from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {colors} from '../theme/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -19,6 +20,7 @@ const MANUAL_CONTACTS_KEY = '@manual_contacts';
 const ManualContactDetailScreen = ({route, navigation}) => {
   const {contactId, onContactUpdated} = route.params;
   const [contact, setContact] = useState(null);
+  const insets = useSafeAreaInsets();
   const [isEditing, setIsEditing] = useState(false);
   
   // Edit form state
@@ -165,36 +167,10 @@ const ManualContactDetailScreen = ({route, navigation}) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor={colors.background} barStyle="dark-content" />
+      <StatusBar backgroundColor="transparent" barStyle="dark-content" translucent={true} />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        
-        <View style={styles.headerActions}>
-          {!isEditing ? (
-            <>
-              <TouchableOpacity onPress={() => setIsEditing(true)} style={styles.editButton}>
-                <Text style={styles.editButtonText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={deleteContact} style={styles.deleteButton}>
-                <Text style={styles.deleteButtonText}>🗑️</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <TouchableOpacity onPress={() => setIsEditing(false)} style={styles.cancelButton}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={saveContact} style={styles.saveButton}>
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-      </View>
+      {/* Status Bar Spacer */}
+      <View style={{ height: insets.top, backgroundColor: colors.background }} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Business Title */}
@@ -373,13 +349,45 @@ const ManualContactDetailScreen = ({route, navigation}) => {
         </View>
       </ScrollView>
 
+      {/* Bottom Action Bar */}
+      <View style={[styles.bottomActionBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        {!isEditing ? (
+          <>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.bottomBackButton}>
+              <Text style={styles.bottomBackButtonText}>Back</Text>
+            </TouchableOpacity>
+            
+            <View style={styles.bottomActions}>
+              <TouchableOpacity onPress={() => setIsEditing(true)} style={styles.bottomEditButton}>
+                <Text style={styles.bottomEditButtonText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={deleteContact} style={styles.bottomDeleteButton}>
+                <Text style={styles.bottomDeleteButtonText}>🗑️</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity onPress={() => setIsEditing(false)} style={styles.bottomCancelButton}>
+              <Text style={styles.bottomCancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={saveContact} style={styles.bottomSaveButton}>
+              <Text style={styles.bottomSaveButtonText}>Save Changes</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+
       {/* Full Screen Image Modal */}
       <Modal
         visible={imageModalVisible}
         transparent={true}
         animationType="fade"
         onRequestClose={closeImageModal}>
-        <View style={styles.modalContainer}>
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          onPress={closeImageModal}
+          activeOpacity={1}>
           <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" />
           
           <TouchableOpacity 
@@ -397,21 +405,23 @@ const ManualContactDetailScreen = ({route, navigation}) => {
 
           <View style={styles.fullScreenImageContainer}>
             {selectedImage && (
-              <Image
-                source={{uri: selectedImage}}
-                style={styles.fullScreenImage}
-                resizeMode="contain"
-              />
+              <TouchableOpacity 
+                onPress={closeImageModal}
+                activeOpacity={1}
+                style={styles.imageWrapper}>
+                <Image
+                  source={{uri: selectedImage}}
+                  style={styles.fullScreenImage}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             )}
           </View>
 
-          <TouchableOpacity 
-            style={styles.tapToCloseArea}
-            onPress={closeImageModal}
-            activeOpacity={1}>
+          <View style={styles.tapToCloseArea}>
             <Text style={styles.tapToCloseText}>Tap anywhere to close</Text>
-          </TouchableOpacity>
-        </View>
+          </View>
+        </TouchableOpacity>
       </Modal>
     </View>
   );
@@ -432,72 +442,97 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
   },
-  header: {
+  bottomActionBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
+    paddingTop: 16,
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 8,
   },
-  backButton: {
-    paddingVertical: 8,
-    paddingRight: 16,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: colors.primary,
-    fontWeight: '500',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  editButton: {
-    backgroundColor: colors.primary,
+  bottomBackButton: {
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  editButtonText: {
-    color: colors.background,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  deleteButton: {
-    backgroundColor: '#FEE2E2',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  deleteButtonText: {
-    fontSize: 16,
-  },
-  cancelButton: {
     backgroundColor: colors.secondary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  cancelButtonText: {
-    color: colors.textSecondary,
-    fontSize: 14,
+  bottomBackButtonText: {
+    fontSize: 16,
+    color: colors.text_color_1,
     fontWeight: '500',
   },
-  saveButton: {
+  bottomActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  bottomEditButton: {
     backgroundColor: colors.gold,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 8,
   },
-  saveButtonText: {
+  bottomEditButtonText: {
     color: colors.background,
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  bottomDeleteButton: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  bottomDeleteButtonText: {
+    fontSize: 18,
+  },
+  bottomCancelButton: {
+    flex: 1,
+    marginRight: 12,
+    backgroundColor: colors.secondary,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  bottomCancelButtonText: {
+    color: colors.textSecondary,
+    fontSize: 16,
     fontWeight: '500',
+  },
+  bottomSaveButton: {
+    flex: 1,
+    backgroundColor: colors.gold,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    shadowColor: colors.gold,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  bottomSaveButtonText: {
+    color: colors.background,
+    fontSize: 16,
+    fontWeight: '600',
   },
   content: {
     flex: 1,
@@ -576,7 +611,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   // Modal styles
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.9)',
     justifyContent: 'center',
@@ -616,6 +651,12 @@ const styles = StyleSheet.create({
   fullScreenImageContainer: {
     flex: 1,
     width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageWrapper: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },

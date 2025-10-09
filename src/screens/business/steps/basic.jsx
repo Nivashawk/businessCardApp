@@ -99,9 +99,12 @@ const Basic = forwardRef(({initialData}, ref) => {
     return selected ? { label: selected.name, value: String(selected.id) } : null;
   }, [industry, industryData]);
 
-  // Update state when initialData changes (when user navigates back)
+  // Track if we've initialized from initialData to prevent unnecessary resets
+  const [hasInitialized, setHasInitialized] = useState(false);
+  
+  // Update state when initialData changes (when user navigates back) - Only initialize once
   useEffect(() => {
-    if (initialData) {
+    if (initialData && !hasInitialized) {
       console.log('Updating Basic form with initialData:', initialData);
       
       setCompanyName(initialData.companyName || '');
@@ -115,8 +118,9 @@ const Basic = forwardRef(({initialData}, ref) => {
       setFoundedYear(initialData.foundedYear || '');
       setGstNumber(initialData.gstNumber || '');
       setIndustry(String(initialData.industry || ''));
+      setHasInitialized(true);
     }
-  }, [initialData]);
+  }, [initialData, hasInitialized]);
 
   // Memoize the handleSelectIndustry callback to prevent unnecessary re-renders
   const handleSelectIndustry = useCallback((item) => {

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {getFocusedRouteNameFromRoute} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {colors} from '../theme/colors';
 
 import HomeStack from './homeStack';
@@ -291,6 +292,7 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const backgroundAnim = useRef(new Animated.Value(0)).current;
   const dimensions = useResponsiveDimensions();
+  const insets = useSafeAreaInsets();
 
   const containerPadding = dimensions.isTablet ? 24 : 16;
   const tabBarHeight = dimensions.isTablet
@@ -300,9 +302,13 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
     : 65;
   const tabBarRadius = dimensions.isTablet ? 28 : 24;
 
-  const bottomMargin = Platform.OS === 'ios' 
-    ? (dimensions.isLandscape ? 12 : 16)
-    : (dimensions.isLandscape ? 16 : 12);
+  // Use safe area insets for proper spacing above device navigation
+  const bottomMargin = Math.max(
+    insets.bottom + (dimensions.isTablet ? 8 : 4),
+    Platform.OS === 'ios' 
+      ? (dimensions.isLandscape ? 16 : 20)
+      : (dimensions.isLandscape ? 12 : 16)
+  );
 
   useEffect(() => {
     Animated.parallel([
@@ -337,7 +343,7 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
 
   return (
     <>
-      {/* Enhanced spacer with gradient */}
+      {/* Enhanced spacer with gradient - accounts for safe area */}
       <View 
         style={{
           height: tabBarHeight + bottomMargin + 8,
@@ -406,7 +412,7 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
                 } else if (route.name === 'Events') {
                   navigation.navigate('Events', {screen: 'ListEvents'});
                 } else if (route.name === 'Contacts') {
-                  navigation.navigate('Contacts', {screen: 'contactPage'});
+                  navigation.navigate('Contacts', {screen: 'Contact'});
                 } else {
                   navigation.navigate(route.name);
                 }
