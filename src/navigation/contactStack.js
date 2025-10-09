@@ -3,6 +3,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getHeaderOptions } from '../theme/headerOptions';
 
 import Contacts from '../screens/contacts';
+import CustomCamera from '../screens/business/steps/customCamera';
+import ManualContactDetailScreen from '../screens/ManualContactDetailScreen';
 
 import CustomHeader from '../components/customHeader';
 
@@ -15,6 +17,16 @@ export default function ContactStack() {
         name="Contact"
         component={Contacts}
         options={{ header: () => <CustomHeader titles="Contacts"/> }}
+      />
+      <Stack.Screen
+        name="CustomCamera"
+        component={CustomCamera}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ManualContactDetail"
+        component={ManualContactDetailScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

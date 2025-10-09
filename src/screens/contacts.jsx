@@ -3,7 +3,7 @@ import React, {useState, useEffect, useMemo, useCallback} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
 
-import {SafeAreaView, StatusBar, TouchableOpacity, StyleSheet, Text, Modal, View, Image} from 'react-native'; // Import TouchableOpacity and Text for FAB
+import {SafeAreaView, StatusBar, TouchableOpacity, StyleSheet, Text, Modal, View, Image, Alert} from 'react-native'; // Import TouchableOpacity and Text for FAB
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 
 import {sharedBusiness} from '../redux/slices/business/sharedBusinessSlices';
@@ -98,6 +98,27 @@ const Contacts = () => {
     [manualContacts, saveManualContacts],
   );
 
+  const handleDeleteManualContact = useCallback(
+    contactToDelete => {
+      Alert.alert(
+        'Delete Business Card',
+        `Are you sure you want to delete "${contactToDelete.businessTitle}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Delete', 
+            style: 'destructive',
+            onPress: () => {
+              const updatedContacts = manualContacts.filter(contact => contact.id !== contactToDelete.id);
+              saveManualContacts(updatedContacts);
+            }
+          }
+        ]
+      );
+    },
+    [manualContacts, saveManualContacts],
+  );
+
   // New handler to open your custom full-screen image modal
   const openImageModal = useCallback((imageUri, title) => {
     setSelectedImage(imageUri);
@@ -114,9 +135,17 @@ const Contacts = () => {
 
   const handleManualCardPress = useCallback(item => {
     console.log('Manual Contact Card Pressed (List Item):', item);
-    // This is the handler for the overall list item press, not specifically the image
-    // You can choose to do something here, e.g., navigate to a detailed view of the manual contact
-  }, []);
+    navigation.navigate('ManualContactDetail', {
+      contactId: item.id,
+      onContactUpdated: (updatedContact) => {
+        // Update the contact in the local state
+        const updatedContacts = manualContacts.map(contact => 
+          contact.id === updatedContact.id ? updatedContact : contact
+        );
+        setManualContacts(updatedContacts);
+      }
+    });
+  }, [navigation, manualContacts]);
 
   const handleCardPress = useCallback(item => {
     console.log('Card pressed (Shared/Received):', item);
@@ -300,11 +329,12 @@ const Contacts = () => {
         <ManualContactListItem
           item={item}
           onPress={handleManualCardPress}
-          onOpenFullScreenImage={openImageModal} // Pass your custom modal opener
+          onOpenFullScreenImage={openImageModal}
+          onDelete={handleDeleteManualContact}
         />
       );
     }
-  }, [activeTab, handleCardPress, handleManualCardPress, openImageModal]);
+  }, [activeTab, handleCardPress, handleManualCardPress, openImageModal, handleDeleteManualContact]);
 
 
   const showFab = activeTab === 'Manual Contacts';

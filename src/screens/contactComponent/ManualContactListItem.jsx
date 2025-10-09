@@ -4,7 +4,7 @@ import {View, Text, TouchableOpacity, Image, StyleSheet} from 'react-native';
 import {listStyles} from './styles';
 
 // Renamed onPressImage to onOpenFullScreenImage for clarity
-const ManualContactListItem = ({item, onPress, onOpenFullScreenImage}) => {
+const ManualContactListItem = ({item, onPress, onOpenFullScreenImage, onDelete}) => {
   const formatDate = dateString => {
     const date = new Date(dateString);
     if (isNaN(date)) return dateString;
@@ -17,7 +17,7 @@ const ManualContactListItem = ({item, onPress, onOpenFullScreenImage}) => {
     });
   };
 
-  const imagesAvailable = item.image1 || item.image2;
+  const imagesAvailable = item.frontImage || item.backImage || item.image1 || item.image2; // Support both old and new formats
 
   return (
     <TouchableOpacity
@@ -39,16 +39,63 @@ const ManualContactListItem = ({item, onPress, onOpenFullScreenImage}) => {
         <Text style={listStyles.dateText} numberOfLines={1}>
           Added: {formatDate(item.createdAt)}
         </Text>
+        
+        {/* OCR Extracted Information */}
+        {(item.name || item.businessName || item.phone || item.email || item.website || item.address) && (
+          <View style={manualListItemStyles.ocrInfo}>
+            {item.name && (
+              <Text style={manualListItemStyles.ocrText} numberOfLines={1}>
+                👤 {item.name}
+              </Text>
+            )}
+            {item.businessName && (
+              <Text style={manualListItemStyles.ocrText} numberOfLines={1}>
+                🏢 {item.businessName}
+              </Text>
+            )}
+            {item.phone && (
+              <Text style={manualListItemStyles.ocrText} numberOfLines={1}>
+                📞 {item.phone}
+              </Text>
+            )}
+            {item.email && (
+              <Text style={manualListItemStyles.ocrText} numberOfLines={1}>
+                📧 {item.email}
+              </Text>
+            )}
+            {item.website && (
+              <Text style={manualListItemStyles.ocrText} numberOfLines={1}>
+                🌐 {item.website}
+              </Text>
+            )}
+            {item.address && (
+              <Text style={manualListItemStyles.ocrText} numberOfLines={1}>
+                📍 {item.address}
+              </Text>
+            )}
+          </View>
+        )}
         {imagesAvailable ? (
           <View style={manualListItemStyles.imageThumbnailContainer}>
-            {item.image1 && (
-              // When image1 is pressed, pass its URI and a title
+            {/* Support new front/back structure */}
+            {item.frontImage && (
+              <TouchableOpacity onPress={() => onOpenFullScreenImage(item.frontImage, `${item.businessTitle} - Front`)}>
+                <Image source={{uri: item.frontImage}} style={manualListItemStyles.imageThumbnail} />
+              </TouchableOpacity>
+            )}
+            {item.backImage && (
+              <TouchableOpacity onPress={() => onOpenFullScreenImage(item.backImage, `${item.businessTitle} - Back`)}>
+                <Image source={{uri: item.backImage}} style={manualListItemStyles.imageThumbnail} />
+              </TouchableOpacity>
+            )}
+            
+            {/* Support old image1/image2 structure for backward compatibility */}
+            {item.image1 && !item.frontImage && (
               <TouchableOpacity onPress={() => onOpenFullScreenImage(item.image1, `${item.businessTitle} - Card 1`)}>
                 <Image source={{uri: item.image1}} style={manualListItemStyles.imageThumbnail} />
               </TouchableOpacity>
             )}
-            {item.image2 && (
-              // When image2 is pressed, pass its URI and a title
+            {item.image2 && !item.backImage && (
               <TouchableOpacity onPress={() => onOpenFullScreenImage(item.image2, `${item.businessTitle} - Card 2`)}>
                 <Image source={{uri: item.image2}} style={manualListItemStyles.imageThumbnail} />
               </TouchableOpacity>
@@ -57,9 +104,18 @@ const ManualContactListItem = ({item, onPress, onOpenFullScreenImage}) => {
         ) : null}
       </View>
 
-      {/* Chevron */}
-      <View style={listStyles.chevron}>
-        <Text style={listStyles.chevronText}>›</Text>
+      {/* Action Buttons */}
+      <View style={manualListItemStyles.actionButtons}>
+        {onDelete && (
+          <TouchableOpacity 
+            style={manualListItemStyles.deleteButton}
+            onPress={() => onDelete(item)}>
+            <Text style={manualListItemStyles.deleteButtonText}>🗑️</Text>
+          </TouchableOpacity>
+        )}
+        <View style={listStyles.chevron}>
+          <Text style={listStyles.chevronText}>›</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -78,6 +134,33 @@ const manualListItemStyles = StyleSheet.create({
     resizeMode: 'cover',
     borderWidth: 0.5,
     borderColor: '#E5E7EB',
+  },
+  ocrInfo: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 0.5,
+    borderTopColor: '#E5E7EB',
+  },
+  ocrText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 2,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  deleteButton: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 16,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    fontSize: 16,
   },
 });
 

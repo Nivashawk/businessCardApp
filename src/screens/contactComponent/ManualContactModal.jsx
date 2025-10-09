@@ -10,19 +10,36 @@ import {
   Alert,
   Image,
   ScrollView,
-  Platform,
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import {colors} from '../../theme/colors';
+// import {processImageOCR} from '../../utils/ocrUtils'; // Original with vision-camera
+// import {processImageOCR} from '../../utils/ocrUtilsMLKit'; // ML Kit alternative
+import {processImageOCR} from '../../utils/ocrUtilsMLKit'; // ML Kit OCR implementation
+import {useNavigation} from '@react-navigation/native';
+import ManualOCRModal from '../../components/ManualOCRModal';
 
 const ManualContactModal = ({visible, onClose, onSave}) => {
+  const navigation = useNavigation();
   const [businessTitle, setBusinessTitle] = useState('');
-  const [image1Uri, setImage1Uri] = useState(null);
-  const [image2Uri, setImage2Uri] = useState(null);
+  const [frontImageUri, setFrontImageUri] = useState(null);
+  const [backImageUri, setBackImageUri] = useState(null);
+  
+  // OCR extracted fields
+  const [name, setName] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [website, setWebsite] = useState('');
+  const [address, setAddress] = useState('');
+  const [isProcessingOCR, setIsProcessingOCR] = useState(false);
+  const [showManualOCRModal, setShowManualOCRModal] = useState(false);
+  const [currentImageForOCR, setCurrentImageForOCR] = useState(null);
+  const [ocrProcessedImages, setOcrProcessedImages] = useState(new Set());
 
-  const selectImage = async (setImage) => {
+  const selectImage = async (setImage, cardType) => {
     Alert.alert(
-      "Add Business Card Image",
+      `Add ${cardType} of Business Card`,
       "Choose how you'd like to add the image.",
       [
         {
@@ -41,6 +58,8 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
                 includeBase64: false,
               });
               setImage(image.path);
+              // Auto-process OCR after image selection
+              processOCRFromImage(image.path);
             } catch (error) {
               if (error.code === 'E_PICKER_CANCELLED') {
                 console.log('User cancelled image selection');
@@ -65,6 +84,8 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
                 includeBase64: false,
               });
               setImage(image.path);
+              // Auto-process OCR after image selection
+              processOCRFromImage(image.path);
             } catch (error) {
               if (error.code === 'E_PICKER_CANCELLED') {
                 console.log('User cancelled image selection');
@@ -81,32 +102,116 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
     );
   };
 
+  const processOCRFromImage = async (imagePath) => {
+    if (ocrProcessedImages.has(imagePath)) {
+      return; // Already processed this image
+    }
+
+    try {
+      setIsProcessingOCR(true);
+      const extracted = await processImageOCR(imagePath);
+      
+      // Check if OCR extracted meaningful data
+      const hasExtractedData = extracted.name || extracted.businessName || 
+                              extracted.phone || extracted.email || 
+                              extracted.website || extracted.address;
+      
+      if (hasExtractedData) {
+        // Merge with existing data (don't overwrite if user already filled)
+        if (!name && extracted.name) setName(extracted.name);
+        if (!businessName && extracted.businessName) setBusinessName(extracted.businessName);
+        if (!phone && extracted.phone) setPhone(extracted.phone);
+        if (!email && extracted.email) setEmail(extracted.email);
+        if (!website && extracted.website) setWebsite(extracted.website);
+        if (!address && extracted.address) setAddress(extracted.address);
+        
+        // Set business title if not already set
+        if (!businessTitle && (extracted.name || extracted.businessName)) {
+          setBusinessTitle(`${extracted.name} - ${extracted.businessName}`.replace(' - ', extracted.businessName ? ' - ' : ''));
+        }
+        
+        setOcrProcessedImages(prev => new Set([...prev, imagePath]));
+        Alert.alert('OCR Success', 'Business card information extracted successfully! You can edit the details below.');
+      } else {
+        // OCR didn't extract meaningful data, offer manual entry
+        Alert.alert(
+          'OCR Incomplete', 
+          'Could not extract complete information from the image. Would you like to manually enter the text from this business card?',
+          [
+            { text: 'Skip', style: 'cancel' },
+            { 
+              text: 'Manual Entry', 
+              onPress: () => {
+                setCurrentImageForOCR(imagePath);
+                setShowManualOCRModal(true);
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('OCR Error:', error);
+      // Fallback to manual entry on OCR failure
+      Alert.alert(
+        'OCR Failed',
+        'Could not process the image automatically. Would you like to manually enter the text from this business card?',
+        [
+          { text: 'Skip', style: 'cancel' },
+          { 
+            text: 'Manual Entry', 
+            onPress: () => {
+              setCurrentImageForOCR(imagePath);
+              setShowManualOCRModal(true);
+            }
+          }
+        ]
+      );
+    } finally {
+      setIsProcessingOCR(false);
+    }
+  };
+
   const handleSave = () => {
     if (!businessTitle.trim()) {
       Alert.alert('Missing Information', 'Please enter a business title.');
       return;
     }
-    if (!image1Uri && !image2Uri) {
-      Alert.alert('Missing Images', 'Please add at least one business card image.');
+    if (!frontImageUri && !backImageUri) {
+      Alert.alert('Missing Images', 'Please add at least one business card image (front or back).');
       return;
     }
 
     onSave({
       id: Date.now().toString(),
       businessTitle,
-      image1: image1Uri,
-      image2: image2Uri,
+      frontImage: frontImageUri,
+      backImage: backImageUri,
+      // OCR extracted fields
+      name,
+      businessName,
+      phone,
+      email,
+      website,
+      address,
       createdAt: new Date().toISOString(),
     });
     
     // Reset fields
     setBusinessTitle('');
-    setImage1Uri(null);
-    setImage2Uri(null);
+    setFrontImageUri(null);
+    setBackImageUri(null);
+    setName('');
+    setBusinessName('');
+    setPhone('');
+    setEmail('');
+    setWebsite('');
+    setAddress('');
+    setOcrProcessedImages(new Set());
     onClose();
   };
 
   return (
+    <>
     <Modal
       animationType="slide"
       transparent={true}
@@ -136,20 +241,87 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
               />
             </View>
 
+            {/* OCR Extracted Fields */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Contact Information</Text>
+              <Text style={styles.sectionSubtitle}>Automatically extracted from business card images</Text>
+              
+              <TextInput
+                style={styles.textInput}
+                placeholder="Name"
+                placeholderTextColor={colors.textSecondary}
+                value={name}
+                onChangeText={setName}
+              />
+              
+              <TextInput
+                style={styles.textInput}
+                placeholder="Business Name"
+                placeholderTextColor={colors.textSecondary}
+                value={businessName}
+                onChangeText={setBusinessName}
+              />
+              
+              <TextInput
+                style={styles.textInput}
+                placeholder="Phone Number"
+                placeholderTextColor={colors.textSecondary}
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+              />
+              
+              <TextInput
+                style={styles.textInput}
+                placeholder="Email"
+                placeholderTextColor={colors.textSecondary}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              
+              <TextInput
+                style={styles.textInput}
+                placeholder="Website"
+                placeholderTextColor={colors.textSecondary}
+                value={website}
+                onChangeText={setWebsite}
+                keyboardType="url"
+                autoCapitalize="none"
+              />
+              
+              <TextInput
+                style={styles.textInput}
+                placeholder="Address"
+                placeholderTextColor={colors.textSecondary}
+                value={address}
+                onChangeText={setAddress}
+                multiline={true}
+                numberOfLines={2}
+              />
+            </View>
+
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Business Card Images</Text>
-              <Text style={styles.sectionSubtitle}>Add at least one image</Text>
+              <Text style={styles.sectionSubtitle}>Add front and/or back of business card (OCR will auto-extract information)</Text>
+              
+              {isProcessingOCR && (
+                <View style={styles.ocrProcessing}>
+                  <Text style={styles.ocrProcessingText}>🔍 Processing image and extracting information...</Text>
+                </View>
+              )}
               
               <View style={styles.imagePickerContainer}>
                 <TouchableOpacity
                   style={styles.imagePlaceholder}
-                  onPress={() => selectImage(setImage1Uri)}>
-                  {image1Uri ? (
+                  onPress={() => selectImage(setFrontImageUri, "Front Side")}>
+                  {frontImageUri ? (
                     <>
-                      <Image source={{uri: image1Uri}} style={styles.imagePreview} />
+                      <Image source={{uri: frontImageUri}} style={styles.imagePreview} />
                       <TouchableOpacity
                         style={styles.clearImageButton}
-                        onPress={() => setImage1Uri(null)}>
+                        onPress={() => setFrontImageUri(null)}>
                         <Text style={styles.clearImageText}>✕</Text>
                       </TouchableOpacity>
                     </>
@@ -157,7 +329,7 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
                     <View style={styles.placeholderContent}>
                       <Text style={styles.addImageIcon}>📷</Text>
                       <Text style={styles.imagePlaceholderText}>
-                        {image2Uri ? 'Image 1 (Optional)' : 'Add Image 1'}
+                        {backImageUri ? 'Front Side (Optional)' : 'Add Front Side'}
                       </Text>
                     </View>
                   )}
@@ -165,13 +337,13 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
 
                 <TouchableOpacity
                   style={styles.imagePlaceholder}
-                  onPress={() => selectImage(setImage2Uri)}>
-                  {image2Uri ? (
+                  onPress={() => selectImage(setBackImageUri, "Back Side")}>
+                  {backImageUri ? (
                     <>
-                      <Image source={{uri: image2Uri}} style={styles.imagePreview} />
+                      <Image source={{uri: backImageUri}} style={styles.imagePreview} />
                       <TouchableOpacity
                         style={styles.clearImageButton}
-                        onPress={() => setImage2Uri(null)}>
+                        onPress={() => setBackImageUri(null)}>
                         <Text style={styles.clearImageText}>✕</Text>
                       </TouchableOpacity>
                     </>
@@ -179,7 +351,7 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
                     <View style={styles.placeholderContent}>
                       <Text style={styles.addImageIcon}>📷</Text>
                       <Text style={styles.imagePlaceholderText}>
-                        Add Image 2 (Optional)
+                        Add Back Side (Optional)
                       </Text>
                     </View>
                   )}
@@ -197,7 +369,34 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
           </View>
         </View>
       </View>
+      
+      {/* Manual OCR Modal */}
+      <ManualOCRModal
+        visible={showManualOCRModal}
+        onClose={() => {
+          setShowManualOCRModal(false);
+          setCurrentImageForOCR(null);
+        }}
+        onExtract={(extractedData) => {
+          // Merge with existing data (don't overwrite if user already filled)
+          if (!name && extractedData.name) setName(extractedData.name);
+          if (!businessName && extractedData.businessName) setBusinessName(extractedData.businessName);
+          if (!phone && extractedData.phone) setPhone(extractedData.phone);
+          if (!email && extractedData.email) setEmail(extractedData.email);
+          if (!website && extractedData.website) setWebsite(extractedData.website);
+          if (!address && extractedData.address) setAddress(extractedData.address);
+          
+          // Set business title if not already set
+          if (!businessTitle && (extractedData.name || extractedData.businessName)) {
+            setBusinessTitle(`${extractedData.name} - ${extractedData.businessName}`.replace(' - ', extractedData.businessName ? ' - ' : ''));
+          }
+          
+          Alert.alert('Success', 'Business card information extracted successfully!');
+        }}
+        imagePath={currentImageForOCR}
+      />
     </Modal>
+    </>
   );
 };
 
@@ -356,6 +555,19 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: 16,
     fontWeight: '600',
+  },
+  ocrProcessing: {
+    backgroundColor: colors.secondary,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.gold,
+  },
+  ocrProcessingText: {
+    color: colors.text_color_1,
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

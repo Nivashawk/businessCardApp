@@ -20,6 +20,9 @@ import {capture} from 'react-native-view-shot'; // optional for snapshot, otherw
 import {TabBarStyle} from '../../../theme/tabBar';
 import {colors} from '../../../theme/colors';
 import BackArrow from '../../../../assets/backArrow.svg';
+// import {processImageOCR} from '../../../utils/ocrUtils'; // Original with vision-camera
+// import {processImageOCR} from '../../../utils/ocrUtilsMLKit'; // ML Kit alternative  
+import {processImageOCR} from '../../../utils/ocrUtilsFallback'; // Fallback without OCR
 
 // Get status bar height for proper positioning
 const getStatusBarHeight = () => {
@@ -35,7 +38,7 @@ const CustomCamera = () => {
   const [isAppActive, setIsAppActive] = useState(
     AppState.currentState === 'active',
   );
-  const {onCapture} = useRoute().params || {};
+  const {onCapture, enableOCR = false} = useRoute().params || {};
 
   useFocusEffect(
     useCallback(() => {
@@ -225,7 +228,18 @@ const CustomCamera = () => {
     const imagePath = 'file://' + photo.path;
 
     if (onCapture) {
-      onCapture(imagePath); // Send back to crop
+      if (enableOCR) {
+        // Process OCR and send back extracted data along with image
+        try {
+          const ocrData = await processImageOCR(photo.path);
+          onCapture(imagePath, ocrData);
+        } catch (error) {
+          console.error('OCR processing failed:', error);
+          onCapture(imagePath); // Fallback to just image
+        }
+      } else {
+        onCapture(imagePath); // Send back to crop
+      }
     }
 
     navigation.goBack();
