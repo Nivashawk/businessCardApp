@@ -25,12 +25,14 @@ import {
   Modal,
 } from 'react-native';
 import ImageCropper from '../../../components/imageCropper';
+import DocumentScannerComponent from '../../../components/DocumentScanner';
 import {useNavigation} from '@react-navigation/native';
 import {colors} from '../../../theme/colors';
 import {useSelector, useDispatch} from 'react-redux';
 import {updateBusinessUploadData} from '../../../redux/slices/business/businessBasic';
 import RNFS from 'react-native-fs';
 import TextAreaBox from '../../../components/inputs/textArea';
+import {useDocumentScanner} from '../../../hooks/useDocumentScanner';
 
 const {width, height} = Dimensions.get('window');
 
@@ -101,7 +103,7 @@ const normalizeURL = url => {
 };
 
 // Helper component for image upload sections
-const ImageUploadSection = ({title, image, onPress, onRemove, isLoading}) => {
+const ImageUploadSection = ({title, image, onPress, onRemove, isLoading, isBusinessCard = false, onScanPress}) => {
   // Simplified and more robust image URI determination
   const imageSourceUri = useMemo(() => {
     if (!image) {
@@ -173,43 +175,70 @@ const ImageUploadSection = ({title, image, onPress, onRemove, isLoading}) => {
   return (
     <View style={styles.imageSection}>
       <Text style={styles.imageSectionTitle}>{title}</Text>
-      <TouchableOpacity onPress={onPress} style={styles.imageUploadArea}>
-        {isLoading ? (
-          <ActivityIndicator size="large" color={colors.gold} />
-        ) : imageSourceUri ? (
-          <>
-            <Image
-              source={{uri: imageSourceUri}}
-              style={styles.imagePreview}
-              resizeMode="cover"
-              onError={({nativeEvent: {error}}) => {
-                console.error(`ERROR loading ${title} image:`, error);
-                console.error(`Failed URI: ${imageSourceUri}`);
-                Alert.alert(
-                  'Image Load Error',
-                  `Failed to load ${title} image. URI: ${imageSourceUri?.substring(
-                    0,
-                    100,
-                  )}`,
-                );
-              }}
-              onLoad={() => {
-                console.log(`SUCCESS: ${title} image loaded successfully`);
-              }}
-            />
-            <TouchableOpacity
-              onPress={onRemove}
-              style={styles.removeImageButton}>
-              <Text style={styles.removeImageButtonText}>Remove</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <View style={styles.placeholderContainer}>
-            <Text style={styles.placeholderText}>Tap to Upload</Text>
-            <Text style={styles.placeholderSubText}>(Max 2MB)</Text>
-          </View>
-        )}
-      </TouchableOpacity>
+      
+      {!imageSourceUri && isBusinessCard ? (
+        // Show document scanner option for business cards when no image
+        <View style={styles.uploadOptionsContainer}>
+          <TouchableOpacity onPress={onScanPress} style={styles.scannerButton}>
+            <Text style={styles.scannerButtonIcon}>📷</Text>
+            <Text style={styles.scannerButtonText}>Document Scanner</Text>
+            <Text style={styles.scannerButtonSubtext}>AI-powered edge detection</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity onPress={onPress} style={styles.regularCameraButton}>
+            <Text style={styles.regularCameraButtonIcon}>📱</Text>
+            <Text style={styles.regularCameraButtonText}>Regular Camera</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        // Standard upload area for logo or when image exists
+        <TouchableOpacity onPress={isBusinessCard ? onScanPress : onPress} style={styles.imageUploadArea}>
+          {isLoading ? (
+            <ActivityIndicator size="large" color={colors.gold} />
+          ) : imageSourceUri ? (
+            <>
+              <Image
+                source={{uri: imageSourceUri}}
+                style={styles.imagePreview}
+                resizeMode="cover"
+                onError={({nativeEvent: {error}}) => {
+                  console.error(`ERROR loading ${title} image:`, error);
+                  console.error(`Failed URI: ${imageSourceUri}`);
+                  Alert.alert(
+                    'Image Load Error',
+                    `Failed to load ${title} image. URI: ${imageSourceUri?.substring(
+                      0,
+                      100,
+                    )}`,
+                  );
+                }}
+                onLoad={() => {
+                  console.log(`SUCCESS: ${title} image loaded successfully`);
+                }}
+              />
+              <TouchableOpacity
+                onPress={onRemove}
+                style={styles.removeImageButton}>
+                <Text style={styles.removeImageButtonText}>Remove</Text>
+              </TouchableOpacity>
+              
+              {/* OCR Data Indicator for business cards */}
+              {isBusinessCard && image?.ocrData && (
+                <View style={styles.ocrIndicator}>
+                  <Text style={styles.ocrIndicatorText}>🤖 OCR Processed</Text>
+                </View>
+              )}
+            </>
+          ) : (
+            <View style={styles.placeholderContainer}>
+              <Text style={styles.placeholderText}>
+                {isBusinessCard ? 'Tap to Scan/Upload' : 'Tap to Upload'}
+              </Text>
+              <Text style={styles.placeholderSubText}>(Max 2MB)</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -234,6 +263,11 @@ const Upload = forwardRef((props, ref) => {
 
   // Modal state instead of BottomSheet
   const [isModalVisible, setIsModalVisible] = useState(false);
+  
+  // Document Scanner state
+  const [showDocumentScanner, setShowDocumentScanner] = useState(false);
+  const [scannerMode, setScannerMode] = useState('businessCard');
+  const {processScanResult, extractBusinessCardData, showScanResultSummary} = useDocumentScanner();
 
   // Helper function to reconstruct image object from base64
   const reconstructImageFromBase64 = useCallback((base64String, imageType) => {
@@ -350,14 +384,140 @@ const Upload = forwardRef((props, ref) => {
   // Fixed openModal function
   const openModal = useCallback(type => {
     console.log(`Opening modal for: ${type}`);
-    setCurrentImageType(type);
-    setIsModalVisible(true);
+    
+    // For logo, open device gallery directly
+    if (type === 'logo') {
+      openDeviceGallery(type);
+    } else {
+      setCurrentImageType(type);
+      setIsModalVisible(true);
+    }
   }, []);
+
+  // Device Gallery function for logos only
+  const openDeviceGallery = useCallback((type) => {
+    const ImagePicker = require('react-native-image-crop-picker').default;
+    
+    ImagePicker.openPicker({
+      width: 300,
+      height: 300,
+      cropping: true,
+      mediaType: 'photo',
+      freeStyleCropEnabled: true,
+      compressImageQuality: 0.8,
+    })
+    .then(image => {
+      console.log(`Device gallery image selected for ${type}:`, image);
+      handleImageSelected(type, image);
+    })
+    .catch(error => {
+      if (error.code !== 'E_PICKER_CANCELLED') {
+        console.error('Device gallery error:', error);
+        Alert.alert('Gallery Error', 'Failed to select image from gallery');
+      }
+    });
+  }, [handleImageSelected]);
 
   const closeModal = useCallback(() => {
     console.log('Closing modal');
     setIsModalVisible(false);
     setCurrentImageType(null);
+  }, []);
+
+  // Document Scanner Functions
+  const openDocumentScanner = useCallback((type) => {
+    console.log(`Opening document scanner for: ${type}`);
+    setCurrentImageType(type);
+    setScannerMode('businessCard');
+    setShowDocumentScanner(true);
+  }, []);
+
+  const closeDocumentScanner = useCallback(() => {
+    console.log('Closing document scanner');
+    setShowDocumentScanner(false);
+    setCurrentImageType(null);
+  }, []);
+
+  const handleDocumentScanComplete = useCallback(async (scanResult) => {
+    try {
+      console.log('Document scan completed:', scanResult);
+      
+      // Process the scan result
+      const processedResult = await processScanResult(scanResult);
+      
+      // Convert scanned image to the format expected by the upload component
+      const imageUri = processedResult.imageUri;
+      let base64Data = null;
+
+      // Read the image file and convert to base64
+      if (imageUri) {
+        try {
+          base64Data = await RNFS.readFile(imageUri, 'base64');
+        } catch (error) {
+          console.error('Error reading scanned image:', error);
+          Alert.alert('Error', 'Failed to process scanned image');
+          return;
+        }
+      }
+
+      // Create processed image object
+      const processedImage = {
+        uri: `data:image/jpeg;base64,${base64Data}`,
+        base64: base64Data,
+        path: imageUri,
+        width: 1200,
+        height: 800,
+        scanType: processedResult.scanType,
+        ocrData: processedResult.ocrData,
+      };
+
+      // Update state based on current image type
+      const updateData = {};
+      const type = currentImageType;
+      
+      switch (type) {
+        case 'front':
+          setSelectedFrontImage(processedImage);
+          updateData.business_card_front = base64Data;
+          break;
+        case 'back':
+          setSelectedBackImage(processedImage);
+          updateData.business_card_back = base64Data;
+          break;
+        default:
+          console.warn(`Unknown image type: ${type}`);
+          break;
+      }
+
+      // Update Redux store
+      if (Object.keys(updateData).length > 0) {
+        dispatch(updateBusinessUploadData(updateData));
+        console.log(`Dispatched update for ${type} with document scanner`);
+      }
+
+      // Show scan result summary to user
+      if (processedResult.ocrData && processedResult.hasOCRData) {
+        showScanResultSummary(processedResult);
+        
+        // Auto-populate business fields from OCR data if available
+        const extractedData = extractBusinessCardData(processedResult.ocrData);
+        if (extractedData && Object.values(extractedData).some(value => value.trim())) {
+          console.log('Extracted business card data:', extractedData);
+          // Note: Auto-population would require access to business form state
+          // This could be implemented by passing a callback or using Redux
+        }
+      }
+
+      console.log(`Document scan processed successfully for ${type}`);
+    } catch (error) {
+      console.error('Error handling document scan:', error);
+      Alert.alert('Scan Error', 'Failed to process the scanned document');
+    }
+  }, [currentImageType, processScanResult, extractBusinessCardData, showScanResultSummary, dispatch]);
+
+  const handleDocumentScanError = useCallback((error) => {
+    console.error('Document scanner error:', error);
+    Alert.alert('Scanner Error', 'Document scanner encountered an error. Please try again.');
   }, []);
 
   const handleImageSelected = useCallback(
@@ -728,8 +888,10 @@ const Upload = forwardRef((props, ref) => {
                 title="Business Card Front"
                 image={selectedFrontImage}
                 onPress={() => openModal('front')}
+                onScanPress={() => openDocumentScanner('front')}
                 onRemove={() => handleRemoveImage('front')}
                 isLoading={isImageProcessing && currentImageType === 'front'}
+                isBusinessCard={true}
               />
 
               {/* Business Card Back */}
@@ -737,8 +899,10 @@ const Upload = forwardRef((props, ref) => {
                 title="Business Card Back"
                 image={selectedBackImage}
                 onPress={() => openModal('back')}
+                onScanPress={() => openDocumentScanner('back')}
                 onRemove={() => handleRemoveImage('back')}
                 isLoading={isImageProcessing && currentImageType === 'back'}
+                isBusinessCard={true}
               />
 
               {/* Business Logo */}
@@ -748,6 +912,7 @@ const Upload = forwardRef((props, ref) => {
                 onPress={() => openModal('logo')}
                 onRemove={() => handleRemoveImage('logo')}
                 isLoading={isImageProcessing && currentImageType === 'logo'}
+                isBusinessCard={false}
               />
             </View>
           </ScrollView>
@@ -782,6 +947,17 @@ const Upload = forwardRef((props, ref) => {
           </View>
         </View>
       </Modal>
+
+      {/* Document Scanner Modal */}
+      <DocumentScannerComponent
+        visible={showDocumentScanner}
+        onClose={closeDocumentScanner}
+        onScanComplete={handleDocumentScanComplete}
+        onError={handleDocumentScanError}
+        mode={scannerMode}
+        title={`Scan ${currentImageType === 'front' ? 'Front' : 'Back'} Business Card`}
+        enableOCR={true}
+      />
     </View>
   );
 });
@@ -951,5 +1127,72 @@ const styles = StyleSheet.create({
     color: colors.text_color_1,
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  // Document Scanner Button Styles
+  uploadOptionsContainer: {
+    gap: 12,
+  },
+  scannerButton: {
+    backgroundColor: colors.gold,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: colors.gold,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  scannerButtonIcon: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  scannerButtonText: {
+    color: colors.background,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  scannerButtonSubtext: {
+    color: colors.background,
+    fontSize: 12,
+    opacity: 0.8,
+  },
+  regularCameraButton: {
+    backgroundColor: colors.secondary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  regularCameraButtonIcon: {
+    fontSize: 20,
+  },
+  regularCameraButtonText: {
+    color: colors.text_color_1,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  // OCR Indicator Styles
+  ocrIndicator: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  ocrIndicatorText: {
+    color: colors.gold,
+    fontSize: 10,
+    fontWeight: '600',
   },
 });

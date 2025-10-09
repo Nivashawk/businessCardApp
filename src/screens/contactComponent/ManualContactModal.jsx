@@ -18,6 +18,8 @@ import {colors} from '../../theme/colors';
 import {processImageOCR} from '../../utils/ocrUtilsMLKit'; // ML Kit OCR implementation
 import {useNavigation} from '@react-navigation/native';
 import ManualOCRModal from '../../components/ManualOCRModal';
+import DocumentScannerComponent from '../../components/DocumentScanner';
+import {useDocumentScanner} from '../../hooks/useDocumentScanner';
 
 const ManualContactModal = ({visible, onClose, onSave}) => {
   const navigation = useNavigation();
@@ -36,6 +38,11 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
   const [showManualOCRModal, setShowManualOCRModal] = useState(false);
   const [currentImageForOCR, setCurrentImageForOCR] = useState(null);
   const [ocrProcessedImages, setOcrProcessedImages] = useState(new Set());
+  
+  // Document Scanner state
+  const [showDocumentScanner, setShowDocumentScanner] = useState(false);
+  const [currentScanType, setCurrentScanType] = useState(null);
+  const {processScanResult, extractBusinessCardData, showScanResultSummary} = useDocumentScanner();
 
   const selectImage = async (setImage, cardType) => {
     Alert.alert(
@@ -47,7 +54,14 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
           style: "cancel"
         },
         {
-          text: "Take Photo",
+          text: "📷 Document Scanner",
+          onPress: () => {
+            setCurrentScanType(cardType.toLowerCase());
+            setShowDocumentScanner(true);
+          }
+        },
+        {
+          text: "📱 Take Photo",
           onPress: async () => {
             try {
               const image = await ImagePicker.openCamera({
@@ -169,6 +183,67 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
     } finally {
       setIsProcessingOCR(false);
     }
+  };
+
+  // Document Scanner Functions
+  const handleDocumentScanComplete = async (scanResult) => {
+    try {
+      console.log('Manual contact document scan completed:', scanResult);
+      
+      // Process the scan result
+      const processedResult = await processScanResult(scanResult);
+      
+      // Update the appropriate image based on scan type
+      const imageUri = processedResult.imageUri;
+      
+      if (currentScanType === 'front side') {
+        setFrontImageUri(imageUri);
+      } else if (currentScanType === 'back side') {
+        setBackImageUri(imageUri);
+      }
+
+      // Process OCR data if available
+      if (processedResult.ocrData && processedResult.hasOCRData) {
+        const extractedData = extractBusinessCardData(processedResult.ocrData);
+        
+        // Merge with existing data (don't overwrite if user already filled)
+        if (!name && extractedData.name) setName(extractedData.name);
+        if (!businessName && extractedData.businessName) setBusinessName(extractedData.businessName);
+        if (!phone && extractedData.phone) setPhone(extractedData.phone);
+        if (!email && extractedData.email) setEmail(extractedData.email);
+        if (!website && extractedData.website) setWebsite(extractedData.website);
+        if (!address && extractedData.address) setAddress(extractedData.address);
+        
+        // Set business title if not already set
+        if (!businessTitle && (extractedData.name || extractedData.businessName)) {
+          setBusinessTitle(`${extractedData.name || ''} - ${extractedData.businessName || ''}`.replace(' - ', extractedData.businessName ? ' - ' : ''));
+        }
+        
+        showScanResultSummary(processedResult);
+      }
+
+      // Mark as processed to avoid reprocessing
+      setOcrProcessedImages(prev => new Set([...prev, imageUri]));
+      
+    } catch (error) {
+      console.error('Error handling manual contact document scan:', error);
+      Alert.alert('Scan Error', 'Failed to process the scanned document');
+    } finally {
+      setShowDocumentScanner(false);
+      setCurrentScanType(null);
+    }
+  };
+
+  const handleDocumentScanError = (error) => {
+    console.error('Manual contact document scanner error:', error);
+    Alert.alert('Scanner Error', 'Document scanner encountered an error. Please try again.');
+    setShowDocumentScanner(false);
+    setCurrentScanType(null);
+  };
+
+  const closeDocumentScanner = () => {
+    setShowDocumentScanner(false);
+    setCurrentScanType(null);
   };
 
   const handleSave = () => {
@@ -394,6 +469,17 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
           Alert.alert('Success', 'Business card information extracted successfully!');
         }}
         imagePath={currentImageForOCR}
+      />
+      
+      {/* Document Scanner Modal */}
+      <DocumentScannerComponent
+        visible={showDocumentScanner}
+        onClose={closeDocumentScanner}
+        onScanComplete={handleDocumentScanComplete}
+        onError={handleDocumentScanError}
+        mode="businessCard"
+        title={`Scan ${currentScanType === 'front side' ? 'Front' : 'Back'} Business Card`}
+        enableOCR={true}
       />
     </Modal>
     </>
