@@ -1,6 +1,7 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../../api/apiClient';
+import config from '../../../config/env';
 
 
 export const authUser = createAsyncThunk(
@@ -13,15 +14,10 @@ export const authUser = createAsyncThunk(
       const response = await apiClient.getFullResponse('web/session/authenticate', {
         method: 'POST',
         body: JSON.stringify({
-          // params:{
-          //   db: "thumps18",
-          //   login: "thumpsbot@yopmail.com",
-          //   password: "Welcome@123"
-          // }
           params:{
-            db: "thumps_dev",
-            login: "thumpsbot@yopmail.com",
-            password: "Welcome@123"
+            db: config.DB_NAME,
+            login: config.LOGIN_EMAIL,
+            password: config.API_PASSWORD
           }
         }),
         excludeSessionID: true

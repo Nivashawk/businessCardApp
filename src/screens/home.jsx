@@ -17,31 +17,19 @@ import {typography} from '../theme/typography';
 import ServiceCard from '../components/cards/serviceCard';
 import DescriptiveCard from '../components/cards/descriptiveCard';
 import ReferralImage from '../../assets/serviceCard/referral.png';
-import EventImage from '../../assets/serviceCard/event.png';
 import ShareImage from '../../assets/serviceCard/share.png';
 // Add NFC card image - you'll need to add this image to your assets
 import NFCImage from '../../assets/serviceCard/event.png'; // Create this image
 import {useNavigation} from '@react-navigation/native';
-import ImageCropper from '../components/imageCropper';
 import {useDispatch, useSelector} from 'react-redux';
 import {getHome} from '../redux/slices/user/homeSlices';
 import {useFocusEffect} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
+import logger from '../utils/logger';
 
 const {width, height} = Dimensions.get('window');
 
 
-const handleReferral = () => {
-  console.log('clicked referral');
-};
-
-const handleEvent = () => {
-  console.log('clicked Event');
-};
-
-const handleShare = () => {
-  console.log('clicked share');
-};
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -49,7 +37,6 @@ const Home = () => {
   
   // State to store partner_id from AsyncStorage
   const [partnerIdFromAsync, setPartnerIdFromAsync] = useState(null);
-  const [isHomeData, setIsHomeData] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [partnerIdInitialized, setPartnerIdInitialized] = useState(false);
 
@@ -196,12 +183,7 @@ const Home = () => {
     }
   }, [homeLoading, refreshing]);
 
-  // Update home data state when data changes
-  useEffect(() => {
-    if (homeData) {
-      setIsHomeData(true);
-    }
-  }, [homeData]);
+  // No longer needed - removed setIsHomeData state
 
   const handlePress = id => {
     navigation.navigate('UpdateEvents', {id});
@@ -292,7 +274,7 @@ const Home = () => {
               <TouchableOpacity 
                 style={styles.aiScannerButton}
                 onPress={() => {
-                  console.log('🚀 Home screen: Navigating to Contacts tab with openManualContact=true');
+                  logger.navigation.navigate('Home', 'Contacts', { openManualContact: true });
                   // Navigate to the Contacts tab and pass parameters to the Contact screen
                   navigation.navigate('Contacts', { 
                     screen: 'Contact', 

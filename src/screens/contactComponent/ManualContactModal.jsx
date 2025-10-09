@@ -16,13 +16,11 @@ import {colors} from '../../theme/colors';
 // import {processImageOCR} from '../../utils/ocrUtils'; // Original with vision-camera
 // import {processImageOCR} from '../../utils/ocrUtilsMLKit'; // ML Kit alternative
 import {processImageOCR} from '../../utils/ocrUtilsMLKit'; // ML Kit OCR implementation
-import {useNavigation} from '@react-navigation/native';
 import ManualOCRModal from '../../components/ManualOCRModal';
 import DocumentScannerComponent from '../../components/DocumentScanner';
 import {useDocumentScanner} from '../../hooks/useDocumentScanner';
 
 const ManualContactModal = ({visible, onClose, onSave}) => {
-  const navigation = useNavigation();
   const [businessTitle, setBusinessTitle] = useState('');
   const [frontImageUri, setFrontImageUri] = useState(null);
   const [backImageUri, setBackImageUri] = useState(null);

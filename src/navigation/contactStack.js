@@ -1,6 +1,5 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { getHeaderOptions } from '../theme/headerOptions';
 
 import Contacts from '../screens/contacts';
 import CustomCamera from '../screens/business/steps/customCamera';

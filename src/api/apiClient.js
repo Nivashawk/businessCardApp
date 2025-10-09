@@ -1,10 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSelector } from 'react-redux';
+import config from '../config/env';
 
-
-const API_BASE_URL = 'https://thumps.app/';
-// const API_BASE_URL = 'https://8913-2405-201-e01a-d894-e518-c1f4-790a-c3be.ngrok-free.app/';
-const DEFAULT_TIMEOUT = 10000; // 10 seconds
+const API_BASE_URL = config.API_BASE_URL;
+const DEFAULT_TIMEOUT = config.DEFAULT_TIMEOUT;
 
 /**
  * Handle session expiration by clearing stored session data
@@ -88,13 +87,13 @@ const addHeaders = async (options = {}) => {
       if (sessionID && typeof sessionID === 'string' && sessionID.trim() !== '') {
         headers['Cookie'] = sessionID;
         if(isOdooConnect){
-          headers['DB'] = 'thumps_dev';
-          headers['Login'] = 'thumpsbot@yopmail.com';
-          headers['Password'] = 'Welcome@123';
+          headers['DB'] = config.DB_NAME;
+          headers['Login'] = config.LOGIN_EMAIL;
+          headers['Password'] = config.API_PASSWORD;
         }
         // else{
         //   headers['login'] = useSelector(state => state.odooConnect?.email);
-        //   headers['password'] = 'Welcome@123';
+        //   headers['password'] = config.API_PASSWORD;
         //   headers['api-key'] = useSelector(state => state.odooConnect?.api-key);
         // }
       } else {

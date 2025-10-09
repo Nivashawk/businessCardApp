@@ -20,6 +20,7 @@ import ContactsList from './contactComponent/ContactsList';
 import ManualContactModal from './contactComponent/ManualContactModal';
 
 import {mainStyles} from './contactComponent/styles'; // Import main styles
+import logger from '../utils/logger';
 
 
 import SharedContactListItem from './contactComponent/SharedContactListItem'; // Import directly here
@@ -180,18 +181,18 @@ const Contacts = ({route}) => {
 
   // Handle navigation from home screen to open manual contact modal
   useEffect(() => {
-    console.log('📋 Contacts screen mounted with route params:', route?.params);
+    logger.navigation.param('Contacts', route?.params);
     
     // Check immediately on mount or param change
     if (route?.params?.openManualContact) {
-      console.log('✅ Detected openManualContact parameter - switching to Manual Contacts tab');
+      logger.user.action('Auto-switch to Manual Contacts tab via navigation param');
       
       // Switch to Manual Contacts tab immediately
       setActiveTab('Manual Contacts');
       
       // Open the manual contact modal after a short delay
       setTimeout(() => {
-        console.log('✅ Opening manual contact modal');
+        logger.user.action('Auto-open manual contact modal');
         setShowManualContactModal(true);
       }, 300); // Reduced delay for better UX
       
@@ -203,9 +204,9 @@ const Contacts = ({route}) => {
   // Also check on screen focus for cases where navigation happens while screen is focused
   useFocusEffect(
     useCallback(() => {
-      console.log('📱 Contacts screen focused with params:', route?.params);
+      logger.navigation.param('Contacts (focus)', route?.params);
       if (route?.params?.openManualContact) {
-        console.log('🎯 useFocusEffect: Switching to Manual Contacts tab and opening modal');
+        logger.user.action('Auto-switch to Manual Contacts tab via focus effect');
         setActiveTab('Manual Contacts');
         setTimeout(() => {
           setShowManualContactModal(true);
