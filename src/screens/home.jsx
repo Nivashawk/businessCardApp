@@ -26,6 +26,7 @@ import {getHome} from '../redux/slices/user/homeSlices';
 import {useFocusEffect} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import logger from '../utils/logger';
+import BetaTag from '../components/BetaTag';
 
 const {width, height} = Dimensions.get('window');
 
@@ -251,7 +252,14 @@ const Home = () => {
               <View style={styles.aiScannerHeader}>
                 {/* <Text style={styles.aiScannerIcon}>🤖</Text> */}
                 <View style={styles.aiScannerTitleContainer}>
-                  <Text style={styles.aiScannerTitle}>AI Business Card Scanner</Text>
+                  <View style={styles.aiScannerTitleRow}>
+                    <Text style={styles.aiScannerTitle}>AI Business Card Scanner</Text>
+                    <BetaTag 
+                      size="medium" 
+                      variant="white" 
+                      style={styles.aiScannerBetaTag}
+                    />
+                  </View>
                   <Text style={styles.aiScannerSubtitle}>Scan & save contacts instantly</Text>
                 </View>
               </View>
@@ -607,6 +615,14 @@ const styles = StyleSheet.create({
   },
   aiScannerTitleContainer: {
     flex: 1,
+  },
+  aiScannerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  aiScannerBetaTag: {
+    marginTop: 2,
   },
   aiScannerTitle: {
     fontSize: 20,

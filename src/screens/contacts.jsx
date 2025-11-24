@@ -21,6 +21,7 @@ import ManualContactModal from './contactComponent/ManualContactModal';
 
 import {mainStyles} from './contactComponent/styles'; // Import main styles
 import logger from '../utils/logger';
+import BetaTag from '../components/BetaTag';
 
 
 import SharedContactListItem from './contactComponent/SharedContactListItem'; // Import directly here
@@ -409,11 +410,18 @@ const Contacts = ({route}) => {
 
       {/* Floating Action Button (FAB) */}
       {showFab && (
-        <TouchableOpacity
-          style={manualContactStyles.fab}
-          onPress={() => setShowManualContactModal(true)}>
-          <Text style={manualContactStyles.fabText}>+</Text>
-        </TouchableOpacity>
+        <View style={manualContactStyles.fabContainer}>
+          <TouchableOpacity
+            style={manualContactStyles.fab}
+            onPress={() => setShowManualContactModal(true)}>
+            <Text style={manualContactStyles.fabText}>+</Text>
+          </TouchableOpacity>
+          <BetaTag 
+            size="small" 
+            variant="default" 
+            style={manualContactStyles.fabBetaTag}
+          />
+        </View>
       )}
 
       <FilterModal
@@ -485,14 +493,17 @@ const Contacts = ({route}) => {
 };
 
 const manualContactStyles = StyleSheet.create({
-  fab: {
+  fabContainer: {
     position: 'absolute',
+    right: 20,
+    bottom: 20,
+    alignItems: 'center',
+  },
+  fab: {
     width: 60,
     height: 60,
     alignItems: 'center',
     justifyContent: 'center',
-    right: 20,
-    bottom: 20,
     backgroundColor: colors.primary,
     borderRadius: 30,
     elevation: 8,
@@ -500,11 +511,19 @@ const manualContactStyles = StyleSheet.create({
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.3,
     shadowRadius: 5,
+    marginBottom: 8,
   },
   fabText: {
     fontSize: 30,
     color: 'white',
     lineHeight: 32,
+  },
+  fabBetaTag: {
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
 });
 

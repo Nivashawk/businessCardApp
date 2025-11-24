@@ -19,6 +19,7 @@ import {processImageOCR} from '../../utils/ocrUtilsMLKit'; // ML Kit OCR impleme
 import ManualOCRModal from '../../components/ManualOCRModal';
 import DocumentScannerComponent from '../../components/DocumentScanner';
 import {useDocumentScanner} from '../../hooks/useDocumentScanner';
+import BetaTag from '../../components/BetaTag';
 
 const ManualContactModal = ({visible, onClose, onSave}) => {
   const [businessTitle, setBusinessTitle] = useState('');
@@ -309,7 +310,14 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           <View style={styles.header}>
-            <Text style={styles.title}>Add Manual Contact</Text>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>Add Manual Contact</Text>
+              <BetaTag 
+                size="small" 
+                variant="default" 
+                style={styles.headerBetaTag}
+              />
+            </View>
             <TouchableOpacity onPress={handleClose} style={styles.closeButtonContainer}>
               <Text style={styles.closeButton}>✕</Text>
             </TouchableOpacity>
@@ -325,7 +333,14 @@ const ManualContactModal = ({visible, onClose, onSave}) => {
               <View style={styles.heroHeader}>
                 {/* <Text style={styles.heroIcon}>🤖</Text> */}
                 <View style={styles.heroTitleContainer}>
-                  <Text style={styles.heroTitle}>AI-Powered Business Card Scanner</Text>
+                  <View style={styles.heroTitleRow}>
+                    <Text style={styles.heroTitle}>AI-Powered Business Card Scanner</Text>
+                    <BetaTag 
+                      size="small" 
+                      variant="white" 
+                      style={styles.heroTitleBetaTag}
+                    />
+                  </View>
                   <Text style={styles.heroSubtitle}>Scan & extract information instantly</Text>
                 </View>
               </View>
@@ -585,10 +600,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   title: {
     fontSize: 20,
     fontWeight: '600',
     color: colors.text_color_1,
+  },
+  headerBetaTag: {
+    marginTop: 2,
   },
   closeButtonContainer: {
     width: 32,
@@ -749,6 +772,15 @@ const styles = StyleSheet.create({
   },
   heroTitleContainer: {
     flex: 1,
+  },
+  heroTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  heroTitleBetaTag: {
+    marginTop: 1,
   },
   heroTitle: {
     fontSize: 18,
