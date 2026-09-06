@@ -1,13 +1,16 @@
 // Environment configuration
 // This file manages environment variables and configurations
 
+// Import environment variables from .env file
+// import { API_PASSWORD as ENV_API_PASSWORD, LOGIN_EMAIL as ENV_LOGIN_EMAIL } from '@env';
+
 // Development environment settings
 const development = {
   API_BASE_URL: 'https://thumps.app/',
   DB_NAME: 'thumps_dev',
   LOGIN_EMAIL: 'thumpsbot@yopmail.com',
   // Password should be set via environment variable
-  API_PASSWORD: process.env.API_PASSWORD || '',
+  API_PASSWORD: 'Welcome@123',
   DEFAULT_TIMEOUT: 10000,
   ENABLE_CONSOLE_LOGS: true,
 };
@@ -16,8 +19,8 @@ const development = {
 const production = {
   API_BASE_URL: 'https://thumps.app/',
   DB_NAME: 'thumps_prod',
-  LOGIN_EMAIL: process.env.LOGIN_EMAIL || '',
-  API_PASSWORD: process.env.API_PASSWORD || '',
+  // LOGIN_EMAIL: ENV_LOGIN_EMAIL || '',
+  // API_PASSWORD: ENV_API_PASSWORD || '',
   DEFAULT_TIMEOUT: 15000,
   ENABLE_CONSOLE_LOGS: false,
 };
@@ -27,27 +30,20 @@ const test = {
   API_BASE_URL: 'https://test.thumps.app/',
   DB_NAME: 'thumps_test',
   LOGIN_EMAIL: 'test@thumps.app',
-  API_PASSWORD: process.env.API_PASSWORD || '',
+  API_PASSWORD: 'Welcome@123',
   DEFAULT_TIMEOUT: 5000,
   ENABLE_CONSOLE_LOGS: true,
 };
 
 // Get current environment
 const getEnvironment = () => {
-  // For React Native, check __DEV__ flag or NODE_ENV
+  // For React Native, check __DEV__ flag
+  // __DEV__ is true in development, false in production builds
   if (__DEV__) {
     return 'development';
   }
   
-  // You can also check process.env.NODE_ENV if needed
-  const nodeEnv = process.env.NODE_ENV;
-  if (nodeEnv === 'production') {
-    return 'production';
-  } else if (nodeEnv === 'test') {
-    return 'test';
-  }
-  
-  return 'development';
+  return 'production';
 };
 
 // Environment configurations
